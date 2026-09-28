@@ -38,10 +38,10 @@
 <article class="prose">
 <h1>Quickstart</h1>
 <p>Ten minutes from a source checkout to a traverser with a recorded path, seen in the web console. You need a Rust toolchain, Node 22 (for the console) and Python 3.10 or newer; the system <code>python3</code> on macOS is 3.9 and will not do.</p>
-<blockquote><p><strong>Using a managed graph server instead?</strong> You do not build anything: the release&#x27;s <code>install.sh --from github:fclimited/ai-lab-atfgraph@vnext-&lt;version&gt;</code> installs the <code>atfg</code> CLI, the SDK and the skills from the GitHub Release into a prefix you own, then <code>atfg login &lt;url&gt;</code> connects you. See <a href="install.html">Install</a>. The rest of this page runs everything on your laptop, which is what you want while changing code.</p></blockquote>
+<blockquote><p><strong>Using a managed graph server instead?</strong> You do not build anything: the release&#x27;s <code>install.sh --from github:rimon-fc/atfgraph@vnext-&lt;version&gt;</code> installs the <code>atfg</code> CLI, the SDK and the skills from the GitHub Release into a prefix you own, then <code>atfg login &lt;url&gt;</code> connects you. See <a href="install.html">Install</a>. The rest of this page runs everything on your laptop, which is what you want while changing code.</p></blockquote>
 <p>ATFGraph vNext is one repository: the graph server <code>atfgraphd</code>, the <code>atfg</code> CLI and the web console (Rust and TypeScript) beside the <code>atfgraph</code> Python package (<code>python/</code>), the examples, the guides and the skills.</p>
 <h2 id="1-build-the-server-and-the-console">1. Build the server and the console</h2>
-<pre><code class="language-bash">git clone https://github.com/fclimited/ai-lab-atfgraph.git
+<pre><code class="language-bash">git clone https://github.com/rimon-fc/atfgraph.git
 cd ai-lab-atfgraph
 cargo build --bin atfgraphd --bin atfg          # about five minutes the first time
 (cd ui &amp;&amp; npm ci &amp;&amp; npm run build)              # the console; the daemon serves ui/dist at /ui/
