@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Container worker and logs — ATFGraph vNext reference</title>
+<meta name="description" content="Container worker and logs: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Container worker and logs</h1>
+<p class="meta">Directory <code>examples/python/container_node</code></p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<p class="meta">Agent node label <code>container-node</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>demo_echo</code></td><td>traversal</td><td><code>(message: str = &#x27;Hello!&#x27;) -&gt; dict</code></td><td><code>examples/python/container_node/agent.py</code></td><td></td></tr><tr><td><code>hello</code></td><td>traversal</td><td><code>(name: str = &#x27;ATFGraph&#x27;) -&gt; dict</code></td><td><code>examples/python/container_node/agent.py</code></td><td></td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">atfg server start
+atfg traverse container-node.demo_echo --in &#x27;{&quot;message&quot;:&quot;container check&quot;}&#x27;
+cargo build --bin atfgraphd --bin atfg
+docker compose -f examples/python/container_node/compose.yaml down
+docker compose -f examples/python/container_node/compose.yaml logs -f
+docker compose -f examples/python/container_node/compose.yaml up --build
+python -m examples.python.container_node.agent
+python -m examples.python.container_node.call hello &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;
+python -m pip install -e ./python</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/container_node/Dockerfile</code></li><li><code>examples/python/container_node/README.md</code></li><li><code>examples/python/container_node/__init__.py</code></li><li><code>examples/python/container_node/agent.py</code></li><li><code>examples/python/container_node/agentnode.yaml</code></li><li><code>examples/python/container_node/call.py</code></li><li><code>examples/python/container_node/compose.yaml</code></li><li><code>examples/python/container_node/requirements.txt</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/container_node/README.md</code>; the source file is not modified.</p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<pre><code class="language-bash">python -m pip install -e ./python
+cargo build --bin atfgraphd --bin atfg
+export PATH=&quot;$PWD/target/debug:$PATH&quot;
+atfg server start</code></pre>
+<p>The server defaults to <code>http://127.0.0.1:18880</code>; its browser UI is <code>/ui/</code>. Set <code>ATFGRAPH_SERVER</code> and <code>ATFGRAPH_API_KEY</code> for a different server.</p>
+<pre><code class="language-bash">python -m examples.python.container_node.agent
+# Another terminal:
+atfg traverse container-node.demo_echo --in &#x27;{&quot;message&quot;:&quot;container check&quot;}&#x27;
+python -m examples.python.container_node.call hello &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;</code></pre>
+<p>Run the same worker in Docker:</p>
+<pre><code class="language-bash">docker compose -f examples/python/container_node/compose.yaml up --build
+# Inspect both stdout and stderr heartbeats:
+docker compose -f examples/python/container_node/compose.yaml logs -f
+# Stop only this example:
+docker compose -f examples/python/container_node/compose.yaml down</code></pre>
+<p>The worker connects outbound; no callback port is required. Set <code>ATFGRAPH_CONTAINER_SERVER</code> to a reachable server URL. A host server bound only to loopback may need an explicit reachable interface or a shared Docker network. The example does not start or change your graph server&#x27;s listener.</p>
+<p>Stdout/stderr heartbeats remain container logs. To additionally ship structured <em>execution</em> logs, an administrator must enable <code>node_logs_enabled</code> using the observability settings API; then set <code>ATFGRAPH_DEMO_SHIP_LOGS=1</code> before launching. For example, from an administrator Python client:</p>
+<pre><code class="language-python">import asyncio
+from atfgraph import Agent
+
+async def configure():
+    app = Agent(node_id=&quot;log-settings&quot;)
+    try:
+        await app.observability.set_settings(node_logs_enabled=True)
+    finally:
+        await app.client.aclose()
+
+asyncio.run(configure())</code></pre>
+<p>The SDK ships logger records made inside traversals, not arbitrary process output. No model credentials are required.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calling other nodes and fanning out — ATFGraph vNext reference</title>
+<meta name="description" content="Calling other nodes and fanning out: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Calling other nodes and fanning out</h1>
+<p>By the end of this page you will be able to call any capability on any registered node from inside a handler, fan out many calls with <code>asyncio.gather</code> without deadlocking a small worker, report durable progress, react to a cancel, and let the graph server retry a step. It requires only the SDK and a running graph server; the <code>nested_concurrency</code> example runs with nothing else configured, and the one snippet taken from <code>features/resilience</code> is marked where it needs the example&#x27;s fixture provider.</p>
+<h2 id="traverse-call-and-submit"><code>traverse</code>, <code>call</code> and <code>submit</code></h2>
+<p>Three methods on <code>Agent</code> submit a traverser (<code>python/atfgraph/agent.py</code>):</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Method</th><th scope="col">Returns</th><th scope="col">Use</th></tr></thead><tbody><tr><td><code>await app.traverse(target, **input)</code></td><td>the child&#x27;s output</td><td>Call and wait. Also accepts one positional dict: <code>app.traverse(&quot;fanout.square&quot;, {&quot;n&quot;: 3})</code>. Mixing both raises <code>TypeError</code>.</td></tr><tr><td><code>await app.call(target, ...)</code></td><td>same</td><td>Retained name for <code>traverse</code>.</td></tr><tr><td><code>await app.submit(target, input)</code></td><td><code>Handle</code></td><td>Submit without waiting; wait later with <code>handle.result()</code>.</td></tr></tbody></table></div>
+<p>A target without a dot is resolved against the node&#x27;s own label (<code>&quot;square&quot;</code> becomes <code>&quot;fanout.square&quot;</code>). Cross-node calls are the same call with another label: <code>await app.traverse(&quot;pricing.quote&quot;, fare=&quot;Y&quot;)</code> reaches whatever node registered <code>pricing</code>, subject to the server&#x27;s access policies (<a href="13-identity-credentials-and-access.html">13-identity-credentials-and-access.md</a>). Pin a version with <code>submit(..., version=&quot;1.0.0&quot;)</code>.</p>
+<p>Inside a handler the call is a nested child of the current step: <code>submit</code> reads the <code>ExecutionContext</code> and sends <code>parent_step_id</code>, the parent&#x27;s <code>parent_lease_token</code>, and an <code>operation_key</code>. The child inherits the root and the session, the server records an edge from the parent step to it, and the parent&#x27;s worker is woken so it claims the child promptly. Outside a handler (a script, a test) the same methods submit an ordinary root traverser through <code>app.client</code>.</p>
+<p>The module-level <code>from atfgraph import traverse</code> does the same through the <code>Agent</code> held by the current <code>ExecutionContext</code>.</p>
+<h2 id="how-a-cross-node-call-travels">How a cross-node call travels</h2>
+<p>Cross-node calls go through the graph server, always. There is no node-to-node connection and no inbound port on any node. The path one call takes:</p>
+<ol><li>Inside a handler on node A you write <code>await app.traverse(&quot;pricing.quote&quot;, fare=&quot;Y&quot;)</code>. A target without a dot means this node; with a label it means whichever node registered <code>pricing</code>.</li><li>The SDK submits a child traverser to the server carrying the parent step id, the parent&#x27;s lease token and an operation key. The server records an edge from the parent step to the child, applies access policies (may this principal call this capability, how often), and queues the task for the <code>pricing</code> label.</li><li>Node B&#x27;s worker, which has been claiming work from the server all along as an outbound worker, takes the task under a lease, runs <code>quote</code>, and completes it back to the server.</li><li>The server wakes node A&#x27;s handler with the result. The child inherits the root and the session, so memory and the usage ledger line up.</li></ol>
+<p>The server is the control plane and the execution gateway at once. Nodes never trust each other; they trust the server, which authenticates each call, enforces policy, leases the work, retries it when the handler raises <code>RetryableError</code>, requeues it when a lease expires, and writes every edge down.</p>
+<p>Skills and traversals on other nodes are called the same way. Both are capabilities addressed as <code>label.capability</code>. The difference is inside the callee: a skill is a leaf; a traversal may call further capabilities and models and becomes a subtree on the path. Whether the callee runs on your node or another is invisible to the caller apart from the label.</p>
+<h2 id="fan-out-with-asyncio-gather">Fan out with <code>asyncio.gather</code></h2>
+<p>Adapted from <code>examples/python/nested_concurrency/agent.py</code>. Each <code>app.traverse</code> is one child step; <code>gather</code> runs a batch concurrently and returns outputs in order.</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;fanout&quot;, version=&quot;1.0.0&quot;, capacity=4)
+
+
+@app.skill()
+async def square(n: int) -&gt; dict:
+    await asyncio.sleep(0.05)
+    return {&quot;n&quot;: n, &quot;square&quot;: n * n}
+
+
+@app.traversal()
+async def fan_out(count: int = 6, batch: int = 3) -&gt; dict:
+    results = []
+    for start in range(0, count, batch):
+        chunk = list(range(start, min(start + batch, count)))
+        squares = await asyncio.gather(*[app.traverse(&quot;fanout.square&quot;, n=n) for n in chunk])
+        results.extend(s[&quot;square&quot;] for s in squares)
+        await app.progress({&quot;completed&quot;: len(results), &quot;of&quot;: count})
+    return {&quot;squares&quot;: results, &quot;sum&quot;: sum(results)}</code></pre>
+<p><code>tests/python_test_examples.py</code> runs this with <code>count=6, batch=3</code> and asserts <code>{&quot;squares&quot;: [0, 1, 4, 9, 16, 25], &quot;sum&quot;: 55, ...}</code> and exactly two progress events. Every square is a step under <code>fan_out</code> on the path; <code>handle.path()</code> returns them all.</p>
+<h2 id="a-dag-across-nodes">A DAG across nodes</h2>
+<p>Nothing declares the graph. The shape comes from <code>await</code> and <code>asyncio.gather</code> inside a handler, and the server records what ran. Here three supplier searches on three nodes run in parallel, a ranking waits for all of them, and a hold depends on the ranking:</p>
+<pre><code>                 ┌── fares.search ──┐
+trip.plan ───────┼── hotels.search ─┼──► trip.rank ──► fares.hold
+                 └── weather.today ─┘</code></pre>
+<p>The supplier nodes, each its own worker; only the label matters:</p>
+<pre><code class="language-python"># fares_node.py
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;fares&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.skill()
+async def search(origin: str, dest: str, date: str) -&gt; dict:
+    return {&quot;offers&quot;: [{&quot;offer_id&quot;: &quot;F1&quot;, &quot;total&quot;: 412.0}, {&quot;offer_id&quot;: &quot;F2&quot;, &quot;total&quot;: 388.0}]}
+
+
+@app.skill()
+async def hold(offer_id: str) -&gt; dict:
+    return {&quot;offer_id&quot;: offer_id, &quot;pnr&quot;: &quot;ABC123&quot;, &quot;expires_in_minutes&quot;: 30}
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run()</code></pre>
+<pre><code class="language-python"># hotels_node.py
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;hotels&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.skill()
+async def search(city: str, checkin: str, nights: int) -&gt; dict:
+    return {&quot;properties&quot;: [{&quot;property_token&quot;: &quot;H9&quot;, &quot;name&quot;: &quot;Quay West&quot;, &quot;total_rate&quot;: 640.0}]}
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run()</code></pre>
+<pre><code class="language-python"># weather_node.py
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;weather&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.skill()
+async def today(city: str) -&gt; dict:
+    return {&quot;city&quot;: city, &quot;summary&quot;: &quot;22°C, light rain in the afternoon&quot;}
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run()</code></pre>
+<p>The orchestrator:</p>
+<pre><code class="language-python"># trip_node.py
+import asyncio
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;trip&quot;, version=&quot;1.0.0&quot;, capacity=2)
+
+
+@app.skill()
+async def rank(fares: dict, hotels: dict, weather: dict) -&gt; dict:
+    best = min(fares[&quot;offers&quot;], key=lambda offer: offer[&quot;total&quot;])
+    return {&quot;fare&quot;: best, &quot;hotel&quot;: hotels[&quot;properties&quot;][0], &quot;note&quot;: weather[&quot;summary&quot;]}
+
+
+@app.traversal()
+async def plan(origin: str, dest: str, date: str, nights: int = 3) -&gt; dict:
+    # Level 1: three independent calls to three nodes, one child step each.
+    fares, hotels, weather = await asyncio.gather(
+        app.traverse(&quot;fares.search&quot;, origin=origin, dest=dest, date=date),
+        app.traverse(&quot;hotels.search&quot;, city=dest, checkin=date, nights=nights),
+        app.traverse(&quot;weather.today&quot;, city=dest),
+    )
+    await app.progress({&quot;stage&quot;: &quot;searched&quot;, &quot;offers&quot;: len(fares[&quot;offers&quot;])})
+
+    # Level 2: depends on all three.
+    choice = await app.traverse(&quot;trip.rank&quot;, fares=fares, hotels=hotels, weather=weather)
+
+    # Level 3: depends on the ranking.
+    held = await app.traverse(&quot;fares.hold&quot;, offer_id=choice[&quot;fare&quot;][&quot;offer_id&quot;])
+    return {&quot;choice&quot;: choice, &quot;hold&quot;: held, &quot;requires_review&quot;: True}
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run()</code></pre>
+<p>Run each node as its own worker against the same graph server, then start the root from anywhere:</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module fares_node:app
+python -m atfgraph.worker --module hotels_node:app
+python -m atfgraph.worker --module weather_node:app
+python -m atfgraph.worker --module trip_node:app --capacity 2
+atfg traverse trip.plan --in &#x27;{&quot;origin&quot;: &quot;BNE&quot;, &quot;dest&quot;: &quot;SYD&quot;, &quot;date&quot;: &quot;2026-10-03&quot;}&#x27;</code></pre>
+<p>What the server does with it:</p>
+<ul><li>Each <code>app.traverse</code> inside <code>plan</code> carries the parent step id and lease token, so the server records an edge from <code>plan</code> to that child. The path shows <code>plan</code> with six children, three of them concurrent; <code>atfg path &lt;id&gt;</code> prints the tree.</li><li>The three searches run on whichever workers own <code>fares</code>, <code>hotels</code> and <code>weather</code>. The orchestrator never knows their addresses. Access policies decide whether <code>trip</code> may call them (<a href="13-identity-credentials-and-access.html">13-identity-credentials-and-access.md</a>).</li><li>While <code>plan</code> waits, its worker releases the handler permit (next section), so this runs with <code>--capacity 1</code> without deadlock even though <code>trip.rank</code> lands on the same worker as <code>plan</code>.</li><li>If <code>fares.hold</code> raises <code>RetryableError</code> and the capability declares <code>max_attempts</code>, the server retries that step alone. Cancelling the root cancels every child still running.</li></ul>
+<h2 id="the-shapes-a-path-can-take">The shapes a path can take</h2>
+<p>In DAG tools you declare the graph and an orchestrator walks it. In ATFGraph the graph is traced, not declared: the code of each traversal decides at run time what to call, and the server records what happened. The same primitives give the classic shapes:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Shape</th><th scope="col">How you write it</th><th scope="col">What the path shows</th></tr></thead><tbody><tr><td>Sequence</td><td><code>a = await app.traverse(...)</code>, then <code>b = await app.traverse(..., a)</code></td><td>A chain of child steps</td></tr><tr><td>Fan-out, fan-in</td><td><code>await asyncio.gather(*[app.traverse(...) for x in items])</code></td><td>Parallel children under one parent, outputs in order</td></tr><tr><td>Conditional branch</td><td>An <code>if</code>, or a <code>@app.decision()</code> whose structured answer carries confidence</td><td>Only the taken branch exists as steps</td></tr><tr><td>Dynamic routing</td><td><code>app.ai(..., tools=&quot;self&quot;)</code> or <code>tools=&quot;discover&quot;</code> lets the model choose the next capability</td><td>One child step per tool call</td></tr><tr><td>Retry</td><td><code>RetryableError</code> with <code>max_attempts</code></td><td>Attempts on the same step</td></tr><tr><td>Pause</td><td><code>await app.request_approval(...)</code></td><td>The traverser waits, resumes on the decision</td></tr><tr><td>Scheduled or event start</td><td><code>triggers=[ScheduleTrigger(...)]</code> or <code>@on_schedule</code> on a capability</td><td>A traverser with no caller</td></tr><tr><td>Composition across teams</td><td>Routers per desk on one node, or one node per team</td><td><code>examples/python/co_consult</code>: one root, three parallel desks</td></tr></tbody></table></div>
+<p>Two properties make deep graphs safe. Durability: every step is a server-side record with attempts and leases, so a worker dying mid-fan-out loses only its in-flight steps and completed children stay. Deadlock avoidance: a parent waiting on children releases its permit, so a small worker can execute a large tree.</p>
+<h2 id="when-the-dag-is-not-known-in-advance">When the DAG is not known in advance</h2>
+<p><code>examples/python/research_path</code> is the version where a model draws the graph. A planning decision returns tasks with <code>dependencies</code>, the example computes <code>parallelizable_groups</code> by topological level and refuses a cycle, and the scheduler is five lines:</p>
+<pre><code class="language-python">for level in plan[&quot;parallelizable_groups&quot;]:
+    batch = await asyncio.gather(*(
+        app.call(&quot;research_path.execute_research_task&quot;,
+                 task=by_id[key],
+                 dependencies=[results[dep] for dep in by_id[key][&quot;dependencies&quot;]])
+        for key in level))
+    results.update({item[&quot;task_id&quot;]: item for item in batch})</code></pre>
+<p>Level by level, everything in a level runs concurrently, and each task receives the outputs of the tasks it depends on. Replace the hard-coded target with a discovered one (<a href="10-multi-node.html">10-multi-node.md</a>) and each task can land on a different node.</p>
+<h2 id="capacity-and-deadlock-avoidance">Capacity and deadlock avoidance</h2>
+<p>A worker holds <code>capacity</code> handler permits (default 8, <code>--capacity</code> on the CLI). Without care, a parent that waits for a child on a worker with one permit would wait forever: the child can only run on that permit. <code>python/atfgraph/worker.py</code> avoids this in <code>waiting_on_child</code>:</p>
+<ol><li>When a handler&#x27;s first <code>traverse</code> starts waiting, the worker calls <code>worker_suspend</code> on the server and releases the permit. Concurrent waits inside one handler count as one release.</li><li>When its last wait ends, the worker reacquires a permit and calls <code>worker_resume</code>, retrying while the server answers <code>429 capacity_exhausted</code>.</li><li>At most <code>max_waiting</code> handlers may be in the released state (default <code>capacity * 4</code>, <code>--max-waiting</code> on the CLI). Beyond that a parent keeps its permit and simply waits (<code>tests/python_test_worker.py::test_bounded_waiting_keeps_permit_beyond_max_waiting</code>).</li></ol>
+<p>So the example above runs to completion with <code>--capacity 1</code>, which is how <code>tests/python_test_examples.py</code> runs it and how <code>tests/test_integration.py::test_python_worker_nested_call_at_capacity_one</code> runs it against the real daemon:</p>
+<pre><code class="language-bash">.venv/bin/python -m atfgraph.worker --module examples.python.nested_concurrency.agent:app --capacity 1
+.venv/bin/python -m examples.python.nested_concurrency.call</code></pre>
+<p>Two related server rules to know when reasoning about throughput: root turns submitted with the same <code>session_id</code> run one at a time, but their children are not held back (<code>test_root_session_turns_are_serialized_children_bypass</code>); and a traverser whose lease expires is requeued and a late completion from the old lease is rejected (<code>test_lease_expiry_requeues_and_stale_result_is_discarded</code>).</p>
+<h2 id="progress-events">Progress events</h2>
+<p><code>await app.progress(data)</code> records a durable <code>progress</code> event on the current task&#x27;s event log; <code>await app.note(&quot;text&quot;, tags=[&quot;phase&quot;])</code> is the same call with <code>{&quot;note&quot;: ..., &quot;tags&quot;: [...]}</code>. Both need an <code>ExecutionContext</code> and the task&#x27;s lease, so they only work inside a handler. Read them back from a <code>Handle</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+import os
+
+from atfgraph import Client
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        handle = await client.submit(&quot;fanout.fan_out&quot;, {&quot;count&quot;: 6, &quot;batch&quot;: 3})
+        async for event in handle.events():
+            print(f&quot;event {event.sequence:&gt;3} {event.type:&lt;10} {event.data}&quot;)
+        print(&quot;result&quot;, await handle.result(timeout=120))
+        path = await handle.path()
+        print(f&quot;path: {len(path.items)} steps under root {path.root_id}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p>This is <code>examples/python/nested_concurrency/call.py</code> without its cancel section. <code>handle.events()</code> streams the event log over SSE and ends at the traverser&#x27;s terminal event; <code>handle.event_log()</code> returns the snapshot as a list. A progress payload arrives as <code>event.data[&quot;data&quot;]</code>, which is what the tests assert. Usage records from <code>app.ai</code> land on the same log as <code>progress</code> events with a <code>usage</code> key (<a href="14-observability.html">14-observability.md</a>).</p>
+<h2 id="cancellation">Cancellation</h2>
+<p><code>await handle.cancel()</code> (or <code>atfg cancel</code>) asks the server to cancel a traverser; the server cancels its children too (<code>test_cancel_propagates_to_children</code>). The worker learns of it on the next lease renew, sets the context&#x27;s cancel event and cancels the handler task. A handler has two ways to observe that, both from <code>examples/python/nested_concurrency/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;fanout&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.skill(timeout_seconds=600)
+async def slow_step(seconds: float) -&gt; dict:
+    &quot;&quot;&quot;Sleeps in small slices so a server cancel interrupts it promptly.&quot;&quot;&quot;
+    waited = 0.0
+    while waited &lt; seconds:
+        if app.cancel_requested():
+            break
+        await asyncio.sleep(0.1)
+        waited += 0.1
+    return {&quot;waited&quot;: round(waited, 1)}
+
+
+@app.traversal(timeout_seconds=600)
+async def long_parent(seconds: float = 30) -&gt; dict:
+    child = await app.traverse(&quot;fanout.slow_step&quot;, seconds=seconds)
+    return {&quot;child&quot;: child}</code></pre>
+<p><code>app.cancel_requested()</code> is a cooperative check for loops; an <code>await</code> inside the handler will also raise <code>asyncio.CancelledError</code> once the worker cancels the task. Either way the worker records nothing further for a cancelled task, and the caller&#x27;s <code>handle.result()</code> raises <code>TraversalCancelled</code>. A <code>progress</code> call that races with the cancel can fail with <code>ConflictError</code>; <code>examples/python/features/resilience/agent.py</code> catches it and stops. Sync handlers cannot be interrupted: the thread runs to its end and its result is dropped.</p>
+<h2 id="retries">Retries</h2>
+<p>A handler exception is terminal by default: the worker completes the task with <code>{&quot;code&quot;: &lt;exception class&gt;, &quot;retryable&quot;: false}</code> and the traverser fails. To let the server schedule another attempt, raise <code>RetryableError</code> (or <code>HandlerError(..., retryable=True)</code>) and give the capability a budget with <code>max_attempts</code>. From <code>examples/python/nested_concurrency/agent.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent, RetryableError, current_context
+
+app = Agent(node_id=&quot;fanout&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.skill(max_attempts=3)
+async def flaky_step(succeed_on_attempt: int = 2) -&gt; dict:
+    &quot;&quot;&quot;Fails with a retryable error until the server has scheduled ``succeed_on_attempt`` attempts.&quot;&quot;&quot;
+    ctx = current_context()
+    if ctx.attempt &lt; succeed_on_attempt:
+        raise RetryableError(f&quot;attempt {ctx.attempt} failed on purpose&quot;)
+    return {&quot;attempt&quot;: ctx.attempt}</code></pre>
+<p>What the tests show (<code>tests/python_test_examples.py</code>, <code>tests/test_feature_examples_extended.py</code>):</p>
+<ul><li><code>ctx.attempt</code> starts at 1 and increments per scheduled attempt; the recorded step has one entry per attempt in <code>PathStep.attempts</code>, the first marked <code>retryable: true</code>.</li><li>The event log carries a <code>requeued</code> event per retry with the error envelope, and <code>client.get(id).raw[&quot;attempt&quot;]</code> and <code>raw[&quot;max_attempts&quot;]</code> show the counters.</li><li>When the budget is spent the traverser fails with the last error&#x27;s code (<code>TraversalFailed.code</code>).</li><li>Retries of a parent do not duplicate its children: <code>ExecutionContext.operation_key</code> derives a stable key from the target, the input and the call count, so the server returns the existing child (<code>test_operation_keys_are_stable_across_parent_retries</code>).</li></ul>
+<p><code>examples/python/features/resilience/agent.py</code> applies the same pattern to a model call: a <code>ModelError</code> from the provider is re-raised as <code>RetryableError</code>, and a bad request that the provider would reject again is left as a plain exception so it fails once. That example needs its fixture provider running (<code>python -m examples.python.features.resilience.fixture_model --port 18899</code> and <code>ATFGRAPH_MODEL_URL</code>/<code>ATFGRAPH_MODEL_NAME</code> pointing at it); without a provider <code>app.ai</code> raises <code>ModelNotConfigured</code>.</p>
+<h2 id="timeouts">Timeouts</h2>
+<p>Three different clocks apply, and they fail differently:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Where</th><th scope="col">Set by</th><th scope="col">What happens</th></tr></thead><tbody><tr><td>Handler budget</td><td><code>timeout_seconds</code> on the capability (default 300)</td><td>The worker stops the handler with <code>asyncio.wait_for</code> and completes the task <code>failed</code> with code <code>handler_timeout</code>, <code>retryable: false</code>.</td></tr><tr><td>Server deadline</td><td>The graph server, from the same registered budget</td><td>If the worker itself is gone, the server&#x27;s sweep marks the traverser <code>timed_out</code>; callers see <code>TraversalTimedOut</code>.</td></tr><tr><td>Client wait</td><td><code>timeout=</code> on <code>app.traverse</code>, <code>handle.result</code>, <code>client.traverse</code>, <code>client.wait</code></td><td>Raises <code>WaitTimeout</code> in the caller after polling with jittered backoff. The traverser keeps running; cancel it if you no longer want it.</td></tr></tbody></table></div>
+<p><code>tests/test_feature_examples_extended.py::test_resilience_example_stops_a_stalled_call_at_its_budget</code> submits <code>disruption.stalled_note</code> (<code>timeout_seconds=2</code>) against a provider that stalls for 30 seconds and asserts the status is <code>failed</code> or <code>timed_out</code> with code <code>handler_timeout</code> or <code>timed_out</code>, well inside 20 seconds. Inside a nested <code>app.traverse(..., timeout=...)</code> the <code>WaitTimeout</code> propagates out of the parent handler like any other exception and fails the parent unless you catch it.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="04-sessions-and-memory.html">04-sessions-and-memory.md</a>: share state between the steps you just fanned out.</li><li><a href="11-resilience-and-controls.html">11-resilience-and-controls.md</a>: budgets, rate limiting and caching on the client side.</li><li><a href="10-multi-node.html">10-multi-node.md</a>: discover targets on other nodes instead of hard-coding them.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Access boundaries example — ATFGraph vNext reference</title>
+<meta name="description" content="Access boundaries example: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Access boundaries example</h1>
+<p class="meta">Directory <code>examples/python/features/access_boundaries</code></p>
+<p>What a restricted caller can reach, decided by the graph server rather than by the node. <code>agent.py</code> contains no authorisation code at all; <code>boundaries.py</code> installs the rules and then tries to cross them.</p>
+<p class="meta">Agent node label <code>concierge</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>itinerary</code></td><td>skill</td><td><code>(ticket: str) -&gt; dict</code></td><td><code>examples/python/features/access_boundaries/agent.py</code></td><td>Read one fixture itinerary.</td></tr><tr><td><code>quote</code></td><td>traversal</td><td><code>(city: str, nights: int = 1, budget_aud: float = 0.0, currency: str = &#x27;AUD&#x27;) -&gt; dict</code></td><td><code>examples/python/features/access_boundaries/agent.py</code></td><td>Quote accommodation from the fixture rate card.</td></tr><tr><td><code>refund</code></td><td>traversal</td><td><code>(ticket: str, amount_aud: float) -&gt; dict</code></td><td><code>examples/python/features/access_boundaries/agent.py</code></td><td>The capability a partner integration must never reach.</td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">ATFGRAPH_API_KEY=local-concierge-node \
+ATFGRAPH_CONFIG_FILE=examples/python/features/access_boundaries/config.example.yaml \
+python -m atfgraph.worker --module examples.python.features.access_boundaries.agent:app
+python -m examples.python.features.access_boundaries.boundaries</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/access_boundaries/README.md</code></li><li><code>examples/python/features/access_boundaries/__init__.py</code></li><li><code>examples/python/features/access_boundaries/agent.py</code></li><li><code>examples/python/features/access_boundaries/agentnode.yaml</code></li><li><code>examples/python/features/access_boundaries/boundaries.py</code></li><li><code>examples/python/features/access_boundaries/config.example.yaml</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/features/access_boundaries/README.md</code>; the source file is not modified.</p>
+<p>What a restricted caller can reach, decided by the graph server rather than by the node. <code>agent.py</code> contains no authorisation code at all; <code>boundaries.py</code> installs the rules and then tries to cross them.</p>
+<pre><code class="language-bash">ATFGRAPH_CONFIG_FILE=examples/python/features/access_boundaries/config.example.yaml \
+  target/debug/atfgraphd
+ATFGRAPH_API_KEY=local-concierge-node \
+  python -m atfgraph.worker --module examples.python.features.access_boundaries.agent:app
+python -m examples.python.features.access_boundaries.boundaries</code></pre>
+<p><code>config.example.yaml</code> defines three fixture principals on a scratch database: <code>operator</code> (admin), <code>concierge-node</code> (admin + worker, so the node can register itself and enrol a worker) and <code>partner</code> (invoke only). The tokens in it are throwaway strings for a loopback daemon, not credentials; override them with <code>$ATFGRAPH_OPERATOR_TOKEN</code> and <code>$ATFGRAPH_PARTNER_TOKEN</code>.</p>
+<h2 id="the-two-mechanisms">The two mechanisms</h2>
+<p><strong>Access policies</strong> (<code>/api/v2/access/policies</code>) match on label, capability and principal and decide invocations:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Policy</th><th scope="col">Effect on <code>partner</code></th></tr></thead><tbody><tr><td><code>deny</code> on <code>concierge.refund</code></td><td>every refund submission is <code>403 policy_denied</code></td></tr><tr><td><code>allow</code> on <code>concierge.quote</code> with constraints <code>currency == AUD</code>, <code>nights &lt;= 7</code></td><td>a 14-night quote is <code>403 constraint_denied</code></td></tr><tr><td><code>allow</code> on <code>concierge.itinerary</code> with <code>rate: 0.001/s, burst: 2</code></td><td>the third call in a burst is <code>429 rate_limited</code></td></tr></tbody></table></div>
+<p>Constraints are checked against the submitted input, so a field the rule names must actually be present: omitting <code>currency</code> is a refusal, not a default. An allow rule never adds authority — it only narrows what the caller&#x27;s role already permits — and a run that is refused is never created, so nothing is charged and no handler starts.</p>
+<p><strong>Connector manifests</strong> (<code>/api/v2/access/connectors/{principal}</code>) bind a principal to a list of operation grants. The partner is granted <code>traversers.submit</code>, <code>traversers.get</code>, <code>traversers.path</code> and <code>agents.capabilities</code>, so <code>client.list_agents()</code> (<code>agents.list</code>) comes back <code>403 connector_forbidden</code> even though its <code>invoke</code> role would otherwise allow it. Grants restrict; they never widen. A principal can always read its own manifest (<code>GET /api/v2/access/connector</code>) to discover what it is allowed to do, and <code>POST /api/v2/access/evaluate</code> previews one operation without consuming a rate token.</p>
+<p>Revocation persists: after <code>POST /api/v2/access/connectors/partner/revoke</code> the partner is refused everywhere and does not fall back to being an ordinary bearer. Re-running the script rebinds it.</p>
+<p>The same checks apply on the MCP and A2A surfaces and to emitter-driven runs, so a partner cannot route around them by choosing a different protocol.</p>
+<p>Tests: <code>tests/test_feature_examples_extended.py</code> runs this configuration against a real daemon and asserts each outcome in the table.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

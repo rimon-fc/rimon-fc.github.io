@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delegating to a coding harness — ATFGraph vNext reference</title>
+<meta name="description" content="Delegating to a coding harness: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Delegating to a coding harness</h1>
+<p>By the end of this page you will be able to hand a task to an installed coding-agent CLI from inside a handler with <code>app.harness</code>, choose the provider, confine it to a working directory with tools disabled, bound its runtime, validate its answer against a schema, and read what the run left on the path. It requires the SDK, a running graph server and one of the supported CLIs installed on the worker host; the repository tests substitute a fake executable, and this page says where.</p>
+<p>Prerequisites: one of <code>atfHar</code>, <code>claude</code>, <code>codex</code> or <code>opencode</code> on the worker&#x27;s <code>PATH</code>, with whatever credentials that CLI itself needs.</p>
+<h2 id="when-to-reach-for-a-harness">When to reach for a harness</h2>
+<p><code>app.harness</code> is the heaviest thing a traversal can do. <code>app.ai</code> makes one model call and returns; a harness spawns a coding agent that reads, edits and creates files in a directory, runs commands, and iterates for as many turns as it needs before answering. The traversal that called it sees the answer and the metrics, not the individual edits. Use it when the task genuinely needs a coding agent: fixing a failing test, describing or refactoring a repository, generating a project from a brief. For a question that a single model call with tools can answer, use <code>app.ai(tools=&quot;self&quot;)</code> from <a href="06-model-calls.html">06-model-calls.md</a>; it is cheaper, faster, and every tool call lands on the path as its own step.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col"></th><th scope="col"><code>app.ai</code></th><th scope="col"><code>app.harness</code></th></tr></thead><tbody><tr><td>Turns</td><td>one call, or a bounded tool loop</td><td>as many as the CLI takes, within a wall-clock deadline</td></tr><tr><td>Side effects</td><td>none unless a tool has them</td><td>edits files in <code>cwd</code>; run it with <code>max_attempts=1</code></td></tr><tr><td>On the path</td><td>one step per tool call</td><td>one step, plus a progress event per CLI event</td></tr><tr><td>Cost</td><td>recorded automatically</td><td>returned on the result; you record it if you want it counted</td></tr></tbody></table></div>
+<h2 id="install-a-provider">Install a provider</h2>
+<p>The worker host needs the CLI on <code>PATH</code>; the graph server needs nothing. Credentials are the CLI&#x27;s own.</p>
+<pre><code class="language-bash"># atf-harness: the family&#x27;s own runtime, a Bun application
+git clone &lt;the atf-harness repository&gt; &amp;&amp; cd atf-harness &amp;&amp; bun install &amp;&amp; bun link
+atfHar --version
+
+# claude-code: Anthropic&#x27;s CLI; signs in with `claude` login or ANTHROPIC_API_KEY
+npm install -g @anthropic-ai/claude-code
+
+# codex: OpenAI&#x27;s CLI; signs in with `codex` login or OPENAI_API_KEY
+npm install -g @openai/codex
+
+# opencode: its installer script from opencode.ai; brings its own provider configuration
+curl -fsSL https://opencode.ai/install | bash</code></pre>
+<p>Check before a paid run, from the shell or from a node:</p>
+<pre><code class="language-bash">python -m examples.harness.python.call --doctor</code></pre>
+<p><code>harness_doctor()</code> looks executables up on <code>PATH</code> and never runs them, so <code>available: true</code> proves the binary is present, not that its credentials work. An absent or expired provider credential surfaces later as a failed traverser whose error message is the CLI&#x27;s own report, a 401 from the model provider included.</p>
+<p>Not verified: the install commands for <code>claude</code>, <code>codex</code> and <code>opencode</code> against current releases; they are the vendors&#x27; documented commands, not something this repository runs.</p>
+<h2 id="what-the-bridge-does">What the bridge does</h2>
+<p><code>app.harness(prompt, ...)</code> (<code>python/atfgraph/agent.py</code>) runs one bounded invocation of a coding-agent CLI through <code>run_harness</code> in <code>python/atfgraph/harness_bridge.py</code>. The bridge owns the process: no shell, JSON-lines output parsed into a <code>HarnessResult</code>, a wall-clock deadline, an output size limit, and termination of the whole process group when the traversal is cancelled or the deadline passes. Which CLI runs and how its output is read comes from a provider in <code>python/atfgraph/harness_providers.py</code>; providers only build argument vectors and parse events, they never spawn anything.</p>
+<p>Two things the bridge is not: it is not a sandbox (an explicit <code>cwd</code> confines the working directory, nothing more), and it never fabricates an answer. A CLI that exits non-zero, reports an error event or prints no assistant text raises <code>HarnessFailure</code>, and the traversal fails with that message.</p>
+<p>In order, one call does five things:</p>
+<ol><li><strong>A provider is chosen.</strong> <code>provider=</code> on the call, else <code>Agent(harness_provider=...)</code>, else <code>ATFGRAPH_HARNESS_PROVIDER</code>, else <code>atf-harness</code>. The CLI must be on the worker&#x27;s <code>PATH</code> with its own credentials; the graph server needs nothing.</li><li><strong>The bridge owns the process.</strong> The CLI starts as a child in its own process group, with no shell and no inbound port, confined to <code>cwd=</code>, with tools disabled unless you list them. The bridge parses the CLI&#x27;s JSON-lines events as they stream.</li><li><strong>Bounds are enforced.</strong> A wall-clock <code>timeout</code> (300 s by default), a 4 MiB cap on combined output, and an optional <code>max_cost_usd</code>: the first streamed event that pushes the provider-reported cost past the cap kills the child and fails the step with <code>harness_cost_exceeded</code>, not retryable. Cancelling the traverser terminates the process group.</li><li><strong>Typed output if you ask.</strong> <code>schema=</code> appends the schema to the prompt, strips a code fence if the CLI added one, validates, and puts the object on <code>result.parsed</code>.</li><li><strong>What comes back.</strong> A <code>HarnessResult</code> with the text, the parsed object, provider, model, session id, token counts, turns, duration and <code>cost_usd</code> when the provider stated one. Nothing is fabricated: if the CLI never answered, the result says so.</li></ol>
+<p>The run is one step on the path, the traversal that called it; every CLI event is a progress event on that step. Cost is returned, not recorded, because a harness run is a side effect on real files; see <a href="#what-comes-back">What comes back</a>. Run harness traversals with <code>max_attempts=1</code>, since a retry would redo the edits.</p>
+<h2 id="providers">Providers</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Name</th><th scope="col">Binary</th><th scope="col">Without <code>tools=</code></th><th scope="col">Notes</th></tr></thead><tbody><tr><td><code>atf-harness</code> (default)</td><td><code>atfHar</code></td><td><code>--no-tools</code></td><td><code>--no-session</code> unless <code>session_dir=</code>; <code>variant=</code> maps to <code>--thinking</code></td></tr><tr><td><code>claude-code</code></td><td><code>claude</code></td><td><code>--tools &quot;&quot;</code> (all built-ins off)</td><td><code>permission_mode=</code>, <code>max_turns=</code>, <code>system_prompt=</code>, <code>resume=</code></td></tr><tr><td><code>codex</code></td><td><code>codex</code></td><td><code>--sandbox read-only</code></td><td><code>tools=</code> or <code>permission_mode=&quot;auto&quot;</code> gives <code>workspace-write</code>; <code>resume=</code> is refused</td></tr><tr><td><code>opencode</code></td><td><code>opencode</code></td><td>refuses to run</td><td>has no tool switch; pass <code>allow_default_tools=True</code> to accept its defaults; prompt goes over stdin</td></tr><tr><td><code>gemini</code></td><td><code>gemini</code></td><td>refuses to run</td><td>Google Gemini CLI (<code>--output-format json</code>); like opencode it needs <code>allow_default_tools=True</code> or an explicit <code>tools=</code> list; <code>system_prompt</code> is prepended to the prompt; reports tokens and turns but no price, so <code>cost_usd</code> stays <code>None</code></td></tr></tbody></table></div>
+<p>The provider is chosen by <code>provider=</code> on the call, then <code>Agent(harness_provider=...)</code>, then the <code>ATFGRAPH_HARNESS_PROVIDER</code> environment variable, then <code>atf-harness</code>. An unknown name raises <code>ValueError</code> listing the supported providers. Every provider passes the prompt after a <code>--</code> terminator or over stdin so user text is never parsed as a flag (<code>tests/test_authoring_parity.py::test_provider_commands_restrict_tools_and_keep_prompts_out_of_flags</code>).</p>
+<p><code>app.harness_doctor()</code> (or the module-level <code>harness_doctor()</code>) reports a <code>ProviderHealth</code> per provider: <code>provider</code>, <code>binary</code>, <code>available</code>, <code>path</code>, <code>restricts_tools</code> and an install <code>hint</code>. It only looks executables up on <code>PATH</code>; it runs nothing. Both examples expose it as a skill so an operator can ask a worker what it can run, adapted from <code>examples/python/features/harness_delegate/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;delegate&quot;, version=&quot;1.0.0&quot;, description=&quot;Harness delegation with typed results&quot;)
+
+
+@app.skill()
+def doctor() -&gt; dict:
+    &quot;&quot;&quot;Which harness CLIs are available here (no process is started).&quot;&quot;&quot;
+    return {health.provider: {&quot;available&quot;: health.available, &quot;binary&quot;: health.binary} for health in app.harness_doctor()}</code></pre>
+<h2 id="a-claude-code-node-end-to-end">A Claude Code node, end to end</h2>
+<p>A node that asks Claude Code to review a directory and return a typed answer:</p>
+<pre><code class="language-python"># review_node/agent.py
+from typing import List
+
+from pydantic import BaseModel
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;reviewer&quot;, version=&quot;1.0.0&quot;, description=&quot;Delegates code review to Claude Code&quot;)
+
+
+class Review(BaseModel):
+    summary: str
+    risks: List[str]
+    suggested_tests: List[str]
+
+
+@app.traversal(max_attempts=1, timeout_seconds=900)  # never retry a harness run
+async def review(path: str) -&gt; Review:
+    result = await app.harness(
+        &quot;Review the code in this directory. Name the main risks and the tests you would add.&quot;,
+        provider=&quot;claude-code&quot;,   # the `claude` CLI on the worker&#x27;s PATH, signed in
+        cwd=path,                 # confined to this directory
+        tools=[],                 # all Claude Code built-in tools off: read-only reasoning
+        max_turns=6,              # Claude Code option, passed through
+        schema=Review,            # the answer must parse as Review
+        timeout=600,              # the bridge&#x27;s wall-clock deadline; timeout_seconds above must be larger
+        max_cost_usd=0.50,        # kill the run if Claude Code&#x27;s streamed cost passes this
+    )
+    return result.parsed</code></pre>
+<pre><code class="language-bash">atfg install ./review_node &amp;&amp; atfg run reviewer
+atfg traverse reviewer.review --in &#x27;{&quot;path&quot;: &quot;/Users/you/some-project&quot;}&#x27;</code></pre>
+<p>The worker spawns <code>claude</code> with tools disabled and <code>--max-turns 6</code>, working in <code>path</code>. Every event Claude Code prints becomes a progress event on the step, visible live in the Console. The final text is validated against <code>Review</code>. The cost Claude Code reports is on <code>result.cost_usd</code>; if the cap is crossed the child is killed and the step fails with <code>harness_cost_exceeded</code>. Nothing runs if <code>claude</code> is not on <code>PATH</code>; <code>app.harness_doctor()</code> tells you beforehand.</p>
+<p>Letting Claude Code edit is the same call with tools on and a supervised shape: a first run with <code>tools=[]</code> produces a plan, <code>request_approval</code> pauses the traversal until someone approves in the Console, and a second run with <code>permission_mode=&quot;auto&quot;</code> applies the plan and runs the tests (<a href="#supervised-writes-plan-approve-apply">Supervised writes</a>).</p>
+<p>Claude Code specifics from the provider table: it signs in with <code>claude login</code> or <code>ANTHROPIC_API_KEY</code>; <code>tools=[]</code> maps to <code>--tools &quot;&quot;</code>; <code>permission_mode=</code>, <code>max_turns=</code>, <code>system_prompt=</code> and <code>resume=</code> pass straight through; it reports cumulative <code>total_cost_usd</code>, so the cost cap works per event.</p>
+<h2 id="delegate-with-typed-output">Delegate with typed output</h2>
+<p><code>schema=</code> (a Pydantic model or a JSON Schema dict) appends &quot;Return only a JSON value matching this schema&quot; plus the schema to the prompt, strips a Markdown code fence from the answer if the CLI wrapped it in one, validates the JSON and stores the instance on <code>result.parsed</code>. Output that does not validate raises <code>HarnessFailure(&quot;Harness output did not match the requested schema&quot;)</code>. From <code>examples/python/features/harness_delegate/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import os
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;delegate&quot;, version=&quot;1.0.0&quot;, description=&quot;Harness delegation with typed results&quot;)
+
+
+class DirectorySummary(BaseModel):
+    purpose: str
+    languages: List[str]
+    entry_points: List[str]
+
+
+@app.traversal(timeout_seconds=900)
+async def describe_directory(path: str, provider: Optional[str] = None, model: Optional[str] = None) -&gt; DirectorySummary:
+    &quot;&quot;&quot;Ask a coding agent to describe ``path``; the result must match ``DirectorySummary``.&quot;&quot;&quot;
+    if not os.path.isdir(path):
+        raise ValueError(f&quot;{path!r} is not a directory&quot;)
+    result = await app.harness(
+        &quot;Describe this directory: its purpose, the programming languages used and the entry points.&quot;,
+        provider=provider,
+        model=model,
+        cwd=path,
+        schema=DirectorySummary,
+        timeout=600,
+    )
+    return result.parsed</code></pre>
+<p>Note the two timeouts. <code>timeout=600</code> is the harness deadline enforced by the bridge; <code>timeout_seconds=900</code> on the traversal is the capability&#x27;s own budget on the graph server and must be the larger of the two, or the server times the step out while the CLI is still running. <code>tests/test_authoring_parity.py::test_agent_harness_validates_schema_and_reports_doctor</code> runs this traversal against a fake <code>atfHar</code>, checks the fenced JSON is parsed, and checks that a wrong-shaped answer raises.</p>
+<h2 id="working-directory-and-tools">Working directory and tools</h2>
+<p><code>cwd=</code> is required. It comes from the call, or from <code>Agent(harness_cwd=...)</code>; with neither, <code>app.harness</code> raises <code>ValueError(&quot;harness requires an explicit cwd&quot;)</code> before anything runs. The directory must exist. The CLI&#x27;s working directory is set to it and, for the providers that take one, it is also passed as a flag (<code>--cwd</code>, <code>-C</code>, <code>--dir</code>).</p>
+<p>Tools are disabled unless you list them. <code>tools=[&quot;Read&quot;, &quot;Grep&quot;]</code> passes exactly those names; a name containing a comma or starting with <code>-</code> raises <code>ValueError</code>. The bridge cannot make <code>opencode</code> drop its tools, so that provider refuses to run without <code>allow_default_tools=True</code>.</p>
+<h2 id="timeouts-budgets-and-cancellation">Timeouts, budgets and cancellation</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Effect</th></tr></thead><tbody><tr><td><code>timeout</code></td><td>300 s</td><td>Wall-clock deadline; raises <code>HarnessFailure(&quot;Harness exceeded its execution deadline&quot;)</code></td></tr><tr><td><code>max_output_bytes</code></td><td>4 MiB</td><td>Combined stdout and stderr cap; exceeding it raises <code>HarnessFailure</code></td></tr><tr><td><code>model</code></td><td>none</td><td>Passed to the CLI&#x27;s model flag</td></tr><tr><td><code>session_dir</code> / <code>resume</code></td><td>none</td><td>Persistent sessions need an explicit directory; <code>resume</code> without one raises</td></tr><tr><td><code>env</code></td><td>none</td><td>Extra environment variables for the child process only</td></tr><tr><td><code>keep_events</code></td><td><code>False</code></td><td>Keep every raw JSON event on <code>result.events</code></td></tr><tr><td><code>binary</code></td><td>provider default</td><td>Alternative executable name; how the tests point at a fake CLI</td></tr><tr><td><code>max_cost_usd</code></td><td>none, or <code>ATFGRAPH_HARNESS_MAX_COST_USD</code></td><td>USD cap on the harness itself; when the provider&#x27;s streamed cost crosses it the child is killed and the step fails with <code>harness_cost_exceeded</code></td></tr></tbody></table></div>
+<p>The cost cap is enforced while the harness streams: Claude Code reports a cumulative <code>total_cost_usd</code> on every event, OpenCode a cost per finished step and Codex a cost per completed turn, and the bridge kills the process group (<code>SIGTERM</code>, then <code>SIGKILL</code> after five seconds) the moment the running total exceeds <code>max_cost_usd</code>. The step fails with <code>HarnessCostExceeded</code>, a <code>HandlerError</code> with <code>code=&quot;harness_cost_exceeded&quot;</code>, <code>retryable=False</code> and the attributes <code>cost_usd</code>, <code>cap</code>, <code>turns</code>, <code>provider</code>, <code>killed</code> and <code>partial_text</code>; the message ends with the last two kilobytes of assistant text so the path shows what was produced before the cut. Providers that report no cost per event (<code>gemini</code>, <code>atf-harness</code>) are checked once on the final result with the same code. This cap is separate from the graph server&#x27;s budgets: a budget refuses the <em>next</em> admission for a principal, node or target over a window; the harness cap stops <em>this</em> process.</p>
+<p>When the traversal is cancelled from the graph server, the awaiting coroutine is cancelled and the bridge&#x27;s <code>finally</code> block sends <code>SIGTERM</code> to the process group, then <code>SIGKILL</code> after two seconds. Nothing of the partial output is returned.</p>
+<p>The harness example shows the strict configuration: no tools, one attempt, a fixed deadline. Adapted from <code>examples/harness/python/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import os
+from typing import Optional
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;harness-example&quot;, version=&quot;0.1.0&quot;, tags=[&quot;harness&quot;])
+
+
+@app.traversal(max_attempts=1, timeout_seconds=180)
+async def answer(prompt: str, model: str, cwd: str, provider: Optional[str] = None, timeout: float = 120.0) -&gt; dict:
+    if not os.path.isdir(cwd):
+        raise ValueError(f&quot;{cwd!r} is not an existing directory&quot;)
+    result = await app.harness(
+        prompt,
+        provider=provider,
+        model=model,
+        cwd=cwd,
+        tools=[],
+        timeout=float(timeout),
+    )
+    return {
+        &quot;text&quot;: result.text,
+        &quot;provider&quot;: result.provider,
+        &quot;model&quot;: result.model,
+        &quot;input_tokens&quot;: result.input_tokens,
+        &quot;output_tokens&quot;: result.output_tokens,
+        &quot;total_tokens&quot;: result.total_tokens,
+        &quot;cost_usd&quot;: result.cost_usd,
+        &quot;session_id&quot;: result.session_id,
+        &quot;turns&quot;: result.turns,
+        &quot;duration_ms&quot;: result.duration_ms,
+    }</code></pre>
+<p><code>max_attempts=1</code> matters here: a harness run is a side effect on a real directory, and a retry would run it again. The shipped example reads <code>model</code> and <code>cwd</code> from <code>ATFGRAPH_HARNESS_MODEL</code> and <code>ATFGRAPH_HARNESS_WORKDIR</code> when they are not passed, and refuses with <code>ValueError</code> when neither is set.</p>
+<h2 id="what-comes-back">What comes back</h2>
+<p><code>HarnessResult</code> carries <code>text</code> (also <code>result</code>), <code>provider</code>, <code>session_id</code>, <code>model</code>, <code>usage</code> (a dict with <code>input</code>, <code>output</code>, <code>cacheRead</code>, <code>cacheWrite</code>), <code>returncode</code>, <code>parsed</code>, <code>duration_ms</code>, <code>turns</code>, <code>cost_usd</code> and <code>events</code>. <code>input_tokens</code>, <code>output_tokens</code> and <code>total_tokens</code> read the usage dict. <code>cost_usd</code> is only what the CLI itself reported: <code>claude-code</code> reports <code>total_cost_usd</code>, <code>opencode</code> sums per-step <code>cost</code>, <code>atf-harness</code> and <code>codex</code> report none, so it stays <code>None</code> (<code>tests/test_migrated_ops_examples.py</code> asserts &quot;atfHar reported no price; none is invented&quot;).</p>
+<p>A harness run is not added to <code>app.execution_cost()</code> on its own. <code>Agent.harness</code> returns the tokens but does not call <code>record_usage</code>; if you want the run in the execution&#x27;s cost totals and the durable usage store, record it yourself:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from atfgraph import Agent, CostEntry
+
+app = Agent(node_id=&quot;delegate&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal(timeout_seconds=900)
+async def summarize(path: str) -&gt; dict:
+    result = await app.harness(&quot;Summarize this directory in one paragraph.&quot;, cwd=path, timeout=600)
+    await app.record_usage(
+        CostEntry(
+            model=result.model or &quot;unknown&quot;,
+            provider=result.provider,
+            source=&quot;harness&quot;,
+            operation=&quot;chat&quot;,
+            input_tokens=result.input_tokens,
+            output_tokens=result.output_tokens,
+            total_tokens=result.total_tokens,
+            cost_usd=result.cost_usd,
+            cost_source=&quot;provider&quot; if result.cost_usd is not None else None,
+        )
+    )
+    return {&quot;text&quot;: result.text, &quot;cost&quot;: app.execution_cost()}</code></pre>
+<p><code>CostEntry</code> is exported from <code>atfgraph</code>; <code>source=&quot;harness&quot;</code> is one of the values <code>python/atfgraph/costs.py</code> reserves for it. <a href="14-observability.html">14-observability.md</a> covers where recorded usage goes.</p>
+<h2 id="how-a-run-is-recorded-on-the-path">How a run is recorded on the path</h2>
+<p>The run itself is one step: the traversal that called <code>app.harness</code>. The CLI does not appear as a child step, because nothing was submitted to the graph server for it. What is recorded, durably, is progress: for every JSON event the CLI prints, the bridge calls <code>app.progress({&quot;harness&quot;: {&quot;provider&quot;: ..., &quot;type&quot;: ...}})</code> on the current task. Only the provider name and event type are forwarded, never the event payload, because tool payloads can contain secrets. Pass <code>on_event=</code> (an async callable) to receive the same summaries in-process.</p>
+<p><code>tests/test_migrated_ops_examples.py::test_harness_example_runs_a_fixture_harness_with_no_tools_and_reports_usage</code> runs <code>examples/harness/python</code> against the real daemon with a fake <code>atfHar</code> on <code>PATH</code> and pins the visible result: <code>handle.event_log()</code> contains <code>progress</code> events whose data mentions <code>harness</code>, the output carries <code>session_id</code>, <code>provider</code>, <code>model</code> and the token counts the CLI reported, and a CLI that exits 1 fails the traverser with <code>code == &quot;HarnessFailure&quot;</code>. The driver in <code>examples/harness/python/call.py</code> prints the same event count after the result.</p>
+<h2 id="atfhar-end-to-end">atfHar end to end</h2>
+<p><code>atf-harness</code> is the default provider and the one the shipped example is built around. Three things make it work: the binary on the worker&#x27;s <code>PATH</code>, its model configuration under <code>~/.atf-harness/agent/</code>, and the credential that configuration names in the worker&#x27;s environment.</p>
+<p><strong>1. Configure the model.</strong> <code>config.yml</code> picks a role, <code>models.yml</code> says where that model lives and which environment variable holds its key. A Databricks Model Serving endpoint looks like this:</p>
+<pre><code class="language-yaml"># ~/.atf-harness/agent/config.yml
+modelRoles:
+  default: databricks/claude-sonnet-4-endpoint:max      # provider/model:variant</code></pre>
+<pre><code class="language-yaml"># ~/.atf-harness/agent/models.yml
+providers:
+  databricks:
+    baseUrl: https://adb-1234567890.12.azuredatabricks.net/serving-endpoints
+    apiKey: DATABRICKS_TOKEN        # the NAME of a variable in the worker&#x27;s environment
+    models:
+      - id: claude-sonnet-4-endpoint</code></pre>
+<p>Not verified: the exact <code>models.yml</code> keys against the current atf-harness release; the two files, the <code>provider/model:variant</code> role form and the <code>apiKey: &lt;ENV_NAME&gt;</code> resolver are as the original project&#x27;s harness guide documents them.</p>
+<p><strong>2. Write the node.</strong> This is the shipped <code>examples/harness/python/agent.py</code>, trimmed. It exposes the harness as one traversal and a <code>doctor</code> skill, permits no tools, and runs one attempt:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import os
+from typing import Optional
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;harness-example&quot;, version=&quot;0.1.0&quot;, tags=[&quot;harness&quot;])
+
+
+@app.skill()
+def doctor() -&gt; dict:
+    return {h.provider: {&quot;available&quot;: h.available, &quot;path&quot;: h.path, &quot;hint&quot;: h.hint} for h in app.harness_doctor()}
+
+
+@app.traversal(max_attempts=1, timeout_seconds=180)
+async def answer(prompt: str, model: Optional[str] = None, cwd: Optional[str] = None,
+                 variant: Optional[str] = None, timeout: float = 120.0) -&gt; dict:
+    model = model or os.environ.get(&quot;ATFGRAPH_HARNESS_MODEL&quot;) or None
+    cwd = cwd or os.environ.get(&quot;ATFGRAPH_HARNESS_WORKDIR&quot;) or None
+    if model is None or cwd is None:
+        raise ValueError(&quot;set ATFGRAPH_HARNESS_MODEL and ATFGRAPH_HARNESS_WORKDIR, or pass model= and cwd=&quot;)
+    result = await app.harness(
+        prompt,
+        provider=&quot;atf-harness&quot;,
+        model=model,
+        cwd=cwd,
+        tools=[],                 # explicit: no built-in tools
+        variant=variant,          # atfHar --thinking; None keeps the configured variant
+        timeout=float(timeout),
+    )
+    return {
+        &quot;text&quot;: result.text,
+        &quot;session_id&quot;: result.session_id,
+        &quot;model&quot;: result.model,
+        &quot;turns&quot;: result.turns,
+        &quot;input_tokens&quot;: result.input_tokens,
+        &quot;output_tokens&quot;: result.output_tokens,
+        &quot;cost_usd&quot;: result.cost_usd,      # None: atfHar reports no price and none is invented
+        &quot;duration_ms&quot;: result.duration_ms,
+    }</code></pre>
+<p>The bridge turns that call into exactly this command, prompt last after <code>--</code> so it can never be read as a flag:</p>
+<pre><code class="language-text">atfHar --print --mode json --cwd &lt;cwd&gt; --no-title --model &lt;model&gt; [--thinking &lt;variant&gt;] --no-tools --no-session -- &lt;prompt&gt;</code></pre>
+<p><code>--no-tools</code> comes from the empty <code>tools=[]</code>, <code>--no-session</code> from the absent <code>session_dir</code>. Pass <code>tools=[&quot;read&quot;, &quot;glob&quot;]</code> to allow named tools, or <code>session_dir=</code> to keep sessions (see the next section).</p>
+<p><strong>3. Run it.</strong> The worker is what spawns <code>atfHar</code>, so the credential goes into the worker&#x27;s shell:</p>
+<pre><code class="language-bash">export DATABRICKS_TOKEN=dapi-your-token            # the variable models.yml names
+export ATFGRAPH_HARNESS_MODEL=&#x27;databricks/claude-sonnet-4-endpoint&#x27;
+export ATFGRAPH_HARNESS_WORKDIR=&quot;$PWD&quot;
+python -m atfgraph.worker --module examples.harness.python.agent:app
+
+# another terminal
+python -m examples.harness.python.call --doctor
+python -m examples.harness.python.call &quot;Reply with the word ready.&quot;
+atfg traverse harness-example.answer --in &#x27;{&quot;prompt&quot;: &quot;List the top-level files here&quot;, &quot;variant&quot;: &quot;max&quot;}&#x27;</code></pre>
+<p>Every JSON event <code>atfHar</code> prints becomes a durable progress event on the traverser (<code>{&quot;harness&quot;: {&quot;provider&quot;: &quot;atf-harness&quot;, &quot;type&quot;: &quot;message_end&quot;}}</code> and so on), which <code>call.py</code> counts after printing the result. A missing or expired <code>DATABRICKS_TOKEN</code> fails the traverser with the harness&#x27;s own 401 report as <code>error.message</code>; <code>doctor</code> cannot detect that, because it only checks the binary is present.</p>
+<p><strong>Differences from the original example.</strong> The node is an outbound worker, so there is no <code>PORT</code>; <code>HarnessConfig(max_retries=0)</code> became <code>@app.traversal(max_attempts=1)</code>, enforced by the server; <code>max_turns=1</code> is gone because <code>atfHar --print</code> runs one turn by construction; failures raise <code>HarnessFailure</code> instead of returning <code>is_error=True</code>; and progress events are new.</p>
+<h2 id="multi-turn-sessions">Multi-turn sessions</h2>
+<p>A harness call is one bounded invocation. To continue the same coding session across traversals, give the provider an explicit <code>session_dir</code> and pass the returned <code>session_id</code> back as <code>resume</code>. Without a <code>session_dir</code>, <code>atf-harness</code> runs with <code>--no-session</code> and <code>resume</code> raises <code>ValueError</code>. Adapted from the provider options in <code>python/atfgraph/harness_providers.py</code> and <code>tests/test_authoring_parity.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import Optional
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;pairing&quot;, version=&quot;1.0.0&quot;, harness_cwd=&quot;/srv/repos/checkout&quot;, harness_provider=&quot;atf-harness&quot;)
+
+SESSIONS = &quot;/srv/harness-sessions&quot;   # outside the coding workspace
+
+
+@app.traversal(max_attempts=1, timeout_seconds=1800)
+async def step(instruction: str, session_id: Optional[str] = None) -&gt; dict:
+    result = await app.harness(
+        instruction,
+        session_dir=SESSIONS,
+        resume=session_id,
+        tools=[&quot;Read&quot;, &quot;Grep&quot;, &quot;Edit&quot;],
+        timeout=1200,
+    )
+    return {&quot;session_id&quot;: result.session_id, &quot;text&quot;: result.text, &quot;turns&quot;: result.turns}</code></pre>
+<p>The caller stores <code>session_id</code> in session memory between turns (<a href="04-sessions-and-memory.html">04-sessions-and-memory.md</a>), so a conversation with a human maps onto one coding session. <code>codex</code> refuses <code>resume</code>; <code>claude-code</code> and <code>atf-harness</code> accept it. <code>Agent(harness_cwd=..., harness_provider=...)</code> sets node-wide defaults so handlers only pass what varies.</p>
+<h2 id="supervised-writes-plan-approve-apply">Supervised writes: plan, approve, apply</h2>
+<p>A harness with write tools is a side effect on a real directory. The pattern that keeps a human in control uses two calls and the durable approval from <a href="08-approvals-pauses-and-checkpoints.html">08-approvals-pauses-and-checkpoints.md</a>: a read-only run produces a plan, a person approves it, a second run applies it.</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import List
+
+from pydantic import BaseModel
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;fixer&quot;, version=&quot;1.0.0&quot;, harness_cwd=&quot;/srv/repos/checkout&quot;)
+
+
+class Plan(BaseModel):
+    summary: str
+    files_to_change: List[str]
+    risk: str
+
+
+class Report(BaseModel):
+    files_changed: List[str]
+    tests_pass: bool
+    summary: str
+
+
+@app.traversal(max_attempts=1, timeout_seconds=3600)
+async def fix_failing_test(test: str) -&gt; dict:
+    plan = await app.load_checkpoint(&quot;plan&quot;)
+    if plan is None:
+        proposed = await app.harness(f&quot;Plan how to make {test} pass without changing the test. Do not edit anything.&quot;,
+                                     schema=Plan, tools=[&quot;Read&quot;, &quot;Grep&quot;], timeout=600)
+        plan = proposed.parsed.model_dump()
+        await app.save_checkpoint(&quot;plan&quot;, plan, expected_revision=0)
+
+    decision = await app.request_approval({&quot;question&quot;: f&quot;Apply this plan for {test}?&quot;, &quot;plan&quot;: plan},
+                                          operation_key=f&quot;fix:{test}&quot;, checkpoint=plan)
+    if decision[&quot;status&quot;] != &quot;approved&quot;:
+        return {&quot;status&quot;: &quot;rejected&quot;, &quot;plan&quot;: plan}
+
+    applied = await app.harness(f&quot;Apply this plan and run the tests: {plan[&#x27;summary&#x27;]}&quot;,
+                                schema=Report, tools=[&quot;Read&quot;, &quot;Grep&quot;, &quot;Edit&quot;, &quot;Bash&quot;], timeout=1800)
+    return {&quot;status&quot;: &quot;applied&quot;, **applied.parsed.model_dump()}</code></pre>
+<p>The checkpoint means the planning run happens once even though the handler replays after the approval; <code>max_attempts=1</code> means a failed apply is reported, not retried against a half-edited tree. Tool names are passed through to the CLI as given (<code>--tools Read,Grep,Edit</code> for <code>claude-code</code>); <code>codex</code> maps any tools to <code>--sandbox workspace-write</code>, and <code>opencode</code> needs <code>allow_default_tools=True</code>.</p>
+<h2 id="atfhar-configuration-and-databricks-authentication">atfHar configuration and Databricks authentication</h2>
+<p><code>atf-harness</code> reads <code>~/.atf-harness/agent/config.yml</code> for model roles (<code>modelRoles.default: provider/model:variant</code>) and <code>models.yml</code> for endpoints and credential resolvers. An entry such as <code>apiKey: DATABRICKS_TOKEN</code> expects that variable in the <strong>worker&#x27;s</strong> process environment; a terminal, a launchd service and a container each have their own environment, and the runtime falls back to the literal string when the variable is absent, which shows up as a misleading 401.</p>
+<p>For a short local check against a Databricks Model Serving endpoint, hand the worker a cached OAuth token from an explicitly selected CLI profile without writing it anywhere:</p>
+<pre><code class="language-bash">DATABRICKS_TOKEN=&quot;$(databricks auth token &lt;PROFILE&gt; --output json | python3 -c &#x27;import json,sys; print(json.load(sys.stdin)[&quot;access_token&quot;])&#x27;)&quot; \
+  python -m atfgraph.worker --module examples.harness.python.agent:app</code></pre>
+<p>That token expires; a long-running worker needs a refresh strategy. <code>ATFGRAPH_HARNESS_MODEL</code> selects the model the example passes and <code>ATFGRAPH_HARNESS_THINKING</code> overrides the variant (<code>--thinking</code> for <code>atf-harness</code>, <code>model_reasoning_effort</code> for <code>codex</code>). Never put a token in <code>agentnode.yaml</code> or a test fixture. The graph server never sees the credential.</p>
+<h2 id="remote-harness-the-same-call-a-workspace-on-another-machine">Remote harness: the same call, a workspace on another machine</h2>
+<p>Everything above runs a CLI as a child process on the worker, in a local <code>cwd</code>. Remote mode sends the same prompt over HTTPS to an <strong>ATF Harness service</strong> and runs it in a workspace on that host. ATFGraph stays the control plane: identity, queueing, cancellation, the execution path, approvals and usage are recorded here exactly as for local mode; the harness runs the model loop and tools.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col"></th><th scope="col">Local (<code>cwd=</code>)</th><th scope="col">Remote (<code>transport=</code>, <code>workspace=</code>)</th></tr></thead><tbody><tr><td>Runs where</td><td>this worker, child process</td><td>the harness host, over HTTPS</td></tr><tr><td>Needs on the worker</td><td>the provider CLI on <code>PATH</code> and its credentials</td><td>nothing but the SDK; the harness holds model/tool credentials</td></tr><tr><td>Working directory</td><td>any local directory</td><td>an <strong>existing</strong> absolute directory the operator provisioned under a harness workspace root</td></tr><tr><td>Tools</td><td><code>tools=</code> per call</td><td>fixed by the operator&#x27;s harness <strong>profile</strong>; callers cannot choose tools</td></tr><tr><td>Cancellation</td><td>terminates the process group</td><td>aborts the active harness turn, once</td></tr><tr><td>Sessions</td><td><code>session_dir</code> + <code>resume</code></td><td>one harness session per ATFGraph session, reused automatically</td></tr><tr><td>Interactive requests</td><td>n/a</td><td>a <code>confirm</code> request becomes a durable <code>request_approval</code>; other kinds are cancelled (fail closed)</td></tr><tr><td>Progress on the path</td><td>provider/type only</td><td>event type, status, sequence and ids only</td></tr><tr><td>Cost</td><td>provider-reported or <code>None</code></td><td>provider-reported or <code>None</code>; never estimated</td></tr></tbody></table></div>
+<pre><code class="language-python">from atfgraph import Agent
+from atfgraph.harness import ExistingWorkspace, RemoteHarness
+
+app = Agent(&quot;remote-coder&quot;)
+remote = RemoteHarness(
+    base_url=os.environ[&quot;ATFGRAPH_HARNESS_URL&quot;],
+    profile=&quot;coding-safe&quot;,                 # operator-approved profile
+    edge_auth=&quot;databricks&quot;,                # or None: what the proxy in front of the harness wants
+    app_token_env=&quot;ATFGRAPH_HARNESS_TOKEN&quot;,  # optional harness application token, named, never passed
+)
+
+@app.traversal(max_attempts=1)
+async def implement(task: str) -&gt; dict:
+    result = await app.harness(task, transport=remote, workspace=ExistingWorkspace(&quot;/workspaces/project&quot;), timeout=1200)
+    return {&quot;text&quot;: result.text, &quot;session&quot;: result.remote.session_id, &quot;turn&quot;: result.remote.turn_id}</code></pre>
+<p>Exactly one of <code>cwd</code> and <code>workspace</code> is accepted; the wrong combination fails before any I/O. Remote mode is available for <code>provider=&quot;atf-harness&quot;</code> only, and <code>tools=</code>, <code>model=</code>, <code>resume=</code> and other local options are rejected because the profile decides them.</p>
+<p><strong>Authentication has two layers that never share a header.</strong> <code>Authorization</code> belongs to whatever proxy stands in front of the harness: with <code>edge_auth=&quot;databricks&quot;</code> the SDK obtains and refreshes a workspace token through <code>databricks-sdk</code> unified auth (<code>pip install &#x27;atfgraph[databricks]&#x27;</code>; a laptop names its profile in <code>ATFGRAPH_DATABRICKS_PROFILE</code>, a Databricks App needs nothing). The harness&#x27;s own application token, if the operator configured one, is sent as <code>X-Atfhar-Token</code> and is read from the environment variable you name. No token appears in a repr, an error or a progress event.</p>
+<p><strong>Sessions and replay.</strong> The first call in an ATFGraph session creates a harness session (idempotently, keyed by the ATFGraph session and workspace) and remembers it in session memory; later calls reuse it. Each turn carries an idempotency key derived from the traverser and the call, so a retried attempt or a continuation after a durable pause re-attaches to the same turn rather than starting another. <code>result.remote</code> tells you what happened: <code>session_id</code>, <code>turn_id</code>, <code>turn_status</code>, <code>session_replayed</code>, <code>turn_replayed</code>, the <code>request_ids</code> that were raised, and <code>stats</code> as the harness reported them.</p>
+<p><strong>Approvals.</strong> When the harness asks for confirmation (a tool outside the profile&#x27;s allow list), the traversal pauses through <code>app.request_approval</code> with the operation key <code>harness:&lt;session&gt;:&lt;request&gt;</code> and a checkpoint holding only session/turn/request references. Decide it as any other approval (<code>atfg</code>, the console, <code>Client.decide_approval</code>); on continuation the bridge answers the harness once and follows the turn to its end. An <code>input</code>/<code>select</code>/<code>editor</code> request cannot be answered from a traversal and is cancelled immediately, so nothing hangs.</p>
+<p><strong>Streams.</strong> The bridge follows the harness&#x27;s SSE stream, reconnects from the last sequence after an <code>overflow</code>, and on <code>reset_required</code> resynchronizes from the session snapshot instead of pretending continuity. If the stream ends early it polls the turn.</p>
+<p><strong>Doctor and protocol.</strong> <code>await app.remote_harness_doctor(remote)</code> reports reachability (<code>/healthz</code>), readiness (<code>/readyz</code>), the harness&#x27;s protocol version and feature flags (<code>/v1/compatibility</code>) and whether the profile is served, without starting a turn; <code>app.harness_doctor()</code> still reports local CLIs. Every remote call first checks that the harness speaks protocol <code>v1</code>; another version, or a harness too old to report one, is refused with <code>protocol_mismatch</code> / <code>protocol_unknown</code> before any session is created.</p>
+<p>What the first slice does <strong>not</strong> do: clone a repository, return a patch or change artifact, or survive a harness restart mid-turn. The harness has no such contracts yet; when it does, they arrive as new typed options, not as a change to this call.</p>
+<p>Run the example (<code>examples/harness/remote/</code>): set <code>ATFGRAPH_HARNESS_URL</code>, <code>ATFGRAPH_HARNESS_PROFILE</code> and <code>ATFGRAPH_HARNESS_WORKSPACE</code>, then</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.harness.remote.agent:app
+python -m examples.harness.remote.call --doctor
+python -m examples.harness.remote.call &quot;Fix the failing parser tests and explain the change&quot;
+python -m examples.harness.remote.call --session &lt;id&gt; &quot;Now add a regression test&quot;
+atfg traverse remote-coder.implement --in &#x27;{&quot;task&quot;: &quot;...&quot;}&#x27; --new-session</code></pre>
+<p>Verified: every statement in this section against the in-memory protocol double and an isolated graph daemon (<code>tests/test_remote_harness_*.py</code>, <code>tests/test_remote_coder_example.py</code>). Not verified: a real harness deployment or the Databricks Apps proxy; that is a separate, approval-gated acceptance.</p>
+<h2 id="where-a-harness-cannot-run">Where a harness cannot run</h2>
+<p>The worker must be able to spawn the CLI. <code>atf-harness</code> is a Bun application, so a worker running as a Databricks App, which has no Bun and no arbitrary binaries, cannot use it; select another provider there with <code>ATFGRAPH_HARNESS_PROVIDER</code> or give that node its own container image with the CLI installed. The same applies to any hosted worker whose image lacks the binary: <code>harness_doctor</code> reports <code>available: false</code> and the run fails with <code>HarnessFailure(&quot;&lt;binary&gt; is not installed in this worker environment&quot;)</code> before anything starts. A harness also cannot reach a developer&#x27;s laptop; <code>cwd</code> is a directory on the worker host.</p>
+<h2 id="testing-a-harness-capability">Testing a harness capability</h2>
+<p>Every harness test in the repository runs against a fake CLI that speaks the provider&#x27;s JSON-lines dialect, so tests are fast, free and deterministic; <code>binary=</code> points the bridge at it. Adapted from <code>fake_cli</code> in <code>tests/test_authoring_parity.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import pytest
+
+from atfgraph import Agent
+
+
+def fake_cli(tmp_path: Path, name: str, code: str) -&gt; str:
+    path = tmp_path / name
+    path.write_text(f&quot;#!{sys.executable}\n&quot; + code)
+    path.chmod(0o755)
+    return str(path)
+
+
+@pytest.mark.asyncio
+async def test_describe_directory_parses_the_schema(tmp_path):
+    good = fake_cli(tmp_path, &quot;good-atfHar&quot;, &quot;&quot;&quot;import json
+print(json.dumps({&quot;type&quot;: &quot;message_end&quot;, &quot;message&quot;: {&quot;role&quot;: &quot;assistant&quot;,
+      &quot;content&quot;: &#x27;{&quot;purpose&quot;: &quot;demo&quot;, &quot;languages&quot;: [&quot;python&quot;], &quot;entry_points&quot;: [&quot;agent.py&quot;]}&#x27;,
+      &quot;stopReason&quot;: &quot;stop&quot;}}))
+&quot;&quot;&quot;)
+    app = Agent(node_id=&quot;delegate&quot;, version=&quot;1.0.0&quot;, harness_cwd=str(tmp_path))
+    result = await app.harness(&quot;Describe this directory&quot;, binary=good, timeout=30)
+    assert &quot;purpose&quot; in result.text</code></pre>
+<p>For an end-to-end test against the real graph server, <code>tests/test_migrated_ops_examples.py</code> puts a fake <code>atfHar</code> on <code>PATH</code>, runs <code>examples/harness/python</code> as a worker, and asserts on the traverser&#x27;s progress events and output; see <a href="15-testing.html">15-testing.md</a> for the daemon fixture it uses.</p>
+<h2 id="run-the-example">Run the example</h2>
+<p>From this repository&#x27;s root, with a graph server running and <code>atfHar</code> installed:</p>
+<pre><code class="language-bash">export ATFGRAPH_HARNESS_MODEL=&#x27;your-provider/your-model&#x27;
+export ATFGRAPH_HARNESS_WORKDIR=&quot;$PWD&quot;
+python -m atfgraph.worker --module examples.harness.python.agent:app
+python -m examples.harness.python.call --doctor
+python -m examples.harness.python.call &quot;Reply with the word ready.&quot;</code></pre>
+<p><code>--doctor</code> needs no CLI installed and no model; it reports what the worker can see. The second command needs the CLI and its credentials. Neither example has a fixture mode; the fixture is the fake executable the tests write, which you can copy from <code>fake_harness</code> in <code>tests/test_migrated_ops_examples.py</code> to try the wiring without a real provider.</p>
+<p>Not verified: the four providers against their real CLIs. Every test in the repository drives <code>run_harness</code> with fake executables that speak each CLI&#x27;s JSON-lines dialect (<code>tests/test_authoring_parity.py::test_run_harness_with_fake_claude_and_codex_and_opencode</code>); confirming the argument vectors and parsers against current releases of <code>claude</code>, <code>codex</code> and <code>opencode</code> needs those tools installed and a live run of <code>examples/python/features/harness_delegate</code>.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="06-model-calls.html">06-model-calls.md</a>: a single model call with tools, when a whole coding session is more than you need.</li><li><a href="08-approvals-pauses-and-checkpoints.html">08-approvals-pauses-and-checkpoints.md</a>: gating a harness run that writes files behind a human decision.</li><li><a href="14-observability.html">14-observability.md</a>: where a recorded <code>CostEntry</code> goes and how to total it per run.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

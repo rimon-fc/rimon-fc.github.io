@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two nodes on Databricks, one path, one trace — ATFGraph vNext reference</title>
+<meta name="description" content="Two nodes on Databricks, one path, one trace: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Two nodes on Databricks, one path, one trace</h1>
+<p class="meta">Directory <code>examples/databricks/two_node</code></p>
+<p>Two agent nodes deployed as two Databricks Apps. <code>intake</code> receives a free-text travel request, extracts the bindings with one model call and walks one edge to <code>pricing</code>, whose deterministic skill returns a quote. A cron emitter on <code>intake</code> fires the same edge every fifteen minutes so the path (and, with tracing on, its MLflow trace) exists even when nobody calls. Both nodes are outbound workers: they connect to the graph server, register, and claim their work; the Apps expose only the status page the platform requires.</p>
+<p class="meta">Agent node label <code>pricing</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>probe</code></td><td>traversal</td><td><code>(trigger: TriggerContext | None = None) -&gt; dict</code></td><td><code>examples/databricks/two_node/intake/agent.py</code></td><td>Emitter: walk the same edge every fifteen minutes with a fixed request.</td></tr><tr><td><code>triage</code></td><td>traversal</td><td><code>(request: str, model: Optional[str] = None) -&gt; dict</code></td><td><code>examples/databricks/two_node/intake/agent.py</code></td><td>Extract destination, nights and travellers from a request, then quote it.</td></tr><tr><td><code>quote</code></td><td>skill</td><td><code>(destination: str, nights: int, travellers: int) -&gt; dict</code></td><td><code>examples/databricks/two_node/pricing/agent.py</code></td><td>Price a stay: nightly rate per traveller times nights times travellers.</td></tr></tbody></table></div>
+<p class="meta">Non-default capability options: <code>probe</code>: <code>timeout_seconds=180</code>; <code>triage</code>: <code>timeout_seconds=180</code></p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.databricks.two_node.intake.agent:app
+python -m atfgraph.worker --module examples.databricks.two_node.pricing.agent:app
+python -m examples.databricks.two_node.call &quot;Two people, four nights in Lisbon&quot;
+python -m examples.python.features.resilience.fixture_model --port 18899</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/databricks/two_node/README.md</code></li><li><code>examples/databricks/two_node/__init__.py</code></li><li><code>examples/databricks/two_node/call.py</code></li><li><code>examples/databricks/two_node/intake/__init__.py</code></li><li><code>examples/databricks/two_node/intake/agent.py</code></li><li><code>examples/databricks/two_node/intake/agentnode.yaml</code></li><li><code>examples/databricks/two_node/intake/databricks.yml</code></li><li><code>examples/databricks/two_node/intake/requirements.txt</code></li><li><code>examples/databricks/two_node/pricing/__init__.py</code></li><li><code>examples/databricks/two_node/pricing/agent.py</code></li><li><code>examples/databricks/two_node/pricing/agentnode.yaml</code></li><li><code>examples/databricks/two_node/pricing/databricks.yml</code></li><li><code>examples/databricks/two_node/pricing/requirements.txt</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/databricks/two_node/README.md</code>; the source file is not modified.</p>
+<p>Two agent nodes deployed as two Databricks Apps. <code>intake</code> receives a free-text travel request, extracts the bindings with one model call and walks one edge to <code>pricing</code>, whose deterministic skill returns a quote. A cron emitter on <code>intake</code> fires the same edge every fifteen minutes so the path (and, with tracing on, its MLflow trace) exists even when nobody calls. Both nodes are outbound workers: they connect to the graph server, register, and claim their work; the Apps expose only the status page the platform requires.</p>
+<pre><code>                 +----------------------+   edge    +----------------------+
+  request -----&gt; | intake.triage        | --------&gt; | pricing.quote        |
+  (or emitter)   | traversal . AGENT    |           | skill . TOOL         |
+                 +----------------------+           +----------------------+
+                   app atfgraph-intake                app atfgraph-pricing
+                            |   register, claim, renew leases, sync emitters  |
+                            +-------------&gt;  graph server  &lt;-----------------+
+                                       (Compose / Kubernetes / Helm)</code></pre>
+<div class="table-wrap"><table><thead><tr><th scope="col">Node</th><th scope="col">Label</th><th scope="col">Elements</th><th scope="col">Module</th></tr></thead><tbody><tr><td><code>intake/</code></td><td><code>intake</code></td><td>traversal <code>triage</code> (entry point); traversal <code>probe</code> with cron emitter <code>*/15 * * * *</code></td><td><code>examples.databricks.two_node.intake.agent:app</code></td></tr><tr><td><code>pricing/</code></td><td><code>pricing</code></td><td>skill <code>quote</code></td><td><code>examples.databricks.two_node.pricing.agent:app</code></td></tr></tbody></table></div>
+<p>Each node directory has <code>agent.py</code>, <code>agentnode.yaml</code> (install/package manifest), <code>databricks.yml</code> (the App bundle) and <code>requirements.txt</code>.</p>
+<h2 id="run-the-same-two-nodes-locally">Run the same two nodes locally</h2>
+<p>Nothing in <code>agent.py</code> is Databricks-specific. With a graph server and any OpenAI-compatible provider (the bundled fixture provider works offline):</p>
+<pre><code class="language-bash">python -m examples.python.features.resilience.fixture_model --port 18899
+export ATFGRAPH_MODEL_URL=http://127.0.0.1:18899 ATFGRAPH_MODEL_NAME=fixture-fast
+target/debug/atfgraphd
+python -m atfgraph.worker --module examples.databricks.two_node.pricing.agent:app
+python -m atfgraph.worker --module examples.databricks.two_node.intake.agent:app
+python -m examples.databricks.two_node.call &quot;Two people, four nights in Lisbon&quot;</code></pre>
+<p>With a real model the expected result is</p>
+<pre><code class="language-json">{&quot;status&quot;: &quot;quoted&quot;, &quot;destination&quot;: &quot;Lisbon&quot;, &quot;nights&quot;: 4, &quot;travellers&quot;: 2, &quot;currency&quot;: &quot;EUR&quot;, &quot;nightly_rate&quot;: 140, &quot;total&quot;: 1120}</code></pre>
+<p>and the printed path has two steps, <code>intake.triage</code> then <code>pricing.quote</code>. The fixture provider answers from the schema instead (<code>&quot;fixture destination&quot;</code>, <code>2</code> nights, <code>2</code> travellers, total <code>520</code> at the default rate); it is a stub, not a model. When the model is not confident the traverser stops with <code>needs_review</code>; a quote with <code>nights &lt; 1</code> fails with the skill&#x27;s <code>ValueError</code>.</p>
+<p>To trace locally, install <code>python[mlflow]</code>, set <code>ATFGRAPH_MLFLOW_TRACING=true</code> and <code>ATFGRAPH_MLFLOW_EXPERIMENT</code> (the same name on both workers) and, if you run a tracking server, <code>ATFGRAPH_MLFLOW_TRACKING_URI</code>. The traversal is an <code>AGENT</code> span, the model call an <code>LLM</code> span, the edge a <code>CHAIN</code> span, and the pricing skill a <code>TOOL</code> span in the same trace; see <code>docs/mlflow.md</code>.</p>
+<h2 id="before-you-deploy">Before you deploy</h2>
+<p>Follow <code>deploy/databricks/README.md</code>: you need a graph server reachable from the workspace over HTTPS, its API key in a Databricks secret scope, and for <code>intake</code> a model provider credential in a secret scope (see <a href="databricks-presets.html"><code>../presets/</code></a> for Model Serving and OpenRouter). For MLflow, add <code>mlflow&gt;=3.11,&lt;4</code> to both <code>requirements.txt</code> files and create the experiment (<code>/Shared/atfgraph/two-node</code> by default) with <code>CAN_EDIT</code> for both Apps&#x27; service principals.</p>
+<h2 id="build-validate-and-deploy-the-two-apps">Build, validate and deploy the two Apps</h2>
+<pre><code class="language-bash"># 1. Build both bundles locally (wheel, node package, requirements, entrypoint checks; no workspace)
+scripts/product/build-databricks-bundle.sh --node-dir examples/databricks/two_node/pricing \
+    --package pricing --module pricing.agent:app --label pricing
+scripts/product/build-databricks-bundle.sh --node-dir examples/databricks/two_node/intake \
+    --package intake --module intake.agent:app --label intake
+
+# 2. Put each node&#x27;s own bundle file in place (the build script writes the generic template)
+cp examples/databricks/two_node/pricing/databricks.yml target/dist/databricks/pricing/databricks.yml
+cp examples/databricks/two_node/intake/databricks.yml  target/dist/databricks/intake/databricks.yml
+.venv/bin/python scripts/product/check_databricks_bundle.py target/dist/databricks/pricing
+.venv/bin/python scripts/product/check_databricks_bundle.py target/dist/databricks/intake
+
+# 3. Validate, deploy and start each App with an explicit profile (nothing here picks one)
+(cd target/dist/databricks/pricing &amp;&amp; \
+  databricks bundle validate -t dev --profile &lt;PROFILE&gt; --var server_url=https://&lt;graph-server&gt; --var api_key_scope=atfgraph &amp;&amp; \
+  databricks bundle deploy   -t dev --profile &lt;PROFILE&gt; --var server_url=https://&lt;graph-server&gt; --var api_key_scope=atfgraph &amp;&amp; \
+  databricks bundle run agent_node -t dev --profile &lt;PROFILE&gt;)
+(cd target/dist/databricks/intake &amp;&amp; \
+  databricks bundle validate -t dev --profile &lt;PROFILE&gt; --var server_url=https://&lt;graph-server&gt; --var api_key_scope=atfgraph \
+    --var model_url=https://&lt;workspace-host&gt;/serving-endpoints --var model_name=&lt;serving-endpoint&gt; --var model_key_scope=atfgraph &amp;&amp; \
+  databricks bundle deploy   -t dev --profile &lt;PROFILE&gt; --var ... &amp;&amp; \
+  databricks bundle run agent_node -t dev --profile &lt;PROFILE&gt;)</code></pre>
+<p>The Apps need no URL exchange: a worker only dials out, so there is no second deploy to fill in callback URLs. Each App&#x27;s status page (<code>GET /health</code> on the App URL) reports <code>registered: true</code> once the graph server lists its label.</p>
+<h2 id="walk-the-edge">Walk the edge</h2>
+<pre><code class="language-bash">export ATFGRAPH_SERVER=https://&lt;graph-server&gt; ATFGRAPH_API_KEY=&lt;the key in the secret scope&gt;
+python -m examples.databricks.two_node.call &quot;Two people, four nights in Lisbon&quot;</code></pre>
+<h2 id="what-to-look-at">What to look at</h2>
+<ol><li><strong>Console.</strong> <code>$ATFGRAPH_SERVER/ui/</code>: the traverser you started, its two-step path, and the <code>probe</code> emitter with its next due time.</li><li><strong>MLflow</strong> (when enabled). The trace in the shared experiment has an <code>AGENT</code> span <code>intake.triage</code>, under it the <code>LLM</code> span of <code>app.ai</code>, the <code>CHAIN</code> span
+of the edge, and the <code>TOOL</code> span <code>pricing.quote</code> produced on the other node
+and joined through the run metadata.</li><li><strong>Emitter.</strong> Without calling anything, a new traverser appears every fifteen minutes from <code>intake.probe</code>, walking the same edge with a fixed
+request.</li><li><strong>Signed path.</strong> <code>GET $ATFGRAPH_SERVER/api/v2/traversers/&lt;id&gt;/path</code> and the identity routes export the recorded and signed path.</li></ol>
+<h2 id="differences-from-the-original">Differences from the original</h2>
+<ul><li>Nodes are outbound workers, so <code>AGENT_CALLBACK_URL</code>, the <code>PORT</code> from <code>DATABRICKS_APP_PORT</code> and the two-pass deploy are gone; the shared
+<code>worker_entrypoint.py</code> binds the App port for the status page only.</li><li><code>ATFGRAPH_AUTH=databricks</code> (service-principal OAuth tokens on graph-server calls, inbound principal allowlists) does not exist in vNext: the worker
+authenticates to the graph server with <code>ATFGRAPH_API_KEY</code> from a secret
+binding, and there is no inbound node surface to allowlist. Recorded as a gap.</li><li>The model provider is the SDK&#x27;s OpenAI-compatible client (<code>ATFGRAPH_MODEL_URL</code>/<code>ATFGRAPH_MODEL_NAME</code>/<code>ATFGRAPH_MODEL_API_KEY</code>) rather
+than litellm&#x27;s <code>databricks/</code> or <code>openrouter/</code> prefixes; the credential is a
+secret binding, never minted from the App&#x27;s service principal.</li><li><code>mlflow_autolog=True</code> became opt-in <code>ATFGRAPH_MLFLOW_TRACING=true</code> via <code>atfgraph.mlflow.enable_from_env</code>; span types are unchanged.</li><li>The graph server is not a Databricks App in vNext; deploy it with Compose, Kubernetes or Helm (<code>deploy/</code>).</li><li><code>databricks bundle validate/deploy/run</code> were <strong>not</strong> run for this example; the bundles were built and checked locally only.</li></ul>
+<p>Tests: <code>tests/test_migrated_ops_examples.py</code> runs both nodes on a real daemon with the fixture provider and checks the bundle files offline.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

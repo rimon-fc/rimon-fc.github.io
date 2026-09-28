@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resilience and client-side controls — ATFGraph vNext reference</title>
+<meta name="description" content="Resilience and client-side controls: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Resilience and client-side controls</h1>
+<p>By the end of this page a capability asks the graph server for another attempt with <code>RetryableError</code>, is cut off by its own <code>timeout_seconds</code> budget, stops cleanly when a traverser is cancelled, and the calling code bounds its own load with <code>RateLimiter</code>, <code>ResultCache</code>, <code>retry_rate_limited</code> and <code>ModelRouter</code>. It requires a running graph server for the first three sections; the client-side controls run in any event loop.</p>
+<h2 id="what-the-server-enforces-and-what-the-client-does">What the server enforces and what the client does</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Concern</th><th scope="col">Enforced by</th><th scope="col">Where it is set</th></tr></thead><tbody><tr><td>retry attempts per capability</td><td>graph server (<code>retry.max_attempts</code>)</td><td><code>@app.skill(max_attempts=3)</code></td></tr><tr><td>handler budget</td><td>worker stops the handler (<code>handler_timeout</code>); server deadline reports <code>timed_out</code> if the worker is gone</td><td><code>@app.traversal(timeout_seconds=2)</code></td></tr><tr><td>cancellation</td><td>server marks <code>cancel_requested</code>; the worker&#x27;s heartbeat sees it and cancels the handler task</td><td><code>Handle.cancel()</code>, <code>atfg cancel</code></td></tr><tr><td>admission, leases, deduplication</td><td>graph server</td><td>server configuration</td></tr><tr><td>rate limiting of your own outbound calls</td><td>process-local <code>RateLimiter</code></td><td>your code</td></tr><tr><td>memoising results within a process</td><td>process-local <code>ResultCache</code></td><td>your code</td></tr><tr><td>provider selection for <code>app.ai</code></td><td>process-local <code>ModelRouter</code></td><td><code>Agent(model=router)</code></td></tr></tbody></table></div>
+<p>The client-side controls in <code>python/atfgraph/controls.py</code> sit above the SDK&#x27;s bounded HTTP layers and coordinate nothing across processes; the graph server&#x27;s admission limits remain authoritative.</p>
+<h2 id="retries-retryableerror-and-maxattempts">Retries: <code>RetryableError</code> and <code>max_attempts</code></h2>
+<p>A handler that raises <code>RetryableError</code> (a <code>HandlerError</code> with <code>retryable=True</code>) tells the server this attempt may be scheduled again while the capability&#x27;s <code>max_attempts</code> allows it. Any other exception is terminal. <code>current_context().attempt</code> tells the handler which attempt it is on. Adapted from <code>examples/python/features/resilience/agent.py</code>:</p>
+<pre><code class="language-python">from pydantic import BaseModel
+
+from atfgraph import Agent, RetryableError, current_context
+from atfgraph.model import ModelError
+
+app = Agent(node_id=&quot;disruption&quot;, version=&quot;1.0.0&quot;, capacity=4)
+
+
+class RebookingNote(BaseModel):
+    summary: str
+    rebook_within_hours: int
+
+
+@app.skill(max_attempts=3)
+async def rebooking_note(flight: str, model: str = &quot;fixture-flaky&quot;) -&gt; dict:
+    attempt = current_context().attempt
+    try:
+        note = await app.ai(
+            system=&quot;You are a disruption desk. Answer with the requested fields only.&quot;,
+            user=f&quot;Flight {flight} was cancelled. Summarise the rebooking action and the hours we have to act.&quot;,
+            schema=RebookingNote,
+            model=model,
+        )
+    except ModelError as exc:
+        raise RetryableError(f&quot;provider failed on attempt {attempt}: {exc}&quot;) from exc
+    return {&quot;flight&quot;: flight, &quot;attempt&quot;: attempt, &quot;summary&quot;: note.summary, &quot;rebook_within_hours&quot;: note.rebook_within_hours}</code></pre>
+<p>This needs a model provider. The example ships one: <code>examples/python/features/resilience/fixture_model.py</code> is a local OpenAI-compatible server whose <code>fixture-flaky</code> model answers <code>503</code> twice and then succeeds, and whose <code>fixture-slow</code> model stalls.</p>
+<pre><code class="language-bash">python -m examples.python.features.resilience.fixture_model --port 18899
+export ATFGRAPH_MODEL_URL=http://127.0.0.1:18899 ATFGRAPH_MODEL_NAME=fixture-fast
+python -m atfgraph.worker --module examples.python.features.resilience.agent:app
+python -m examples.python.features.resilience.call</code></pre>
+<p><code>tests/test_feature_examples_extended.py</code> runs this against the daemon and asserts: the output reports <code>attempt: 3</code>, the traverser record shows <code>attempt == 3</code> and <code>max_attempts == 3</code>, the event log holds two <code>requeued</code> events whose <code>error.retryable</code> is <code>True</code>, and the provider was called exactly three times. With the fixture set to fail nine times, the fourth failure is terminal: the traverser ends <code>failed</code> after attempt 3. The budget is per capability, not per handler call. Without <code>ATFGRAPH_MODEL_URL</code> / <code>ATFGRAPH_MODEL_NAME</code>, <code>app.ai</code> raises <code>ModelNotConfigured</code> and the run fails saying so.</p>
+<h2 id="capability-budgets-timeoutseconds">Capability budgets: <code>timeout_seconds</code></h2>
+<p><code>timeout_seconds</code> (default 300) is the handler budget. The worker runs the handler under <code>asyncio.wait_for</code> and, when the budget passes, completes the traverser with error code <code>handler_timeout</code> (not retryable). If the worker itself had disappeared, the server&#x27;s own deadline would mark the same run <code>timed_out</code>, which the client sees as <code>TraversalTimedOut</code>. Adapted from the same example:</p>
+<pre><code class="language-python">from pydantic import BaseModel
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;disruption&quot;, version=&quot;1.0.0&quot;)
+
+
+class RebookingNote(BaseModel):
+    summary: str
+    rebook_within_hours: int
+
+
+@app.skill(timeout_seconds=2)
+async def stalled_note(flight: str) -&gt; dict:
+    note = await app.ai(user=f&quot;Flight {flight} was cancelled.&quot;, schema=RebookingNote, model=&quot;fixture-slow&quot;)
+    return {&quot;flight&quot;: flight, &quot;summary&quot;: note.summary}</code></pre>
+<p>The test submits this against a fixture that stalls for 30 seconds and asserts the traverser ends within 20 seconds with status <code>failed</code> or <code>timed_out</code> and code <code>handler_timeout</code> or <code>timed_out</code>. Synchronous handlers run in a thread that Python cannot interrupt: the worker stops waiting and reports the timeout, but the thread runs to its own end.</p>
+<h2 id="guardrails-refuse-bad-input-and-bad-output">Guardrails: refuse bad input and bad output</h2>
+<p>A guardrail is a named check the worker runs around a handler. <code>input</code> guardrails see the admitted payload before the handler runs; <code>output</code> guardrails see the encoded result before it is reported. A refusal fails the step with the envelope <code>{&quot;code&quot;: &quot;guardrail_violation&quot;, &quot;retryable&quot;: false}</code> and a message that names the rule and the reason, so the run&#x27;s path, <code>atfg path</code> and the console&#x27;s Runs page show exactly which rule refused what. Nothing is redacted or rewritten silently.</p>
+<pre><code class="language-python">import json
+import re
+
+from atfgraph import Agent, allowed_values, deny_patterns, max_chars, require_keys
+
+app = Agent(node_id=&quot;support&quot;)
+
+
+@app.guardrail(&quot;no_card_numbers&quot;, phase=&quot;output&quot;, description=&quot;refuse card-like digit runs&quot;)
+def no_card_numbers(value, ctx):
+    # Return None to pass, or a message (or list of messages) to refuse.
+    if re.search(r&quot;\b\d{13,19}\b&quot;, json.dumps(value)):
+        return &quot;output contains a card-number-like sequence&quot;
+
+
+@app.traversal(
+    guardrails=[
+        &quot;no_card_numbers&quot;,                                  # registered by name above
+        require_keys(&quot;has_answer&quot;, [&quot;answer&quot;, &quot;sources&quot;]),  # output must carry these keys
+        max_chars(&quot;short_reply&quot;, 4000, fields=[&quot;answer&quot;]),  # bound one field&#x27;s length
+        allowed_values(&quot;lang&quot;, &quot;lang&quot;, [&quot;en&quot;, &quot;fr&quot;]),       # an input guardrail
+    ]
+)
+async def answer(question: str, lang: str = &quot;en&quot;) -&gt; dict:
+    ...</code></pre>
+<p>Built-in checks: <code>deny_patterns(name, patterns, fields=…)</code> (the reason names the pattern, never the matched text), <code>max_chars</code>, <code>require_keys</code>, <code>json_schema(name, schema)</code> and <code>allowed_values(name, field, values)</code>; each takes <code>phase=&quot;input&quot; | &quot;output&quot; | &quot;both&quot;</code>. Any callable <code>(value, ctx) -&gt; None | bool | str | list[str]</code>, sync or async, becomes a guardrail through <code>@app.guardrail(...)</code> or <code>Guardrail(name, check, phase)</code>; <code>app.add_guardrail(...)</code> registers a prebuilt one. <code>app.call_local</code> applies the same guardrails, so a unit test can assert a <code>GuardrailViolation</code> without a server:</p>
+<pre><code class="language-python">import pytest
+from atfgraph import GuardrailViolation
+
+async def test_card_numbers_are_refused():
+    with pytest.raises(GuardrailViolation) as refused:
+        await app.call_local(&quot;answer&quot;, question=&quot;pay with 4111111111111111&quot;)
+    assert refused.value.rule == &quot;no_card_numbers&quot; and refused.value.phase == &quot;output&quot;</code></pre>
+<p>Guardrails run in the worker, next to the handler, which is where the output exists; the graph server never sees model output before the worker reports it. Access policies (<code>docs/python/13-identity-credentials-and-access.md</code>) decide <em>who may call what with which input</em> at admission; guardrails decide <em>what a handler may accept and return</em>. A violation counts as a failed attempt and is never retried.</p>
+<h2 id="cooperative-cancellation">Cooperative cancellation</h2>
+<p><code>Handle.cancel()</code> (or <code>atfg cancel</code>) sets <code>cancel_requested</code> on the server. The worker learns of it on the next lease renewal, sets the context&#x27;s cancel event and cancels the handler task; an <code>async def</code> handler observes that at its next <code>await</code>. Long loops should also poll <code>app.cancel_requested()</code> between slices so partial work is reported as progress rather than lost. Adapted from the same example:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph import Agent, ConflictError
+
+app = Agent(node_id=&quot;disruption&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal(timeout_seconds=600)
+async def watch(flight: str, seconds: float = 30.0, slice_seconds: float = 0.1) -&gt; dict:
+    ticks = max(1, int(seconds / slice_seconds))
+    per_note = max(1, int(1.0 / slice_seconds))
+    done = 0
+    while done &lt; ticks and not app.cancel_requested():
+        await asyncio.sleep(slice_seconds)
+        done += 1
+        if done % per_note == 0:
+            try:
+                await app.progress({&quot;flight&quot;: flight, &quot;watched_seconds&quot;: round(done * slice_seconds, 1)})
+            except ConflictError:
+                break
+    return {&quot;flight&quot;: flight, &quot;watched_seconds&quot;: round(done * slice_seconds, 1), &quot;cancelled&quot;: app.cancel_requested()}</code></pre>
+<p><code>app.progress</code> after the cancel landed raises <code>ConflictError</code>, which is why the loop catches it. The test cancels after 1.2 seconds, sees <code>TraversalCancelled</code> from <code>handle.result()</code>, finds the first progress event <code>{&quot;flight&quot;: &quot;QF-541&quot;, &quot;watched_seconds&quot;: 1.0}</code> in the event log, and the traverser record has <code>cancel_requested: True</code>. This snippet needs no provider.</p>
+<h2 id="ratelimiter"><code>RateLimiter</code></h2>
+<p><code>RateLimiter(default=None, policies={...})</code> gives bounded per-key admission for one event loop. A <code>RateLimitPolicy</code> combines <code>rate</code> admissions per <code>per</code> seconds (a token bucket of <code>burst</code> tokens), a <code>concurrency</code> cap and <code>max_pending</code> waiters; at least one of <code>rate</code> or <code>concurrency</code> is required. Keys are plain strings; a policy key ending in <code>:</code> acts as a prefix (<code>&quot;node:&quot;</code> applies to <code>&quot;node:slow&quot;</code> unless <code>&quot;node:slow&quot;</code> has its own). A key with no policy and no default is unlimited. Adapted from <code>examples/python/features/serverless/agent.py</code> and <code>tests/test_python_controls.py</code>:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph import Agent, RateLimiter
+from atfgraph.controls import RateLimitExceeded, RateLimitPolicy
+
+app = Agent(node_id=&quot;quoter&quot;, version=&quot;1.0.0&quot;, capacity=2)
+limiter = RateLimiter(policies={&quot;node:quoter&quot;: RateLimitPolicy(rate=20, per=1.0, concurrency=2, max_pending=50)})
+
+
+@app.traversal()
+async def quote(legs: list[dict]) -&gt; dict:
+    async def one(leg: dict) -&gt; dict:
+        try:
+            async with limiter.limit(&quot;node:quoter&quot;, timeout=5.0):
+                return await app.traverse(&quot;quoter.price&quot;, **leg)
+        except RateLimitExceeded as exc:
+            return {&quot;error&quot;: str(exc), &quot;retry_after&quot;: exc.retry_after}
+
+    priced = await asyncio.gather(*(one(leg) for leg in legs))
+    return {&quot;legs&quot;: priced, &quot;admitted&quot;: limiter.stats(&quot;node:quoter&quot;).admitted}</code></pre>
+<p>Admission is FIFO per key. <code>limit(key, timeout=...)</code> raises <code>RateLimitExceeded</code> when <code>max_pending</code> callers already wait or when <code>timeout</code> passes; a waiter cancelled by its caller leaves the queue and never holds a permit. <code>run(key, func, *args)</code> holds the permit for the whole call; <code>acquire</code>/<code>release</code> are the manual pair; <code>stats(key)</code> reports <code>admitted</code>, <code>refused</code>, <code>timed_out</code>, <code>cancelled_waits</code>, <code>max_in_flight</code> and <code>max_pending</code>.</p>
+<h2 id="resultcache"><code>ResultCache</code></h2>
+<p><code>ResultCache(ttl=300.0, max_size=1024)</code> is an expiring, LRU-bounded, single-flight cache for one event loop. <code>get_or_compute(key, factory)</code> returns the cached value or runs <code>factory</code> once for every concurrent caller of the same key. Values are deep-copied on the way in and out; a failing factory propagates to all coalesced waiters and caches nothing; if the computing caller is cancelled, a waiter takes over. Adapted from <code>examples/python/features/serverless/agent.py</code>:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph import Agent, ResultCache
+
+app = Agent(node_id=&quot;quoter&quot;, version=&quot;1.0.0&quot;, capacity=2)
+cache = ResultCache(ttl=60.0, max_size=256)
+
+
+@app.traversal()
+async def quote(legs: list[dict]) -&gt; dict:
+    async def one(leg: dict) -&gt; dict:
+        key = (&quot;price&quot;, leg.get(&quot;origin&quot;), leg.get(&quot;destination&quot;), leg.get(&quot;nights&quot;, 1))
+
+        async def compute() -&gt; dict:
+            return await app.traverse(&quot;quoter.price&quot;, **leg)
+
+        return await cache.get_or_compute(key, compute)
+
+    priced = await asyncio.gather(*(one(leg) for leg in legs))
+    return {&quot;legs&quot;: priced, &quot;cache&quot;: {&quot;hits&quot;: cache.stats.hits, &quot;misses&quot;: cache.stats.misses}}</code></pre>
+<p><code>tests/test_python_controls.py</code> runs this on the daemon with three legs of which two are identical: the path holds <code>quoter.quote</code> and two <code>quoter.price</code> steps (the duplicate leg never became a child), and a repeated invocation of the first leg claims one task and reports a cache hit. A cache hit therefore also means no step on the path. The optional background sweep (<code>start()</code> / <code>stop()</code>, or <code>async with cache:</code>) is bound to the loop that started it; <code>sweep()</code> also runs on every <code>len()</code> and <code>keys()</code>.</p>
+<h2 id="retryratelimited"><code>retry_rate_limited</code></h2>
+<p><code>await retry_rate_limited(func, max_attempts=3, base_delay=0.2, max_delay=5.0, deadline=None)</code> calls a zero-argument coroutine function again only when it failed with a rate limit: <code>APIError</code> with status 429 from the graph server, <code>RateLimitExceeded</code>, or a <code>ModelError</code> whose text contains <code>HTTP 429</code>. It honours a <code>retry_after</code> carried by the error, otherwise backs off exponentially up to <code>max_delay</code>, and stops before sleeping past <code>deadline</code> (a monotonic time). Any other exception propagates at once. Adapted from <code>tests/test_python_controls.py</code>:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph import Client, retry_rate_limited
+
+
+async def main() -&gt; None:
+    async with Client(&quot;http://127.0.0.1:18880&quot;) as client:
+        async def once() -&gt; dict:
+            return await client.traverse(&quot;quoter.quote&quot;, {&quot;legs&quot;: [{&quot;origin&quot;: &quot;BNE&quot;, &quot;destination&quot;: &quot;SYD&quot;}]}, timeout=30)
+
+        print(await retry_rate_limited(once, max_attempts=3))
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<h2 id="modelrouter"><code>ModelRouter</code></h2>
+<p><code>ModelRouter</code> is a <code>ModelProvider</code> that dispatches <code>complete</code> and <code>stream</code> to explicitly registered providers only. It reads nothing from the environment and never constructs a provider; an unroutable request raises <code>ModelNotConfigured</code>. Resolution order for <code>model</code>: <code>&quot;&lt;route&gt;:&lt;model&gt;&quot;</code> names a route explicitly; then a route whose <code>models</code> contain the name or whose <code>prefixes</code> match; then the default route with its <code>default_model</code>. Adapted from <code>tests/test_python_controls.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent, ModelRouter, RateLimiter
+from atfgraph.controls import RateLimitPolicy
+from atfgraph.model import HTTPChatModel
+
+limiter = RateLimiter(policies={&quot;model:fast&quot;: RateLimitPolicy(concurrency=2)})
+router = ModelRouter(limiter=limiter, admission_timeout=10.0)
+router.register(&quot;fast&quot;, HTTPChatModel(&quot;http://127.0.0.1:18899&quot;, &quot;fixture-fast&quot;), default_model=&quot;fixture-fast&quot;, prefixes=[&quot;fixture-&quot;])
+
+app = Agent(node_id=&quot;routed&quot;, version=&quot;1.0.0&quot;, model=router)
+
+
+@app.skill()
+async def answer(question: str) -&gt; dict:
+    text = await app.ai(question)
+    bigger = await app.ai(question, model=&quot;fast:fixture-fast&quot;)
+    return {&quot;default&quot;: str(text), &quot;explicit&quot;: str(bigger), &quot;calls&quot;: dict(router.calls)}</code></pre>
+<p>With <code>limiter=</code> set, every call is admitted under the route&#x27;s <code>limit_key</code> (default <code>&quot;model:&lt;route&gt;&quot;</code>); a stream holds its permit from the first event until the stream ends or is closed. <code>resolve(model, needs=[&quot;vision&quot;])</code> skips routes whose provider lacks a required capability. The snippet needs the fixture provider from the resilience example (or any OpenAI-compatible endpoint) at the given URL.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="03-calling-other-nodes.html">./03-calling-other-nodes.md</a> for fan-out and the worker permit model behind <code>--capacity</code>.</li><li><a href="06-model-calls.html">./06-model-calls.md</a> for the provider environment variables <code>ModelRouter</code> replaces.</li><li><a href="12-hosting.html">./12-hosting.md</a> for the serverless host that composes <code>RateLimiter</code> and <code>ResultCache</code>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

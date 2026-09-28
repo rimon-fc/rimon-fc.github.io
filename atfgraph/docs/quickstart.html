@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quickstart — ATFGraph vNext reference</title>
+<meta name="description" content="Quickstart: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Quickstart</h1>
+<p>Ten minutes from a source checkout to a traverser with a recorded path, seen in the web console. You need a Rust toolchain, Node 22 (for the console) and Python 3.10 or newer; the system <code>python3</code> on macOS is 3.9 and will not do.</p>
+<blockquote><p><strong>Using a managed graph server instead?</strong> You do not build anything: the release&#x27;s <code>install.sh --from github:fclimited/ai-lab-atfgraph@vnext-&lt;version&gt;</code> installs the <code>atfg</code> CLI, the SDK and the skills from the GitHub Release into a prefix you own, then <code>atfg login &lt;url&gt;</code> connects you. See <a href="install.html">Install</a>. The rest of this page runs everything on your laptop, which is what you want while changing code.</p></blockquote>
+<p>ATFGraph vNext is one repository: the graph server <code>atfgraphd</code>, the <code>atfg</code> CLI and the web console (Rust and TypeScript) beside the <code>atfgraph</code> Python package (<code>python/</code>), the examples, the guides and the skills.</p>
+<h2 id="1-build-the-server-and-the-console">1. Build the server and the console</h2>
+<pre><code class="language-bash">git clone https://github.com/fclimited/ai-lab-atfgraph.git
+cd ai-lab-atfgraph
+cargo build --bin atfgraphd --bin atfg          # about five minutes the first time
+(cd ui &amp;&amp; npm ci &amp;&amp; npm run build)              # the console; the daemon serves ui/dist at /ui/
+export PATH=&quot;$PWD/target/debug:$PATH&quot;</code></pre>
+<h2 id="2-start-the-graph-server">2. Start the graph server</h2>
+<pre><code class="language-bash">atfg server start</code></pre>
+<pre><code class="language-text">ATFGraph vNext started: pid 77649 listening on 127.0.0.1:18880 (log …/.atfgraph-vnext/server-127.0.0.1-18880.log)
+API http://127.0.0.1:18880/api/v2  UI http://127.0.0.1:18880/ui/</code></pre>
+<p>Loopback without an API key is development mode. Nothing else is needed. Open <strong>http://127.0.0.1:18880/ui/</strong> now: the console is empty until a node registers.</p>
+<h2 id="2b-install-the-sdk">2b. Install the SDK</h2>
+<pre><code class="language-bash">python3 -m venv .venv
+.venv/bin/python -m pip install -e &#x27;python[test]&#x27;</code></pre>
+<h2 id="3-run-an-agent-node">3. Run an agent node</h2>
+<p>In a second terminal, from the checkout, with <code>target/debug</code> on <code>PATH</code>:</p>
+<pre><code class="language-bash">cd ai-lab-atfgraph
+export PATH=&quot;$PWD/target/debug:$PATH&quot;
+atfg dev --module examples.python.first_node.agent:app --python .venv/bin/python --expect-label hello</code></pre>
+<p>The node is one file, <code>examples/python/first_node/agent.py</code>: a traversal <code>greet</code> that calls a skill <code>shout</code>. <code>atfg dev</code> checks that the interpreter can import <code>atfgraph</code>, starts the worker attached to your terminal, and reports when the label <code>hello</code> is registered. Leave it running.</p>
+<h2 id="4-start-a-traverser">4. Start a traverser</h2>
+<p>Back in the first terminal:</p>
+<pre><code class="language-bash">atfg ls</code></pre>
+<pre><code class="language-text">LABEL  VERSION  ELEMENT      KIND       TIMEOUT  ATTEMPTS
+hello  1.0.0    hello.greet  traversal  300s     1
+hello  1.0.0    hello.shout  skill      300s     1</code></pre>
+<pre><code class="language-bash">atfg traverse hello.greet --in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;</code></pre>
+<pre><code class="language-text">traverser 8d2efb59-8a42-4087-bc80-d9b04b4b2b4d queued; waiting at the barrier (up to 300s)
+traverser 8d2efb59-8a42-4087-bc80-d9b04b4b2b4d succeeded (hello.greet)
+{
+  &quot;greeting&quot;: &quot;Hello Ada!&quot;,
+  &quot;length&quot;: 3,
+  &quot;shouted&quot;: &quot;HELLO ADA&quot;
+}</code></pre>
+<h2 id="5-read-the-path">5. Read the path</h2>
+<pre><code class="language-bash">atfg path 8d2efb59-8a42-4087-bc80-d9b04b4b2b4d</code></pre>
+<pre><code class="language-text">path of traverser 8d2efb59-8a42-4087-bc80-d9b04b4b2b4d (root 8d2efb59-8a42-4087-bc80-d9b04b4b2b4d)
+#  STEP                                  TARGET       STATUS     ATTEMPT  PARENT                                ELAPSED
+1  0a108d2b-e768-483a-bde9-f5ab3208bedb  hello.greet  succeeded  1        -                                     314ms
+2  f6ea3c4a-b8e1-448c-b12c-2183ebe762be  hello.shout  succeeded  1        0a108d2b-e768-483a-bde9-f5ab3208bedb  6ms</code></pre>
+<p>Two steps: the traversal you called, and the skill it called through the graph server. In the console, <strong>Runs</strong> lists the same traverser; open it for the path, the events and the usage.</p>
+<h2 id="6-stop">6. Stop</h2>
+<p>Press Ctrl-C in the worker terminal, then, from either checkout:</p>
+<pre><code class="language-bash">atfg server stop</code></pre>
+<p>The server&#x27;s SQLite file (<code>data/graph.db</code> under the server checkout) and its pid/log files (<code>~/.atfgraph-vnext/</code>) remain; delete them to start clean. <code>atfg server status</code> reports what is running.</p>
+<h2 id="next">Next</h2>
+<ul><li>The words in that output, defined: <a href="concepts.html">Core concepts</a>.</li><li>Start traversers from HTTP or Python instead of the CLI: <a href="howto-start-a-traverser.html">Start a traverser</a>.</li><li>Write your own node: <a href="python.html">Python SDK</a>; the same first node, step by step: <a href="01-install-and-first-node.html">Install and first node</a>.</li><li>Connect to a shared or managed server (<code>atfg login</code>, <code>X-API-Key</code>, edge auth): <a href="install.html">Install</a> and <a href="01-install-and-first-node.html#connecting-to-a-server-that-needs-credentials">Install and first node</a>.</li><li>Something printed an error: <a href="troubleshooting.html">Troubleshooting</a>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

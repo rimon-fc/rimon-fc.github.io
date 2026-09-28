@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resilience example — ATFGraph vNext reference</title>
+<meta name="description" content="Resilience example: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Resilience example</h1>
+<p class="meta">Directory <code>examples/python/features/resilience</code></p>
+<p>Three ways work goes wrong — a flaky dependency, one that never answers, and one nobody wants any more — against a provider fixture that runs locally. No keys, no network, no supplier.</p>
+<p class="meta">Agent node label <code>disruption</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>rebooking_note</code></td><td>skill</td><td><code>(flight: str, model: str = FLAKY_MODEL) -&gt; dict</code></td><td><code>examples/python/features/resilience/agent.py</code></td><td>Ask the provider for a note; a provider failure becomes another server attempt.</td></tr><tr><td><code>stalled_note</code></td><td>skill</td><td><code>(flight: str) -&gt; dict</code></td><td><code>examples/python/features/resilience/agent.py</code></td><td>Deliberately outrun the capability&#x27;s budget against the stalling fixture model.</td></tr><tr><td><code>watch</code></td><td>traversal</td><td><code>(flight: str, seconds: float = 30.0, slice_seconds: float = 0.1) -&gt; dict</code></td><td><code>examples/python/features/resilience/agent.py</code></td><td>Poll for a rebooking window until it is cancelled, reporting progress as it goes.</td></tr></tbody></table></div>
+<p class="meta">Non-default capability options: <code>rebooking_note</code>: <code>max_attempts=3</code>; <code>stalled_note</code>: <code>timeout_seconds=2</code>; <code>watch</code>: <code>timeout_seconds=600</code></p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.resilience.agent:app
+python -m examples.python.features.resilience.call
+python -m examples.python.features.resilience.fixture_model --port 18899</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/resilience/README.md</code></li><li><code>examples/python/features/resilience/__init__.py</code></li><li><code>examples/python/features/resilience/agent.py</code></li><li><code>examples/python/features/resilience/agentnode.yaml</code></li><li><code>examples/python/features/resilience/call.py</code></li><li><code>examples/python/features/resilience/fixture_model.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/features/resilience/README.md</code>; the source file is not modified.</p>
+<p>Three ways work goes wrong — a flaky dependency, one that never answers, and one nobody wants any more — against a provider fixture that runs locally. No keys, no network, no supplier.</p>
+<pre><code class="language-bash">python -m examples.python.features.resilience.fixture_model --port 18899
+export ATFGRAPH_MODEL_URL=http://127.0.0.1:18899 ATFGRAPH_MODEL_NAME=fixture-fast
+target/debug/atfgraphd
+python -m atfgraph.worker --module examples.python.features.resilience.agent:app
+python -m examples.python.features.resilience.call</code></pre>
+<p><code>fixture_model.py</code> is an OpenAI-compatible <code>/chat/completions</code> endpoint that answers from the request: <code>fixture-fast</code> replies at once, <code>fixture-flaky</code> returns <code>503</code> for the first two calls carrying a given user message, <code>fixture-slow</code> stalls. When the request asks for a JSON schema the reply is built from that schema (<code>&quot;fixture &lt;field&gt;&quot;</code>, <code>2</code>, <code>true</code>, first enum value). It is a stub, not a model: it never invents a fare, a route or a policy.</p>
+<h2 id="what-each-capability-shows">What each capability shows</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Declared</th><th scope="col">Outcome</th></tr></thead><tbody><tr><td><code>rebooking_note</code></td><td><code>max_attempts=3</code></td><td>attempts 1 and 2 raise <code>RetryableError</code>, the server requeues, attempt 3 returns</td></tr><tr><td><code>stalled_note</code></td><td><code>timeout_seconds=2</code></td><td>the budget ends the call: <code>failed</code>/<code>handler_timeout</code></td></tr><tr><td><code>watch</code></td><td><code>timeout_seconds=600</code></td><td><code>cancel()</code> stops the poll between slices: <code>cancelled</code></td></tr></tbody></table></div>
+<p><strong>Retries are the server&#x27;s, not the handler&#x27;s.</strong> Only a retryable error envelope (<code>RetryableError</code>, or <code>HandlerError(..., retryable=True)</code>) lets the server schedule another attempt, and only while the capability&#x27;s <code>max_attempts</code> allows it. Any other exception is terminal on the first failure, which is what you want for input the provider will reject again. Each attempt gets a fresh lease and <code>current_context().attempt</code> — the driver prints the <code>attempt.started</code> and <code>requeued</code> events so you can see the sequence the server recorded.</p>
+<p><strong>Budgets are enforced twice.</strong> The worker stops a handler that outruns <code>timeout_seconds</code> and completes the run with <code>handler_timeout</code>; independently the server gave the running attempt a deadline, so a worker that stops answering altogether has the same run marked <code>timed_out</code> instead. Either way the budget is what ends it, and <code>call.py</code> prints whichever arrived.</p>
+<p><strong>Cancellation is cooperative but bounded.</strong> <code>client.cancel()</code> marks the run; the worker sees it on its next lease renewal, sets the context flag and cancels the handler task. A handler that awaits in small slices and checks <code>app.cancel_requested()</code> stops promptly and leaves its progress events behind; a handler that blocks without awaiting cannot be stopped until it yields. A cancelled task may not record more progress — that <code>409 cancelled</code> from <code>app.progress</code> is the cancel arriving between slices.</p>
+<p>Tests: <code>tests/test_feature_examples_extended.py</code> runs all three paths against a real daemon with the fixture provider on an ephemeral port.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

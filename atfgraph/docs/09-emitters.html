@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emitters: schedules and webhooks — ATFGraph vNext reference</title>
+<meta name="description" content="Emitters: schedules and webhooks: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Emitters: schedules and webhooks</h1>
+<p>By the end of this page a capability on your agent node fires on a cron schedule or on an authenticated webhook delivery, reads the emitter&#x27;s <code>TriggerContext</code>, reshapes a provider payload with a transform, and you can inspect, fire, replay and pause the emitters the graph server created. It requires a running graph server and a worker; for webhooks the source&#x27;s secret must be present in the environment of the graph server process, never in the worker.</p>
+<p>Prerequisites: a webhook source needs its secret exported on the graph server host under the name you pass as <code>secret_env</code> (the daemon reads it; the SDK never does).</p>
+<h2 id="how-emitters-work">How emitters work</h2>
+<p>An emitter is a persistent server-side definition, either a schedule or a webhook source, that admits one traverser per delivery. A capability declares its emitters in code with <code>triggers=[...]</code> on <code>@app.traversal()</code> / <code>@app.skill()</code>, or with the <code>@on_schedule</code> / <code>@on_event</code> sugar. When <code>app.serve()</code> (or <code>app.run()</code>) starts and <code>Agent(sync_emitters=True)</code> is in effect (the default), the worker registers the node and then calls <code>app.sync_emitters()</code>, which posts one binding per <code>(capability, source)</code>. The server upserts a code-managed emitter for each binding and marks bindings that disappeared as <code>orphaned</code> and disabled. Emitters created through <code>Emitters.create</code> or the web console are UI-managed and never touched by a sync.</p>
+<p>Two rules from <code>python/atfgraph/emitters.py</code> matter for input handling:</p>
+<ul><li>A code-managed delivery bypasses the server&#x27;s input-schema check at admission. The worker then applies the binding&#x27;s <code>transform</code> (if any), binds the result to the handler&#x27;s parameters and validates it against the capability&#x27;s <code>input_schema</code> before the handler runs.</li><li>A UI-managed delivery is validated against the input schema by the server on admission and reaches the handler unchanged; no transform runs.</li></ul>
+<p>A capability may declare at most one binding per source; two <code>EventTrigger(source=&quot;github&quot;)</code> on one capability raise <code>ValueError</code> at import time.</p>
+<h2 id="declare-a-schedule">Declare a schedule</h2>
+<p><code>ScheduleTrigger</code> takes exactly one of <code>cron</code> (5 fields, or 6 with leading seconds) or <code>every_seconds</code> (1 to 31536000), an IANA <code>timezone</code> (default <code>UTC</code>) and a JSON object <code>input</code> that the handler receives on every tick. Adapted from <code>examples/python/features/schedule_emitter/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from atfgraph import Agent, ScheduleTrigger, TriggerContext, on_schedule
+
+app = Agent(node_id=&quot;ticker&quot;, version=&quot;1.0.0&quot;, description=&quot;Scheduled fixture ticks&quot;)
+
+
+@app.traversal(triggers=[ScheduleTrigger(cron=&quot;* * * * * *&quot;, input={&quot;region&quot;: &quot;AU&quot;})])
+async def tick(region: str, trigger: TriggerContext) -&gt; dict:
+    count = await app.memory.global_scope().update(f&quot;ticks:{region}&quot;, lambda current: (current or 0) + 1)
+    return {&quot;region&quot;: region, &quot;count&quot;: count, &quot;delivery_key&quot;: trigger.idempotency_key, &quot;emitter_id&quot;: trigger.emitter_id}
+
+
+@app.skill()
+@on_schedule(every_seconds=1)
+async def heartbeat(trigger: TriggerContext | None = None) -&gt; dict:
+    beats = await app.memory.global_scope().update(&quot;heartbeats&quot;, lambda current: (current or 0) + 1)
+    return {&quot;beats&quot;: beats, &quot;via_emitter&quot;: trigger is not None}
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run()</code></pre>
+<p><code>@app.traversal()</code> stays the outermost decorator; <code>@on_schedule</code> only stages the trigger. Run the worker and it logs each synced emitter:</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.schedule_emitter.agent:app
+python -m examples.python.features.schedule_emitter.inspect_emitters</code></pre>
+<p><code>tests/test_emitter_authoring.py</code> runs this against the real daemon and asserts: the emitter is named <code>code:ticker:heartbeat:cron</code>, every tick&#x27;s <code>trigger.source</code> is <code>cron</code>, <code>event_type</code> is <code>tick</code>, <code>managed_by</code> is <code>code</code>, each delivery key starts with <code>schedule:</code> and is unique per due time, so a restarted server never fires the same due time twice. This snippet needs no model provider.</p>
+<h2 id="declare-a-webhook">Declare a webhook</h2>
+<p><code>EventTrigger(source, types, secret_env, config, transform)</code> binds a capability to an authenticated source. <code>types</code> filters event types on the server (exact match, or a dotted prefix; empty or <code>&quot;*&quot;</code> means all). <code>config</code> holds header and tolerance settings for the generic sources.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Source</th><th scope="col">Signature the server checks</th><th scope="col">Where the event type and delivery key come from</th></tr></thead><tbody><tr><td><code>stripe</code></td><td><code>Stripe-Signature: t=&lt;ts&gt;,v1=&lt;hmac&gt;</code> over <code>&lt;ts&gt;.&lt;body&gt;</code></td><td>Stripe&#x27;s <code>type</code> and event <code>id</code></td></tr><tr><td><code>github</code></td><td><code>X-Hub-Signature-256: sha256=&lt;hmac&gt;</code> over the body</td><td><code>X-GitHub-Event</code>, <code>X-GitHub-Delivery</code></td></tr><tr><td><code>slack</code></td><td><code>X-Slack-Signature: v0=&lt;hmac&gt;</code> over <code>v0:&lt;ts&gt;:&lt;body&gt;</code></td><td>Slack event callback</td></tr><tr><td><code>generic_hmac</code></td><td>hex HMAC of the body in <code>signature_header</code> (default <code>X-Signature</code>)</td><td><code>event_type_header</code>, <code>idempotency_header</code></td></tr><tr><td><code>generic_bearer</code></td><td><code>Authorization: Bearer &lt;secret&gt;</code></td><td><code>event_type_header</code>, <code>idempotency_header</code></td></tr><tr><td><code>databricks</code></td><td>basic or bearer per <code>auth_mode</code></td><td>dotted <code>event_type_path</code> / <code>event_id_path</code> overrides</td></tr></tbody></table></div>
+<p>Not verified: the exact header and payload layout of the <code>databricks</code> source; I read the <code>EventTrigger</code> docstring and the emitter creation in <code>tests/test_databricks_integration.py</code> but not the source&#x27;s server-side verification. The other five are exercised end to end by <code>tests/test_emitter_authoring.py</code> and <code>tests/test_migrated_ops_examples.py</code>.</p>
+<p>Adapted from <code>examples/python/features/webhook_emitter/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel
+
+from atfgraph import Agent, EventTrigger, TriggerContext, on_event
+
+app = Agent(node_id=&quot;hooks&quot;, version=&quot;1.0.0&quot;)
+
+
+class Payment(BaseModel):
+    id: str
+    amount: int
+    currency: str = &quot;aud&quot;
+    customer: Optional[str] = None
+
+
+def _payment_from_event(event: Dict[str, Any]) -&gt; Dict[str, Any]:
+    obj = event[&quot;data&quot;][&quot;object&quot;]
+    return {&quot;id&quot;: obj[&quot;id&quot;], &quot;amount&quot;: obj[&quot;amount&quot;], &quot;currency&quot;: obj.get(&quot;currency&quot;, &quot;aud&quot;), &quot;customer&quot;: obj.get(&quot;customer&quot;)}
+
+
+@app.traversal(
+    triggers=[
+        EventTrigger(
+            source=&quot;generic_bearer&quot;,
+            types=[&quot;payment.succeeded&quot;],
+            secret_env=&quot;HOOKS_PAYMENT_SECRET&quot;,
+            config={&quot;idempotency_header&quot;: &quot;X-Delivery-Id&quot;, &quot;event_type_header&quot;: &quot;X-Event-Type&quot;},
+            transform=_payment_from_event,
+        )
+    ]
+)
+async def handle_payment(payment: Payment, trigger: TriggerContext | None = None) -&gt; dict:
+    return {&quot;payment_id&quot;: payment.id, &quot;amount_cents&quot;: payment.amount, &quot;delivery_key&quot;: trigger.idempotency_key if trigger else None}
+
+
+@app.traversal()
+@on_event(&quot;github&quot;, types=[&quot;pull_request&quot;], secret_env=&quot;HOOKS_GITHUB_SECRET&quot;)
+async def handle_pr(event: dict, trigger: TriggerContext | None = None) -&gt; dict:
+    pr = event.get(&quot;pull_request&quot;) or {}
+    return {&quot;action&quot;: event.get(&quot;action&quot;), &quot;title&quot;: pr.get(&quot;title&quot;)}</code></pre>
+<p>Start the daemon with <code>HOOKS_PAYMENT_SECRET</code> and <code>HOOKS_GITHUB_SECRET</code> in its environment, then run the worker. After the sync <code>app.webhook_urls()</code> returns <code>{&quot;handle_payment&quot;: &quot;.../hooks/&lt;id&gt;&quot;, &quot;handle_pr&quot;: ...}</code>; the server owns the URL <code>/hooks/{emitter_id}</code>.</p>
+<h2 id="declare-a-memory-trigger">Declare a memory trigger</h2>
+<p>A <code>memory</code> source fires when a memory key is written or deleted, so a reasoner can react to state instead of polling the change feed. The emitter is <code>kind: event</code>, <code>source: memory</code>, and <code>source_config</code> names the scope (<code>global</code>, <code>session</code>, <code>actor</code> or <code>workflow</code>), an optional <code>scope_id</code>, an optional key <code>prefix</code>, the entry <code>kinds</code> (<code>value</code>, <code>vector</code>) and <code>actions</code> (<code>set</code>, <code>delete</code>) to react to. Each matching change admits one traverser to the target with input <code>{key, scope, scope_id, action, kind, revision, principal, value?}</code>; <code>value</code> is included only for <code>set</code> and only when it is 16 KiB or smaller. The delivery key <code>memory:&lt;scope&gt;:&lt;scope_id&gt;:&lt;key&gt;:&lt;revision&gt;</code> makes a replay idempotent, and a failed admission never fails the memory write; it is counted in <code>GET /api/v2/emitters/metrics</code> as <code>memory_dispatch_failures</code>.</p>
+<pre><code class="language-python">from atfgraph import Agent
+from atfgraph.decorators import on_event
+
+app = Agent(node_id=&quot;briefs&quot;)
+
+
+@app.traversal()
+@on_event(source=&quot;memory&quot;, config={&quot;scope&quot;: &quot;global&quot;, &quot;prefix&quot;: &quot;brief.&quot;, &quot;actions&quot;: [&quot;set&quot;]})
+async def brief_changed(key: str, action: str, revision: int, value: dict | None = None) -&gt; dict:
+    return {&quot;key&quot;: key, &quot;revision&quot;: revision, &quot;summary&quot;: (value or {}).get(&quot;destination&quot;)}</code></pre>
+<p>From the console, Build → Triggers → Create trigger → kind &quot;memory change&quot; builds the same emitter.</p>
+<h2 id="transforms-and-input-binding">Transforms and input binding</h2>
+<p>A transform is a synchronous callable (an <code>async def</code> raises <code>TypeError</code> at declaration) applied by the worker to the raw event of a code-managed delivery. <code>bind_trusted_input</code> then binds the result in this order: a dict whose keys are all handler data parameters and that covers every required one binds as keyword arguments; otherwise a handler with exactly one data parameter receives the whole payload there (this is how <code>handle_pr</code> gets the raw GitHub event as <code>event</code>); a handler with no data parameter drops the payload. Anything else fails the traverser with <code>invalid_input</code>.</p>
+<p>The daemon test shows the failure modes. A transform that raises (<code>KeyError</code> on a malformed envelope) fails the traverser with error code <code>transform_failed</code> and the worker keeps serving. A transform that succeeds but produces <code>amount=&quot;lots&quot;</code> fails with <code>invalid_input</code> before the handler is invoked. In both cases the handler never ran, which the test checks through global memory.</p>
+<h2 id="read-the-triggercontext">Read the TriggerContext</h2>
+<p>Declare a parameter named <code>trigger</code> or <code>webhook</code>, or annotate any parameter with <code>TriggerContext</code>, and the worker injects it. It is <code>None</code> for ordinary calls, so give it a default when the capability is also called directly.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Field</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>trigger_id</code> / <code>emitter_id</code></td><td>the emitter&#x27;s server id, also its webhook slug</td></tr><tr><td><code>source</code>, <code>event_type</code>, <code>event_id</code></td><td>what the server authenticated</td></tr><tr><td><code>idempotency_key</code></td><td>the delivery key the server deduplicated on</td></tr><tr><td><code>received_at</code></td><td>aware UTC <code>datetime</code></td></tr><tr><td><code>managed_by</code> / <code>code_managed</code></td><td><code>&quot;code&quot;</code> for declared bindings, <code>&quot;ui&quot;</code> for manual emitters</td></tr></tbody></table></div>
+<p>Inside the handler <code>app.ctx.trigger</code> and <code>app.ctx.via_emitter</code> expose the same object.</p>
+<h2 id="duplicate-suppression-filtering-and-dead-letters">Duplicate suppression, filtering and dead letters</h2>
+<p>Behaviour observed in <code>tests/test_emitter_authoring.py</code> against the daemon:</p>
+<ul><li>A wrong bearer token or HMAC is refused with <code>401</code> and nothing is admitted.</li><li>A second delivery with the same key returns <code>202</code> with the same event id and traverser id; the handler ran once. The same key with a different body is <code>409</code>.</li><li>An event type not in <code>types</code> is stored with status <code>filtered</code> and no traverser.</li><li>A UI-managed delivery whose raw input fails the schema is <code>202</code> with status <code>failed</code>, error code <code>invalid_input</code>, and lands in the dead-letter list; <code>Emitters.metrics()</code> reports <code>dlq_depth</code>.</li></ul>
+<h2 id="manage-emitters-from-code">Manage emitters from code</h2>
+<p><code>app.emitters</code> (or <code>Emitters(client)</code> from any <code>Client</code>) wraps the <code>/api/v2/emitters</code> routes. Adapted from <code>examples/python/features/schedule_emitter/inspect_emitters.py</code> and the daemon test:</p>
+<pre><code class="language-python">import asyncio
+import os
+
+from atfgraph import Client, Emitters
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        emitters = Emitters(client)
+        for emitter in await emitters.list():
+            print(emitter.name, emitter.target, emitter.managed_by, emitter.enabled, emitter.orphaned)
+            for event in (await emitters.events(emitter.id))[:5]:
+                print(&quot;   &quot;, event.delivery_key, event.status, event.traverser_id)
+        manual = await emitters.create(
+            &quot;manual-receive&quot;, &quot;hooks.receive&quot;, source=&quot;generic_bearer&quot;,
+            secret_env=&quot;HOOKS_PAYMENT_SECRET&quot;, source_config={&quot;idempotency_header&quot;: &quot;X-Delivery-Id&quot;},
+        )
+        fired = await emitters.fire(manual.id, &quot;fire-1&quot;, input={&quot;value&quot;: 7})
+        print(await fired.result(timeout=10))
+        current = await emitters.get(manual.id)
+        await emitters.update(manual.id, expected_revision=current.revision, enabled=False)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p><code>fire</code> admits the target by hand with an explicit delivery key: repeating the key returns the same traverser, no emitter context is attached (<code>trigger</code> is <code>None</code>), and input is validated normally. <code>replay(emitter_id, event_id)</code> re-delivers a stored inbound event under a fresh key and runs the handler again. <code>update</code> needs <code>expected_revision</code>; disabling a code-managed emitter sets <code>sticky_paused</code> and its webhook URL answers <code>404</code> until re-enabled. A code-managed emitter cannot be deleted while its binding exists (<code>409</code>); remove the trigger from code and the next sync orphans it instead. <code>update(managed_by=&quot;ui&quot;)</code> converts a code-managed emitter to UI management, never the reverse. <code>create</code>, <code>sync</code>, <code>replay</code> and <code>update</code> are administrator operations.</p>
+<h2 id="test-a-handler-without-a-server">Test a handler without a server</h2>
+<p><code>simulate_trigger</code> runs a registered handler in-process as if a delivery had arrived: it applies the matching transform for <code>managed_by=&quot;code&quot;</code>, binds and validates exactly like the worker, and injects a synthetic <code>TriggerContext</code>. Adapted from <code>tests/test_migrated_ops_examples.py</code>:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph import simulate_trigger
+from examples.emitters.python.agent import app
+
+
+async def main() -&gt; None:
+    result = await simulate_trigger(
+        app.entry(&quot;handle_tick&quot;), source=&quot;cron&quot;, body={}, event_type=&quot;tick&quot;,
+        event_id=&quot;evt-1&quot;, idempotency_key=&quot;schedule:2026-01-01T00:00:00Z&quot;,
+    )
+    print(result)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p>This still needs a graph server if the handler touches <code>app.memory</code>, as <code>handle_tick</code> does; the test runs it with the worker bound to a real daemon. The full end-to-end check is the daemon fixture pattern in <a href="15-testing.html">./15-testing.md</a>.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="10-multi-node.html">./10-multi-node.md</a> for capabilities that call other nodes when an emitter fires.</li><li><a href="14-observability.html">./14-observability.md</a> for the usage and logs each emitter-driven traverser records.</li><li><a href="15-testing.html">./15-testing.md</a> for running <code>atfgraphd</code> with webhook secrets in a test.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

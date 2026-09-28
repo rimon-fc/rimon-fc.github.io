@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install ATFGraph vNext — ATFGraph vNext reference</title>
+<meta name="description" content="Install ATFGraph vNext: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Install ATFGraph vNext</h1>
+<p><code>install.sh</code> lives at the root of the repository and ships inside every release set. It finds a Python 3.10 or newer, trying <code>python3.12</code> and its neighbours before <code>python3</code> (set <code>ATFG_PYTHON</code> to choose one; macOS&#x27;s system 3.9 is refused with one sentence), and runs <code>scripts/product/bootstrap.py</code>, which verifies checksums, extracts safely, installs into a prefix you own and checks the result. No compiler, no <code>sudo</code>, no shell-profile edits.</p>
+<p>There are two kinds of artifact, and they install different things:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Artifact</th><th scope="col">Contains</th><th scope="col">Install with</th><th scope="col">For</th></tr></thead><tbody><tr><td><strong>Client bundle</strong> <code>atfgraph-client-&lt;v&gt;-&lt;os&gt;-&lt;arch&gt;.tar.gz</code></td><td>the <code>atfg</code> CLI, the <code>atfgraph</code> wheel, the three coding-assistant skills</td><td><code>install.sh --from …</code></td><td>people who use a managed graph server; nothing runs locally but the CLI and your nodes</td></tr><tr><td><strong>Self-host bundle</strong> <code>atfgraph-vnext-&lt;v&gt;-&lt;os&gt;-&lt;arch&gt;.tar.gz</code></td><td><code>atfgraphd</code>, <code>atfg</code>, the console, the wheel, docs, examples, skills, the migration tool</td><td><code>install.sh --bundle DIR</code> / <code>--archive TAR.GZ</code> / <code>--source</code></td><td>running a graph server on this machine from a packaged artifact</td></tr></tbody></table></div>
+<p>The client bundle has <strong>no daemon and no console</strong>. A release set (what <code>package-artifacts.sh --release-set</code> assembles and what a GitHub Release of the repository holds) contains client bundles for linux-amd64 and darwin-arm64, the Linux daemon and its App bundle, the wheel and sdist, the contract, the skills bundle, <code>install.sh</code> with <code>bootstrap.py</code>, <code>release-manifest.json</code> and <code>SHA256SUMS</code>; it does not contain self-host bundles. A workspace that keeps the Unity Catalog Volume channel holds the same set under <code>/Volumes/&lt;catalog&gt;/&lt;schema&gt;/&lt;volume&gt;/vnext-&lt;version&gt;/</code>.</p>
+<h2 id="client-the-guided-install">Client: the guided install</h2>
+<p>One line installs the client and finishes the setup. The installer shipped with a release knows its own repository, so the piped form needs no <code>--from</code> from 0.3.10 on (in 0.3.9 that default was inert: pass <code>--from github:fclimited/ai-lab-atfgraph@latest</code> there). The <code>gh</code> form is the canonical one because the repository is private:</p>
+<pre><code class="language-bash">gh release download --repo fclimited/ai-lab-atfgraph --pattern install.sh --output - | bash -s --</code></pre>
+<p>On a terminal it detects the platform, Python, the GitHub login, the Databricks profiles in <code>~/.databrickscfg</code> and the coding assistants on the machine, prints a summary, and asks at most three questions: what you will do (build agent nodes, operate a workspace, or just call agents), which Databricks profile is ATFGraph&#x27;s when more than one exists, and whether to add <code>&lt;prefix&gt;/bin</code> to <code>PATH</code> in your shell file. Then it verifies and installs as before, and finishes the job:</p>
+<ul><li><strong>Login.</strong> With a profile chosen, it finds the graph server App in the workspace (the App named <code>atfgraph</code>, or <code>--server URL</code>), reads the server&#x27;s key from the secret scope <code>atfgraph</code> (<code>--secret-scope</code>
+to change) through that profile, and hands it to <code>atfg login … --api-key-stdin</code>. The key is decoded in
+memory and never printed; <code>atfg login</code> verifies it against the server. <code>--no-login</code> skips this.</li><li><strong>PATH.</strong> With consent (or <code>--path</code>), one marked block <code># &gt;&gt;&gt; atfgraph &gt;&gt;&gt; … # &lt;&lt;&lt; atfgraph &lt;&lt;&lt;</code> is appended to the file your <code>$SHELL</code> implies (<code>~/.zshrc</code>, <code>~/.bash_profile</code> or <code>~/.bashrc</code>,
+<code>~/.config/fish/config.fish</code>); a second install finds it and changes nothing; <code>atfg uninstall</code> removes
+it. <code>--no-path</code> never edits a shell file. When the shell is unknown, the line is printed for you.</li><li><strong>Skills.</strong> Installed into every coding assistant detected (Claude Code, Codex) when the release ships them; <code>--skills none</code> opts out, <code>--skills claude</code> limits.</li><li><strong>Config.</strong> <code>~/.config/atfgraph/config</code> (mode 0600, no secrets) records the profile, server, role, version and channel you chose; <code>atfg databricks</code> reads <code>profile</code> from it, so <code>--profile</code> becomes an
+override rather than a requirement. Nothing is written when nothing was decided.</li><li><strong>Proof.</strong> <code>atfg doctor</code>, then <code>atfg ls</code> against the server, then three lines: what is installed, where you are connected and as whom, and one command to try for your role.</li></ul>
+<p>Without a terminal (a pipe, CI, <code>--yes</code>) nothing is asked: the role is <code>client</code>, the shell file is not edited unless <code>--path</code> is given, and login happens only when the profile is unambiguous (<code>--databricks-profile</code>, or <code>--yes</code> with exactly one profile on the machine). <code>--json</code> prints the outcome as one document. Unknown flags are reported in one sentence and ignored, so an older installer never dumps its usage at a newer command line. A failed login or skill install never fails the installation; the ending says what to do instead.</p>
+<h2 id="client-install-sh-from">Client: <code>install.sh --from</code></h2>
+<p>Releases are <strong>GitHub Releases of the repository</strong> — <code>fclimited/ai-lab-atfgraph</code>, tag <code>vnext-&lt;version&gt;</code> (releases up to 0.3.7 stay on <code>fclimited/ai-lab-atfgraph-server</code>). The repository is private and every user is an organisation member, so the installer presents a GitHub token to the release API: <code>GITHUB_TOKEN</code>, <code>GH_TOKEN</code> or <code>ATFGRAPH_CHANNEL_TOKEN</code> from the environment, otherwise the token of a logged-in <code>gh</code> (<code>gh auth login</code> once). The token needs read access to the repository.</p>
+<pre><code class="language-bash"># install.sh and bootstrap.py are assets of every release: download the two, point them at the release
+gh release download vnext-&lt;version&gt; --repo fclimited/ai-lab-atfgraph \
+  --pattern install.sh --pattern bootstrap.py --dir ./atfgraph-install
+sh ./atfgraph-install/install.sh --from github:fclimited/ai-lab-atfgraph@vnext-&lt;version&gt; --skills claude
+# @latest is GitHub&#x27;s latest release — never a draft or a pre-release
+sh ./atfgraph-install/install.sh --from github:fclimited/ai-lab-atfgraph@latest</code></pre>
+<p>A <code>github:</code> source takes no <code>--profile</code>. The installer reads the release&#x27;s <code>SHA256SUMS</code> first, downloads the one client bundle for this platform from its API asset URL, refuses it on any checksum mismatch or a missing entry, extracts it safely, validates the bundle&#x27;s own <code>install-manifest.txt</code>, then creates <code>&lt;prefix&gt;/venv</code> with the wheel and runs <code>atfg doctor</code> (<code>--no-sdk</code> skips the virtualenv). The token goes to <code>api.github.com</code> only; it is dropped on the redirect to the object store that serves the asset. The <code>github:</code> source is exercised by the installer&#x27;s offline tests against a fake GitHub API; its first live use is the 0.3.6 release rehearsal.</p>
+<p>The same verification applies to the other sources:</p>
+<pre><code class="language-bash"># a release directory (downloaded assets, or a checkout of one), or an https URL serving the release files
+sh install.sh --from &lt;release directory or URL&gt; --prefix ~/.local/atfgraph-vnext
+# a Unity Catalog Volume, where a workspace still publishes releases; the Databricks profile is always explicit
+sh install.sh --from /Volumes/&lt;catalog&gt;/&lt;schema&gt;/&lt;volume&gt;/vnext-&lt;version&gt; --profile &lt;profile&gt;
+databricks fs cat dbfs:/Volumes/&lt;catalog&gt;/&lt;schema&gt;/&lt;volume&gt;/vnext-&lt;version&gt;/install.sh --profile &lt;p&gt; \
+  | sh -s -- --from /Volumes/&lt;catalog&gt;/&lt;schema&gt;/&lt;volume&gt;/vnext-&lt;version&gt; --profile &lt;p&gt;</code></pre>
+<p>A plain <code>http://</code> source is accepted only from localhost. Afterwards:</p>
+<pre><code class="language-bash">export PATH=&quot;$HOME/.local/atfgraph-vnext/bin:$PATH&quot;
+atfg login https://&lt;your graph server&gt;       # saves the key (0600); add --edge-auth databricks --databricks-profile &lt;p&gt; behind the Apps proxy
+atfg ls</code></pre>
+<h2 id="self-host-bundle">Self-host bundle</h2>
+<pre><code class="language-bash">./install.sh                       # newest self-host artifact for this platform in target/dist/release
+./install.sh --source              # build the artifact first (needs Rust and the SDK wheel), then install it
+./install.sh --bundle DIR          # an extracted atfgraph-vnext-&lt;version&gt; directory
+./install.sh --archive TAR.GZ      # a packaged tarball; its sidecar SHA256SUMS is verified</code></pre>
+<p>These run from the server checkout. The Windows equivalent ships inside the artifact as <code>install-windows.ps1</code>.</p>
+<h2 id="options">Options</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>--prefix DIR</code></td><td><code>~/.local/atfgraph-vnext</code></td><td>Where everything lands. Relative paths are resolved against the current directory. Spaces are fine.</td></tr><tr><td><code>--skills claude,codex</code></td><td>none</td><td>Also install the bundled coding skills into those harnesses, using the installer shipped in the artifact.</td></tr><tr><td><code>--no-start</code></td><td>start</td><td>Self-host bundle only: install without starting the server. Client installs never start a server.</td></tr><tr><td><code>--listen HOST:PORT</code></td><td><code>127.0.0.1:18880</code></td><td>Address for the started server. <code>0.0.0.0</code> is reported as <code>127.0.0.1</code> in the URLs.</td></tr><tr><td><code>--python EXE</code></td><td>the interpreter running the installer</td><td>Interpreter for the skill installer, for <code>&lt;prefix&gt;/venv</code> (client installs) and for the <code>pip install</code> hint.</td></tr><tr><td><code>--from WHERE</code></td><td>—</td><td>Client install from <code>github:&lt;owner&gt;/&lt;repo&gt;@&lt;tag&gt;</code> (or <code>@latest</code>), a release directory, an https URL or <code>/Volumes/...</code> (see above).</td></tr><tr><td><code>--profile NAME</code></td><td>—</td><td>Databricks CLI profile for a <code>/Volumes/...</code> source; required there, refused for every other source.</td></tr><tr><td><code>--no-sdk</code></td><td>—</td><td>Client install: skip creating <code>&lt;prefix&gt;/venv</code> with the wheel.</td></tr></tbody></table></div>
+<p>Environment: <code>ATFG_BOOTSTRAP_RELEASE_DIR</code> replaces <code>target/dist/release</code> as the place auto-detection looks; <code>ATFG_PYTHON</code> sets the default <code>--python</code>; <code>GITHUB_TOKEN</code>, <code>GH_TOKEN</code> or <code>ATFGRAPH_CHANNEL_TOKEN</code> (in that order) is the token for a <code>github:</code> source, else the token of a logged-in <code>gh</code>.</p>
+<h2 id="what-gets-installed">What gets installed</h2>
+<p>Client bundle (<code>--from</code>):</p>
+<pre><code>&lt;prefix&gt;/
+  bin/atfg                         the CLI
+  venv/                            a private virtualenv with the atfgraph wheel installed (unless --no-sdk)
+  share/atfgraph/
+    atfgraph-&lt;version&gt;-py3-none-any.whl   the wheel; `atfg install` finds it here on its own
+    resources/skills/              the four coding-assistant skills (build, use, personal, topology)
+    resources/scripts/install-skills.py
+    resources/databricks/          the node-App deployment kit: bundle/ (databricks.yml, worker_entrypoint.py,
+                                   requirements.in), deploy-databricks-node.py, check_databricks_bundle.py.
+                                   `python3 &lt;prefix&gt;/share/atfgraph/resources/databricks/deploy-databricks-node.py &lt;node_dir&gt; --profile &lt;p&gt;`
+                                   deploys a node you built to a Databricks workspace without an SDK checkout: the
+                                   script finds the bundle template and the offline check beside itself (from an SDK
+                                   checkout it uses deploy/databricks/bundle and scripts/product/); --template-dir and
+                                   --wheel override the lookup
+    install-manifest.txt           every installed path with its SHA-256
+    version.json                   kind: client, version, contract stamp, target, source identity</code></pre>
+<p>Self-host bundle (<code>--bundle</code>, <code>--archive</code>, <code>--source</code>), in addition:</p>
+<pre><code>  bin/atfgraphd                    the graph server daemon
+  bin/atfg-docs                    opens the bundled copy of the documentation site (published on GitHub Pages)
+  share/atfgraph/
+    config/atfgraph.yaml           a sample server configuration
+    docs/                          public guides
+    resources/                     examples, skills, site, scripts/install-skills.py
+    uninstall-local.sh             removes exactly the paths in the manifest
+  data/graph.db                    created by the started server (never listed in the manifest)</code></pre>
+<p>The installer prints this map with the real paths when it finishes, and for a self-host bundle the started server&#x27;s URL, UI and API addresses and the stop command. To use <code>atfg</code> without a path for the current shell:</p>
+<pre><code class="language-bash">export PATH=&quot;$HOME/.local/atfgraph-vnext/bin:$PATH&quot;</code></pre>
+<p>An <code>atfg</code> from another product already on <code>PATH</code> is left alone and mentioned in the output. Nothing is ever written to <code>/usr/local/bin</code>.</p>
+<h2 id="nothing-is-written-until-the-artifact-is-proven">Nothing is written until the artifact is proven</h2>
+<p>The installer refuses, with exit code 2 and an empty prefix, when any of these fail. The message says which check failed and what to do instead.</p>
+<ol><li><strong>Tarball against its sidecar.</strong> <code>--archive</code> needs a <code>SHA256SUMS</code> from the same build next to the tarball, with an entry for that file name. A missing sidecar,
+a missing entry or a digest that does not match is a refusal. If you only have
+the extracted directory, use <code>--bundle</code>.</li><li><strong>Archive members.</strong> Absolute paths, <code>..</code> components, symlinks, hard links, devices and FIFOs are refused before extraction starts. The archive must hold
+exactly one top-level <code>atfgraph-vnext-&lt;version&gt;</code> directory. Modes are
+normalised to 0755 for executables and 0644 otherwise.</li><li><strong>Bundle structure.</strong> <code>install-local.sh</code>, <code>bin/atfg</code>, <code>bin/atfgraphd</code>, <code>share/atfgraph/install-manifest.txt</code> and <code>version.json</code> must exist and none
+may be a symlink.</li><li><strong>Manifest digests, both ways.</strong> Every path the manifest lists must exist and hash to the recorded SHA-256, and every file under <code>bin/</code> and <code>share/</code> must be
+listed. A file the manifest does not know about is as much a refusal as a
+corrupt one. Only the manifest may mark itself <code>-</code> instead of a digest.</li></ol>
+<p>Only after all four pass is the artifact&#x27;s own <code>install-local.sh</code> handed the copy into the prefix.</p>
+<h2 id="when-something-fails-after-validation">When something fails after validation</h2>
+<p>Exit code 1 means the artifact was sound but an install step failed. The prefix may be partially or fully written; the message says which step and what to do.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Failure</th><th scope="col">What the message says</th><th scope="col">State of the prefix</th></tr></thead><tbody><tr><td><code>install-local.sh</code> exits non-zero, or exits 0 without producing <code>bin/atfg</code> and <code>bin/atfgraphd</code></td><td>the exit code and the script&#x27;s own output</td><td>whatever the script managed to write</td></tr><tr><td>the installed <code>atfg --version</code> does not run on this machine</td><td>the exit code; the binary was built for another platform or is blocked</td><td>files are in place</td></tr><tr><td>the server does not start</td><td>re-run with <code>--listen 127.0.0.1:&lt;free port&gt;</code>; the install itself is complete</td><td>complete</td></tr><tr><td>a skill install fails</td><td>the exact command to re-run by hand</td><td>complete; other harnesses named earlier were installed</td></tr></tbody></table></div>
+<p>The prefix may already contain an install: re-running over it replaces the manifest&#x27;s files and leaves everything else, including <code>data/graph.db</code> and files you added yourself, untouched. A prefix path that is an existing file fails the copy step and the file survives.</p>
+<h2 id="uninstall">Uninstall</h2>
+<pre><code class="language-bash">~/.local/atfgraph-vnext/share/atfgraph/uninstall-local.sh --prefix ~/.local/atfgraph-vnext</code></pre>
+<p>It removes exactly the paths listed in <code>install-manifest.txt</code> and refuses, with nothing deleted, if any listed path is a symlink, is not a regular file, reaches outside the prefix, or has changed since install (<code>--force</code> overrides the last one). <code>--dry-run</code> prints the plan. Directories are removed only when empty, so <code>data/</code>, installed agent node packages and anything you put there survive. Graph data under <code>ATFGRAPH_VNEXT_HOME</code> or <code>~/.atfgraph-vnext</code> is never touched; add <code>--remove-prefix</code> to remove the prefix directory itself once it is empty.</p>
+<h2 id="after-installing">After installing</h2>
+<p>A client install talks to a graph server somewhere else:</p>
+<pre><code class="language-bash">PREFIX=~/.local/atfgraph-vnext
+$PREFIX/bin/atfg login https://&lt;your graph server&gt;
+$PREFIX/bin/atfg whoami
+$PREFIX/bin/atfg ls
+$PREFIX/bin/atfg install /path/to/your-node --python $PREFIX/venv/bin/python   # the wheel beside atfg is used
+$PREFIX/bin/atfg run your-node</code></pre>
+<p>A self-host install has the server too:</p>
+<pre><code class="language-bash">$PREFIX/bin/atfg server status
+$PREFIX/bin/atfg docs                                    # bundled documentation on loopback
+$PREFIX/bin/atfg install $PREFIX/share/atfgraph/resources/examples/python/co_consult --python python3
+$PREFIX/bin/atfg run co-consult</code></pre>
+<p><code>atfg install</code> uses the wheel beside the binary, so no package index is needed for the SDK (there is no PyPI package). The runner in <code>share/atfgraph/resources/examples/run.py</code> does the same and refuses any <code>atfg</code> that is not this product.</p>
+<h2 id="building-the-artifact-yourself">Building the artifact yourself</h2>
+<p><code>./install.sh --source</code> (server checkout) runs <code>scripts/product/package-artifacts.sh --sdk-wheel &lt;wheel built from this repository&#x27;s python/&gt;</code>, which builds the release binaries and the web UI, takes the wheel as an explicit input, writes <code>version.json</code>, the install manifest and the tarball with <code>SHA256SUMS</code> into <code>target/dist/release</code>, and proves the result installs and runs from a fresh directory before the installer proceeds. <code>package-artifacts.sh --debug</code> reuses the debug binaries for a quick local artifact.</p>
+<h2 id="verification">Verification</h2>
+<p><code>scripts/tests/test_bootstrap.py</code> and <code>test_bootstrap_fetch.py</code> run the installer against synthetic artifacts in temporary directories: valid bundles and archives, sidecar and manifest corruption, path traversal, symlink, hard-link and special-file members, two top-level entries, paths with spaces, partial failures of the copy, binary, server and skill steps, reinstalling over a prefix with foreign files, and every usage error. It never touches a real home directory or prefix. The <code>github:</code> source runs against a fake GitHub API: a tag and <code>latest</code> resolved to the concrete release, a draft or pre-release <code>latest</code> refused, the client bundle fetched from its asset URL and verified, the token order, <code>--profile</code> refused, and the messages for a missing or refused token. Nothing there reaches the network.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

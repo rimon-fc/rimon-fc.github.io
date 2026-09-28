@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Historical data migration and backup/restore — ATFGraph vNext reference</title>
+<meta name="description" content="Historical data migration and backup/restore: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Historical data migration and backup/restore</h1>
+<p>The CLI exposes the same tool and options through <code>atfg migrate</code>. These commands run locally; they do not send database credentials to the graph API. Set <code>ATFG_PYTHON</code> to an interpreter with the optional <code>migration</code> extra for PostgreSQL. Full local artifacts bundle the tool and its SQL migrations; a server source checkout is selected with <code>ATFGRAPH_VNEXT_SOURCE</code> (the server checkout root) or <code>atfg migrate --tool-root /path/to/atfgraph ...</code> (the migration tool ships in the repository and in the self-host bundle).</p>
+<pre><code class="language-sh">atfg migrate plan --source graph.db
+atfg migrate run --source graph.db --destination new/graph.db
+atfg migrate plan --source-postgres env:PARENT_DSN
+atfg migrate run --source-postgres env:PARENT_DSN --destination-postgres env:VNEXT_DSN --archive new/legacy.sqlite3
+atfg migrate backup --database-postgres env:VNEXT_DSN --out backups/snapshot
+atfg migrate verify --backup backups/snapshot
+atfg migrate restore --backup backups/snapshot --destination-postgres env:VNEXT_DSN
+atfg migrate plan --help</code></pre>
+<p>Arguments are passed directly to Python without shell expansion. <code>env:NAME</code> is resolved only inside the migration process and keeps DSN values out of the command line. Tool exit codes are preserved: 0 success, 2 usage, 3 rejected, 4 execution failure. Put dispatcher options (<code>--python</code>, <code>--tool-root</code>) before the migration subcommand. SQLite operations use Python&#x27;s standard library.</p>
+<p><code>scripts/migrate.py</code> (package <code>migration/</code>) moves history out of a parent graph server (the Go server in <code>../graph-server</code>, <code>local</code> <strong>or</strong> <code>postgres</code> storage mode) into a <strong>new, separate</strong> ATFGraph vNext store (SQLite file or empty PostgreSQL database), and backs up / restores vNext stores on either backend. Run it through <code>atfg migrate</code> or directly with Python. The SQLite path needs only the Python standard library; the PostgreSQL path needs the optional <code>psycopg</code> driver (<code>python -m pip install &#x27;psycopg[binary]&gt;=3.2&#x27;</code> into the workspace <code>.venv</code>), and says so with code <code>psycopg_missing</code> when it is absent.</p>
+<pre><code>python scripts/migrate.py plan    --source graph.db [--source-memory kv.db] [--unfinished reject|archive]
+python scripts/migrate.py plan    --source-postgres env:PARENT_DSN
+python scripts/migrate.py run     --source graph.db --destination new/graph.db [--archive new/graph.legacy-archive.sqlite3]
+python scripts/migrate.py run     --source-postgres env:PARENT_DSN --destination-postgres env:VNEXT_DSN --archive new/legacy-archive.sqlite3
+python scripts/migrate.py backup  --database graph.db --out backups/2026-09-15
+python scripts/migrate.py backup  --database-postgres env:VNEXT_DSN --out backups/2026-09-15
+python scripts/migrate.py verify  --backup backups/2026-09-15
+python scripts/migrate.py restore --backup backups/2026-09-15 --destination graph.db [--replace]
+python scripts/migrate.py restore --backup backups/2026-09-15 --destination-postgres env:VNEXT_DSN [--replace]
+python scripts/migrate.py archive --archive new/graph.legacy-archive.sqlite3
+python scripts/migrate.py fixture --out /tmp/legacy-fixture [--unfinished] [--duplicate-execution]
+python scripts/migrate.py fixture --postgres env:EMPTY_DSN [--unfinished] [--duplicate-execution]</code></pre>
+<p>PostgreSQL options take a libpq connection string or <code>env:NAME</code>, which reads it from that environment variable so passwords stay out of shell history and process listings. Connection strings are never printed, stored or archived with their password: reports, ledgers, manifests and the archive carry <code>postgresql://user@host:port/dbname</code> only. Supported combinations are SQLite parent → SQLite vNext and PostgreSQL parent → PostgreSQL vNext (the legacy archive is always a SQLite file, so <code>--archive</code> is required with <code>--destination-postgres</code>). Cross-backend runs are refused as a usage error (exit <code>2</code>).</p>
+<p>Exit codes: <code>0</code> success or idempotent no-op, <code>2</code> usage, <code>3</code> rejected by a validation rule (nothing written), <code>4</code> failure while the tool was writing (temporary files removed, no destination created).</p>
+<h2 id="safety-rules-the-tool-enforces">Safety rules the tool enforces</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Rule</th><th scope="col">Behaviour</th></tr></thead><tbody><tr><td>Source is read-only</td><td>SQLite: opened <code>mode=ro</code>, copied with the SQLite online-backup API into a private snapshot; every query runs on the snapshot. The main file and <code>-wal</code> are never written (SQLite may create a <code>-shm</code> index next to a WAL-mode source). The BoltDB memory file is memory-mapped read-only. PostgreSQL: one connection in <code>READ ONLY</code> <code>REPEATABLE READ</code> mode, so every table and the <code>kv_store</code> memory table are read from a single consistent snapshot and the server itself rejects any write on that connection.</td></tr><tr><td>Source ≠ destination</td><td>Destination and archive may not be the source database or memory file, and may not be each other. PostgreSQL: source and destination may not be the same host/port/database.</td></tr><tr><td>Destination must be new</td><td>SQLite: any existing destination file, side file (<code>-wal</code>, <code>-shm</code>, <code>-journal</code>) or archive path is refused. PostgreSQL: the database must hold no vNext data (no tables, or a daemon-initialised schema whose data tables are all empty and whose <code>traverser_seq</code> counter is 0). One exception on both: a destination holding a committed import of the <em>same</em> source (same content digest) is an idempotent no-op.</td></tr><tr><td>Supported schema only</td><td>The source <code>schema_migrations</code> ledger must equal the parent runner&#x27;s set for that backend (SQLite <code>007–015, 036</code>; PostgreSQL <code>015, 036</code>) and every documented column must exist (schemas captured from real <code>atfgraphd</code> starts: <code>migration/legacy_ddl.py</code>). Anything else is <code>unknown_schema</code>, <code>incompatible_schema</code> or <code>unsupported_backend</code> (a SQLite file carrying the PostgreSQL ledger).</td></tr><tr><td>Unfinished legacy work</td><td>Parent <code>workflow_executions</code>, <code>workflow_runs</code>, workflow or step rows in a non-terminal status, pending approvals or held leases are rejected (<code>unfinished_runs</code>) unless <code>--unfinished archive</code>, which archives those trees and imports nothing for them natively. Stop the parent graph server first in either case.</td></tr><tr><td>Duplicate IDs</td><td>Duplicate <code>execution_id</code> rows or agent rows that collapse onto one <code>(label, version)</code> are rejected (<code>duplicate_ids</code>); nothing is merged or overwritten.</td></tr><tr><td>Atomic commit</td><td>SQLite: destination and archive are built as hidden temp files in the destination directory and hard-linked into place only after all checks pass, archive first. PostgreSQL: migrations, native rows, checks and the <code>atfgraph_legacy_import</code> ledger row are written in <strong>one transaction</strong> holding the runtime&#x27;s own advisory lock (<code>7346210991</code>, so a daemon starting concurrently waits); the archive is linked into place immediately before <code>COMMIT</code> and removed again if the commit fails. Any failure rolls back / removes temp files; no partial destination ever exists under the final name. Re-running after an interruption is the resume path: IDs are UUIDv5 of the legacy identity, so a re-run produces identical records on either backend.</td></tr><tr><td>Referential checks</td><td>Before commit the destination is checked for: terminal statuses only, root/parent/step links, contiguous <code>seq</code>, <code>counters.traverser_seq</code>, session and agent-version references, event ordering and <code>event_seq</code>, memory scope owners, JSON validity, and (SQLite) <code>PRAGMA integrity_check</code>. The same portable SQL runs on both backends.</td></tr></tbody></table></div>
+<h2 id="what-is-imported-natively-and-what-is-archived">What is imported natively and what is archived</h2>
+<p>&quot;Native&quot; rows are written to the vNext tables the runtime reads. Everything else, and every legacy row without exception, is preserved in the archive.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Legacy (parent)</th><th scope="col">vNext destination</th><th scope="col">Notes</th></tr></thead><tbody><tr><td><code>agent_nodes</code></td><td><code>agents</code></td><td>label = node id; capabilities from <code>reasoners</code> (traversal) and <code>skills</code> (skill) with their schemas; <code>retry.max_attempts=1</code>, <code>timeout_seconds=300</code> (the runtime defaults, the parent stored neither); empty legacy version → <code>0.0.0</code> (reported). Capability names containing <code>.</code> are dropped from the native definition (reported) because vNext splits <code>label.capability</code> on the dot.</td></tr><tr><td><code>sessions</code></td><td><code>sessions</code></td><td>owner = <code>--namespace</code>/<code>--principal</code> (default <code>local</code>/<code>local</code>); <code>active_root_id</code> NULL. Actor id, name, parent/root session and totals are archive-only.</td></tr><tr><td><code>workflow_executions</code> (finished trees)</td><td><code>traversers</code></td><td>status mapped through the parent&#x27;s own alias table (<code>completed</code>→<code>succeeded</code>, <code>timeout</code>→<code>timed_out</code>, …); input/output JSON; <code>input_hash</code> computed with the runtime&#x27;s exact algorithm; error envelope <code>{code,message,retryable:false}</code> from <code>status_reason</code>/<code>error_message</code>; parent/root/step links and depth recomputed from <code>parent_execution_id</code>; <code>seq</code> by start time; <code>attempt = retry_count+1</code>. Agent version resolved by <code>instance_id</code>, else the highest registered version. Executions of unregistered agent nodes are archived (<code>unknown_agent</code>) unless <code>--synthesize-missing-agents</code>. A session that no longer exists yields <code>session_id NULL</code> (reported), never an invented session.</td></tr><tr><td><code>workflow_execution_events</code> (of native trees)</td><td><code>events</code></td><td>type <code>legacy.&lt;event_type&gt;</code>, ordered by <code>emitted_at</code>, renumbered per root; payload and legacy identifiers kept under <code>data.legacy</code>. Root <code>event_seq</code> set accordingly.</td></tr><tr><td>BoltDB memory (<code>kv_store_path</code>) or PostgreSQL <code>kv_store</code> (JSONB <code>types.Memory</code>)</td><td><code>memory</code></td><td><code>global</code> → scope <code>global</code> (scope_id <code>&quot;&quot;</code>); <code>session</code> → owning imported session; <code>workflow</code> → the imported root traverser of that workflow; <code>actor</code> → scope <code>actor</code> with the legacy actor id (vNext binds actor scope to the authenticated principal, so only a principal named exactly like the legacy actor reads it; <code>--actor-memory archive</code> to skip). <code>revision=1</code>; Go <code>ttl</code> → <code>expires_at</code>. <code>reasoner</code> scope, dangling sessions/workflows, values that are not a <code>types.Memory</code> object and key collisions are archive-only. Both memory sources go through the same mapping; the same fixture yields identical <code>memory</code> rows.</td></tr><tr><td><code>memory_events</code>, <code>distributed_locks</code> (PostgreSQL mode only)</td><td>archive only</td><td>Change feed and lock state of the parent; the runtime keeps its own (<code>memory_changes</code>, leases).</td></tr><tr><td><code>attempts</code>, <code>workers</code>, leases</td><td>—</td><td>Not fabricated. Imported traversers have no attempts; <code>path</code> shows <code>attempts: []</code>.</td></tr><tr><td><code>execution_vcs</code>, <code>workflow_vcs</code>, <code>agent_tag_vcs</code>, <code>did_registry</code>, <code>agent_dids</code>, <code>component_dids</code>, <code>did_documents</code></td><td>archive only</td><td>Legacy proofs and identities are historical facts about the parent graph server. They are stored verbatim, never re-signed, and no <code>node_keys</code>/<code>signed_paths</code> rows are created. <code>--redact-identity-material</code> stores only a SHA-256 of <code>did_registry.master_seed_encrypted</code>. <code>verify-proof</code> checks the preserved proofs afterwards (see below).</td></tr><tr><td><code>triggers</code>, <code>inbound_events</code></td><td>archive only</td><td>A mapping to vNext emitters is plausible but was not verified against emitter semantics (<code>emitter_mapping_unverified</code>).</td></tr><tr><td><code>executions</code>, <code>agent_executions</code>, <code>workflows</code>, <code>workflow_runs</code>, <code>workflow_steps</code>, <code>workflow_run_events</code></td><td>archive only</td><td>Superseded aggregates or run/step models with no vNext counterpart; the traverser tree carries the history.</td></tr><tr><td><code>execution_logs</code>, <code>execution_usage</code>, <code>memory_vectors</code>, <code>config_storage</code>, <code>access_policies</code>, <code>agent_configurations</code>, <code>agent_packages</code>, <code>execution_webhooks*</code>, <code>observability_*</code>, <code>schema_migrations</code></td><td>archive only</td><td>No native table or out of scope for data migration.</td></tr></tbody></table></div>
+<p>Legacy <code>execution_logs</code>, usage, <code>workflow_runs</code>/<code>workflow_steps</code> rows and proofs remain queryable in the archive but are <strong>not</strong> served by the vNext API. Raw archival storage does not make a legacy traverser continuable, replayable or verifiable in vNext; it makes it inspectable.</p>
+<h2 id="the-archive-store">The archive store</h2>
+<p><code>&lt;destination stem&gt;.legacy-archive.sqlite3</code> (override with <code>--archive</code>), format version 1 (<code>migration/archive.py</code>). The vNext runtime never opens it.</p>
+<ul><li><code>archive_meta</code>: format version, tool version, run id, source paths and digests, source ledger, policy, native counts, proof note.</li><li><code>legacy_tables</code>: every source table with its DDL and row counts.</li><li><code>legacy_rows</code>: every source row as typed JSON (blobs base64), its disposition (<code>native</code>/<code>archive</code>), reason, and the native id it became.</li><li><code>legacy_memory</code>: every BoltDB record, raw and decoded, with disposition.</li><li><code>id_map</code>: <code>(kind, legacy_id) → native_id</code> for <code>agent</code>, <code>session</code>, <code>traverser</code>, <code>step</code>; both directions unique.</li><li><code>findings</code>: the same warnings the report prints.</li></ul>
+<p>The destination records the import in <code>atfgraph_legacy_import</code> (run id, source digest, archive path and SHA-256, policy, counts). <code>migrate.py archive --archive …</code> summarises an archive.</p>
+<h2 id="verifying-preserved-proofs">Verifying preserved proofs</h2>
+<p><code>migrate.py verify-proof --archive &lt;archive&gt; [--truststore keys.json] [--json]</code> checks the parent&#x27;s preserved credentials offline against the parent&#x27;s actual historical formats (<code>migration/proofs.py</code>; formats, statuses and evidence in <code>docs/historical-proof-evidence.md</code>). It reads the archive read-only, never opens the parent or the destination, never re-signs anything and never reads private key material (<code>did_registry.master_seed_encrypted</code> is not even selected). Each record is <code>verified</code>, <code>invalid</code> (signature mismatch, tampered or inconsistent row, broken chain reference) or <code>unverifiable</code> (no proof, unsupported proof type, no public key, oversized document, or a format the parent never stored proof material for: <code>workflow_vcs</code>). <code>verified</code> states where the key came from (<code>key_source</code>, <code>issuer_binding</code>, <code>trust</code>); only <code>--truststore</code> yields <code>trust: caller_truststore</code>. Exit codes: 0 every selected record verified, 5 at least one invalid, 6 at least one unverifiable or nothing selected. <code>--document &lt;file&gt;</code> verifies one standalone credential document (for example the workflow credential the parent&#x27;s chain API returned). <code>fixture --real-proofs</code> builds a rehearsal parent store with real Ed25519 proofs from the Go-generated fixture under <code>migration/fixtures/historical_proofs/</code>.</p>
+<h2 id="backup-and-restore-vnext-sqlite">Backup and restore (vNext SQLite)</h2>
+<ul><li><code>backup</code> copies a live vNext store with the SQLite online-backup API in one read transaction (consistent even while the daemon writes; uncommitted work
+is excluded), verifies integrity, and writes <code>graph.sqlite3</code> plus
+<code>manifest.json</code> (SHA-256, size, applied runtime migrations, per-table row
+counts, legacy-import ledger, product and distribution identity from
+<code>../project.yaml</code>). The directory is staged and renamed into place.</li><li><code>verify</code> re-checks checksum, size, <code>integrity_check</code>, migrations and counts.</li><li><code>restore</code> verifies first and refuses an existing destination. With <code>--replace</code> it moves the current file(s) aside as <code>&lt;name&gt;.pre-restore-&lt;ts&gt;</code>;
+a non-empty <code>-wal</code> is refused because it means the daemon is running or
+exited uncleanly. The restored copy is validated against the manifest and
+linked into place. The report lists rows present before the restore but
+absent from the backup.</li></ul>
+<p>Restore is a rollback to the backup point. Every write the daemon made after the backup is gone from the live store (kept only in the moved-aside file). Nothing else is rolled back: workers, the legacy archive, or state held by callers.</p>
+<h2 id="backup-and-restore-vnext-postgresql">Backup and restore (vNext PostgreSQL)</h2>
+<p>Logical, driver-only (no <code>pg_dump</code>), same manifest contract with <code>&quot;backend&quot;: &quot;postgres&quot;</code>:</p>
+<ul><li><code>backup --database-postgres</code> opens one <code>READ ONLY</code> <code>REPEATABLE READ</code> transaction and <code>COPY</code>s every base table of the current schema (in
+primary-key order, explicit column list) into <code>tables/&lt;name&gt;.copy</code>; a write
+committed by another session after the snapshot is not in the backup. The
+manifest records per-table columns, row counts, SHA-256 and size, a
+combined SHA-256, applied runtime migrations, the legacy-import ledger, the
+server version and snapshot, the redacted DSN, and the distribution
+identity from <code>../project.yaml</code>. The directory is staged and renamed into
+place.</li><li><code>verify</code> re-checks every file&#x27;s size, SHA-256 and row count (one COPY line per row), the combined digest and the manifest&#x27;s internal consistency.</li><li><code>restore --destination-postgres</code> verifies first, refuses a database with <strong>other client connections</strong> (<code>destination_active</code>: stop the daemon),
+refuses a database that already holds vNext data unless <code>--replace</code>, then
+in one transaction under the runtime advisory lock: applies the runtime
+migrations from <code>migrations/</code>, requires the applied set to equal the
+manifest&#x27;s (<code>migrations_mismatch</code> otherwise: a backup is restored into the
+schema version it was taken from), creates the legacy-import ledger table
+if the manifest has it, truncates all manifest tables in one statement,
+<code>COPY</code>s them back in foreign-key dependency order, and verifies the counts
+before <code>COMMIT</code>. <code>lock_timeout</code> is 5 s so a contended table fails instead of
+hanging. The report lists rows present before the restore but absent from
+the backup (data tables only).</li></ul>
+<p>As on SQLite, a PostgreSQL restore is a rollback to the backup point for the database only; other databases, workers and the legacy archive are untouched.</p>
+<h2 id="operating-procedure">Operating procedure</h2>
+<ol><li>Stop the parent graph server. <code>plan</code> warns when a SQLite source <code>-wal</code> is non-empty.</li><li><code>plan --source …</code> (or <code>--source-postgres env:PARENT_DSN</code>) and read the report: native counts, per-table dispositions and reasons, findings.</li><li><code>run --source … --destination &lt;new path&gt;</code>; the parent&#x27;s <code>kv.db</code> next to the source is used automatically, or pass <code>--source-memory</code>. PostgreSQL:
+<code>run --source-postgres env:PARENT_DSN --destination-postgres env:VNEXT_DSN
+--archive &lt;path&gt;</code> into an empty database you created (<code>CREATE DATABASE</code>);
+memory comes from the parent&#x27;s <code>kv_store</code> table automatically.</li><li>Start the vNext daemon on the destination (`--database-url sqlite://&lt;path&gt;?mode=rwc<code> or </code>--database-url postgresql://…<code>); the imported
+agents, traversers, paths, event logs and memory are served through
+</code>/api/v2<code>. The daemon must be at least as new as the </code>migrations/`
+directory the importer applied (it skips versions already recorded).</li><li><code>backup --database &lt;destination&gt;</code> / <code>--database-postgres env:VNEXT_DSN</code> <code>--out &lt;dir&gt;</code> before opening it to traffic; <code>verify</code>; keep the archive next
+to the backup.</li></ol>
+<p>Rehearse on a synthetic store first: <code>fixture --out /tmp/legacy</code> creates a parent-shaped SQLite/BoltDB store, <code>fixture --postgres env:EMPTY_DSN</code> fills an empty PostgreSQL database with the parent&#x27;s postgres-mode schema (captured from a real parent start) and the same data, memory in <code>kv_store</code>.</p>
+<h2 id="not-supported">Not supported</h2>
+<ul><li>Cross-backend migration (SQLite parent → PostgreSQL vNext or the reverse); the archive is always a SQLite file.</li><li>The parent&#x27;s Lakebase/Databricks-token PostgreSQL authentication and non-default <code>schema</code> search paths: the tool connects with the connection
+string it is given (static credentials) and reads the connection&#x27;s current
+schema.</li><li><code>pg_dump</code>-format backups; the PostgreSQL backup is the tool&#x27;s own COPY format and is restored only by this tool into the same migration version.</li><li>Payload/VC documents kept outside the database (<code>input_uri</code>, <code>result_uri</code>, <code>storage_uri</code>, the parent&#x27;s file keystore under <code>~/.atfgraph</code>). Only what is
+in the database (and BoltDB file) is read.</li><li>Continuation of unfinished legacy traversers (the parent&#x27;s executions), approvals or leases.</li><li>Re-signing legacy proofs or deriving vNext node identities from legacy DIDs.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

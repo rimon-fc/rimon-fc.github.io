@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge operations — ATFGraph vNext reference</title>
+<meta name="description" content="Knowledge operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Knowledge operations</h1>
+<p>Document knowledge per scope: put, list, get, delete, lexical BM25 search with citations, and per-scope statistics.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-deleteKnowledgeDocument"><code>deleteKnowledgeDocument</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/knowledge/delete</code></td></tr><tr><td><a href="#op-getKnowledgeDocument"><code>getKnowledgeDocument</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/knowledge/get</code></td></tr><tr><td><a href="#op-listKnowledgeDocuments"><code>listKnowledgeDocuments</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/knowledge/list</code></td></tr><tr><td><a href="#op-putKnowledgeDocument"><code>putKnowledgeDocument</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/knowledge/put</code></td></tr><tr><td><a href="#op-putKnowledgeBatch"><code>putKnowledgeBatch</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/knowledge/put-batch</code></td></tr><tr><td><a href="#op-searchKnowledge"><code>searchKnowledge</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/knowledge/search</code></td></tr><tr><td><a href="#op-knowledgeStats"><code>knowledgeStats</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/knowledge/stats</code></td></tr></tbody></table></div>
+<section class="operation" id="op-deleteKnowledgeDocument">
+<h3><code>deleteKnowledgeDocument</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/knowledge/delete</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Tombstone one document, keeping its revision monotonic. deleted:false when no live document existed. expected_revision mismatches are 409 revision_conflict.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.knowledge_api.KnowledgeApi.delete_knowledge_document()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-knowledgedelete"><code>KnowledgeDelete</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;doc_id&quot;: &quot;string&quot;,
+  &quot;scope&quot;: &quot;session&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-knowledgedeleted"><code>KnowledgeDeleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false,
+  &quot;doc_id&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-getKnowledgeDocument">
+<h3><code>getKnowledgeDocument</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/knowledge/get</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Read one document with its chunks (include_chunks defaults to true). A missing or deleted document returns found:false with the doc_id rather than 404.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.knowledge_api.KnowledgeApi.get_knowledge_document()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-knowledgeget"><code>KnowledgeGet</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;doc_id&quot;: &quot;string&quot;,
+  &quot;scope&quot;: &quot;session&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-knowledgedocument"><code>KnowledgeDocument</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;chunks&quot;: 0,
+  &quot;created_at&quot;: 0,
+  &quot;doc_id&quot;: &quot;string&quot;,
+  &quot;found&quot;: false,
+  &quot;items&quot;: [
+    {
+      &quot;citation&quot;: &quot;string&quot;,
+      &quot;metadata&quot;: {
+        &quot;key&quot;: {}
+      },
+      &quot;ordinal&quot;: 0,
+      &quot;page&quot;: 0,
+      &quot;text&quot;: &quot;string&quot;,
+      &quot;tokens&quot;: 0
+    }
+  ],
+  &quot;metadata&quot;: {
+    &quot;key&quot;: {}
+  },
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;text_bytes&quot;: 0,
+  &quot;title&quot;: &quot;string&quot;,
+  &quot;tokens&quot;: 0,
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-listKnowledgeDocuments">
+<h3><code>listKnowledgeDocuments</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/knowledge/list</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Page live documents of one scope in ascending doc_id order with an optional literal prefix. cursor is the last doc_id of the previous page; a null next_cursor is the last page.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.knowledge_api.KnowledgeApi.list_knowledge_documents()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-knowledgelistquery"><code>KnowledgeListQuery</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;scope&quot;: &quot;session&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-knowledgelisting"><code>KnowledgeListing</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;chunks&quot;: 0,
+      &quot;doc_id&quot;: &quot;string&quot;,
+      &quot;metadata&quot;: {
+        &quot;key&quot;: {}
+      },
+      &quot;revision&quot;: 0,
+      &quot;text_bytes&quot;: 0,
+      &quot;title&quot;: &quot;string&quot;,
+      &quot;tokens&quot;: 0,
+      &quot;updated_at&quot;: 0
+    }
+  ],
+  &quot;next_cursor&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-putKnowledgeDocument">
+<h3><code>putKnowledgeDocument</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/knowledge/put</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Write or replace one document in a memory scope. Provide exactly one of text (chunked server-side, optional chunk size/overlap) or chunks (1-2000 caller chunks). doc_id is 1-256 printable characters; text is at most 1 MiB, each chunk at most 32 KiB, metadata at most 16384 canonical bytes. expected_revision is compare-and-set (0 means must not exist; 409 revision_conflict). Scopes hold at most 20000 documents and 200000 chunks (422 scope_full). Writes do not append to the memory change feed.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.knowledge_api.KnowledgeApi.put_knowledge_document()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-knowledgeput"><code>KnowledgePut</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;doc_id&quot;: &quot;string&quot;,
+  &quot;scope&quot;: &quot;session&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-knowledgewriteresult"><code>KnowledgeWriteResult</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;chunks&quot;: 0,
+  &quot;created&quot;: false,
+  &quot;doc_id&quot;: &quot;string&quot;,
+  &quot;postings&quot;: 0,
+  &quot;revision&quot;: 0,
+  &quot;terms&quot;: 0,
+  &quot;tokens&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-putKnowledgeBatch">
+<h3><code>putKnowledgeBatch</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/knowledge/put-batch</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Write 1-100 documents in one transaction: any failure writes nothing. Duplicate doc_ids are rejected and the combined text is bounded to 4 MiB.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.knowledge_api.KnowledgeApi.put_knowledge_batch()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-knowledgeputbatch"><code>KnowledgePutBatch</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;documents&quot;: [
+    {
+      &quot;doc_id&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;scope&quot;: &quot;session&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-knowledgebatchresult"><code>KnowledgeBatchResult</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;chunks&quot;: 0,
+  &quot;documents&quot;: 0,
+  &quot;items&quot;: [
+    {
+      &quot;chunks&quot;: 0,
+      &quot;created&quot;: false,
+      &quot;doc_id&quot;: &quot;string&quot;,
+      &quot;postings&quot;: 0,
+      &quot;revision&quot;: 0,
+      &quot;terms&quot;: 0,
+      &quot;tokens&quot;: 0
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-searchKnowledge">
+<h3><code>searchKnowledge</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/knowledge/search</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Lexical BM25 search (k1 = 1.2, b = 0.75) over the chunks of one scope. Tokenisation lower-cases, splits camelCase and acronyms, and indexes ideographs per character; the same rules apply to queries. Results are ordered by score descending, then doc_id, then ordinal, identically on every page and process. filters are exact JSON equality against document metadata (at most 32 keys); doc_id restricts to one document; min_score floors the score. A query without indexable terms returns items:[] with terms:[] and status 200. There is no embedding index; use memory/vector for embeddings.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.knowledge_api.KnowledgeApi.search_knowledge()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-knowledgesearch"><code>KnowledgeSearch</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;query&quot;: &quot;string&quot;,
+  &quot;scope&quot;: &quot;session&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-knowledgehits"><code>KnowledgeHits</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;corpus_chunks&quot;: 0,
+  &quot;items&quot;: [
+    {
+      &quot;chunk_metadata&quot;: {
+        &quot;key&quot;: {}
+      },
+      &quot;citation&quot;: &quot;string&quot;,
+      &quot;doc_id&quot;: &quot;string&quot;,
+      &quot;matched_terms&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;metadata&quot;: {
+        &quot;key&quot;: {}
+      },
+      &quot;ordinal&quot;: 0,
+      &quot;page&quot;: 0,
+      &quot;score&quot;: 0.0,
+      &quot;text&quot;: &quot;string&quot;,
+      &quot;title&quot;: &quot;string&quot;,
+      &quot;tokens&quot;: 0
+    }
+  ],
+  &quot;next_offset&quot;: 0,
+  &quot;offset&quot;: 0,
+  &quot;scanned&quot;: 0,
+  &quot;strategy&quot;: &quot;bm25&quot;,
+  &quot;terms&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;top_k&quot;: 0,
+  &quot;total&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-knowledgeStats">
+<h3><code>knowledgeStats</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/knowledge/stats</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Live corpus counts for one scope (documents, chunks, tokens, bytes, distinct terms, postings), the strategy and the bounds the store enforces.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.knowledge_api.KnowledgeApi.knowledge_stats()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-knowledgescope"><code>KnowledgeScope</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;scope&quot;: &quot;session&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-knowledgestats"><code>KnowledgeStats</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;average_chunk_tokens&quot;: 0.0,
+  &quot;chunks&quot;: 0,
+  &quot;documents&quot;: 0,
+  &quot;limits&quot;: {
+    &quot;chunk_bytes&quot;: 0,
+    &quot;chunk_chars&quot;: {
+      &quot;default&quot;: 0,
+      &quot;max&quot;: 0,
+      &quot;min&quot;: 0
+    },
+    &quot;chunk_overlap_default&quot;: 0,
+    &quot;chunks_per_document&quot;: 0,
+    &quot;chunks_per_scope&quot;: 0,
+    &quot;doc_id_chars&quot;: 0,
+    &quot;documents_per_batch&quot;: 0,
+    &quot;documents_per_scope&quot;: 0,
+    &quot;list_limit&quot;: 0,
+    &quot;metadata_bytes&quot;: 0,
+    &quot;offset&quot;: 0,
+    &quot;query_chars&quot;: 0,
+    &quot;query_terms&quot;: 0,
+    &quot;term_chars&quot;: 0,
+    &quot;text_bytes&quot;: 0,
+    &quot;title_chars&quot;: 0,
+    &quot;top_k&quot;: 0
+  },
+  &quot;postings&quot;: 0,
+  &quot;scope&quot;: &quot;session&quot;,
+  &quot;strategy&quot;: &quot;bm25&quot;,
+  &quot;terms&quot;: 0,
+  &quot;text_bytes&quot;: 0,
+  &quot;tokens&quot;: 0
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

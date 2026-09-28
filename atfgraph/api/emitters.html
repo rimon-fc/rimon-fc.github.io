@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emitters operations — ATFGraph vNext reference</title>
+<meta name="description" content="Emitters operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Emitters operations</h1>
+<p>Scheduled and event-driven sources that start traversers, plus their delivery log.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-syncEmitters"><code>syncEmitters</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/agents/{label}/emitters</code></td></tr><tr><td><a href="#op-listEmitters"><code>listEmitters</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/emitters</code></td></tr><tr><td><a href="#op-createEmitter"><code>createEmitter</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/emitters</code></td></tr><tr><td><a href="#op-emitterMetrics"><code>emitterMetrics</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/emitters/metrics</code></td></tr><tr><td><a href="#op-getEmitter"><code>getEmitter</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/emitters/{id}</code></td></tr><tr><td><a href="#op-updateEmitter"><code>updateEmitter</code></a></td><td><span class="method">PATCH</span></td><td><code>/api/v2/emitters/{id}</code></td></tr><tr><td><a href="#op-deleteEmitter"><code>deleteEmitter</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/emitters/{id}</code></td></tr><tr><td><a href="#op-emitterEvents"><code>emitterEvents</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/emitters/{id}/events</code></td></tr><tr><td><a href="#op-fireEmitter"><code>fireEmitter</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/emitters/{id}/fire</code></td></tr><tr><td><a href="#op-replayEmitterEvent"><code>replayEmitterEvent</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/emitters/{id}/replay</code></td></tr></tbody></table></div>
+<section class="operation" id="op-syncEmitters">
+<h3><code>syncEmitters</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/agents/{label}/emitters</code></p>
+<p class="meta">Requires: admin role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.sync_emitters()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>label</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>version</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-emittersync"><code>EmitterSync</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;bindings&quot;: [
+    {
+      &quot;capability&quot;: &quot;string&quot;,
+      &quot;source&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-emitterlist"><code>EmitterList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;code_origin&quot;: &quot;string&quot;,
+      &quot;cron_expression&quot;: &quot;string&quot;,
+      &quot;enabled&quot;: false,
+      &quot;event_types&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;input&quot;: {},
+      &quot;interval_seconds&quot;: 0,
+      &quot;kind&quot;: &quot;string&quot;,
+      &quot;last_registered_at&quot;: 0,
+      &quot;managed_by&quot;: &quot;string&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;next_due_at&quot;: 0,
+      &quot;orphaned&quot;: false,
+      &quot;revision&quot;: 0,
+      &quot;secret_env&quot;: &quot;string&quot;,
+      &quot;source&quot;: &quot;string&quot;,
+      &quot;source_config&quot;: {
+        &quot;actions&quot;: [
+          {}
+        ],
+        &quot;auth_mode&quot;: &quot;string&quot;,
+        &quot;basic_username&quot;: &quot;string&quot;,
+        &quot;event_id_path&quot;: &quot;string&quot;,
+        &quot;event_type_header&quot;: &quot;string&quot;,
+        &quot;event_type_path&quot;: &quot;string&quot;,
+        &quot;header&quot;: &quot;string&quot;,
+        &quot;idempotency_header&quot;: &quot;string&quot;,
+        &quot;job_ids&quot;: [
+          {}
+        ],
+        &quot;kinds&quot;: [
+          {}
+        ],
+        &quot;prefix&quot;: &quot;string&quot;,
+        &quot;scheme&quot;: &quot;string&quot;,
+        &quot;scope&quot;: {},
+        &quot;scope_id&quot;: &quot;string&quot;,
+        &quot;signature_header&quot;: &quot;string&quot;,
+        &quot;signature_prefix&quot;: &quot;string&quot;,
+        &quot;timestamp_header&quot;: &quot;string&quot;,
+        &quot;tolerance_seconds&quot;: 0,
+        &quot;workspace_id&quot;: &quot;string&quot;,
+        &quot;workspace_path&quot;: &quot;string&quot;
+      },
+      &quot;sticky_paused&quot;: false,
+      &quot;target&quot;: &quot;string&quot;,
+      &quot;timezone&quot;: &quot;string&quot;,
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-listEmitters">
+<h3><code>listEmitters</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/emitters</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.list_emitters()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-emitterlist"><code>EmitterList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;code_origin&quot;: &quot;string&quot;,
+      &quot;cron_expression&quot;: &quot;string&quot;,
+      &quot;enabled&quot;: false,
+      &quot;event_types&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;input&quot;: {},
+      &quot;interval_seconds&quot;: 0,
+      &quot;kind&quot;: &quot;string&quot;,
+      &quot;last_registered_at&quot;: 0,
+      &quot;managed_by&quot;: &quot;string&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;next_due_at&quot;: 0,
+      &quot;orphaned&quot;: false,
+      &quot;revision&quot;: 0,
+      &quot;secret_env&quot;: &quot;string&quot;,
+      &quot;source&quot;: &quot;string&quot;,
+      &quot;source_config&quot;: {
+        &quot;actions&quot;: [
+          {}
+        ],
+        &quot;auth_mode&quot;: &quot;string&quot;,
+        &quot;basic_username&quot;: &quot;string&quot;,
+        &quot;event_id_path&quot;: &quot;string&quot;,
+        &quot;event_type_header&quot;: &quot;string&quot;,
+        &quot;event_type_path&quot;: &quot;string&quot;,
+        &quot;header&quot;: &quot;string&quot;,
+        &quot;idempotency_header&quot;: &quot;string&quot;,
+        &quot;job_ids&quot;: [
+          {}
+        ],
+        &quot;kinds&quot;: [
+          {}
+        ],
+        &quot;prefix&quot;: &quot;string&quot;,
+        &quot;scheme&quot;: &quot;string&quot;,
+        &quot;scope&quot;: {},
+        &quot;scope_id&quot;: &quot;string&quot;,
+        &quot;signature_header&quot;: &quot;string&quot;,
+        &quot;signature_prefix&quot;: &quot;string&quot;,
+        &quot;timestamp_header&quot;: &quot;string&quot;,
+        &quot;tolerance_seconds&quot;: 0,
+        &quot;workspace_id&quot;: &quot;string&quot;,
+        &quot;workspace_path&quot;: &quot;string&quot;
+      },
+      &quot;sticky_paused&quot;: false,
+      &quot;target&quot;: &quot;string&quot;,
+      &quot;timezone&quot;: &quot;string&quot;,
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-createEmitter">
+<h3><code>createEmitter</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/emitters</code></p>
+<p class="meta">Requires: admin role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.create_emitter()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-emittercreate"><code>EmitterCreate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;kind&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;target&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>201</code></td><td><a href="../schemas/index.html#schema-emitter"><code>Emitter</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>201</code></h4>
+<pre><code class="language-json">{
+  &quot;code_origin&quot;: &quot;string&quot;,
+  &quot;cron_expression&quot;: &quot;string&quot;,
+  &quot;enabled&quot;: false,
+  &quot;event_types&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;input&quot;: {},
+  &quot;interval_seconds&quot;: 0,
+  &quot;kind&quot;: &quot;string&quot;,
+  &quot;last_registered_at&quot;: 0,
+  &quot;managed_by&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;next_due_at&quot;: 0,
+  &quot;orphaned&quot;: false,
+  &quot;revision&quot;: 0,
+  &quot;secret_env&quot;: &quot;string&quot;,
+  &quot;source&quot;: &quot;string&quot;,
+  &quot;source_config&quot;: {
+    &quot;actions&quot;: [
+      &quot;set&quot;
+    ],
+    &quot;auth_mode&quot;: &quot;string&quot;,
+    &quot;basic_username&quot;: &quot;string&quot;,
+    &quot;event_id_path&quot;: &quot;string&quot;,
+    &quot;event_type_header&quot;: &quot;string&quot;,
+    &quot;event_type_path&quot;: &quot;string&quot;,
+    &quot;header&quot;: &quot;string&quot;,
+    &quot;idempotency_header&quot;: &quot;string&quot;,
+    &quot;job_ids&quot;: [
+      {}
+    ],
+    &quot;kinds&quot;: [
+      &quot;value&quot;
+    ],
+    &quot;prefix&quot;: &quot;string&quot;,
+    &quot;scheme&quot;: &quot;string&quot;,
+    &quot;scope&quot;: &quot;session&quot;,
+    &quot;scope_id&quot;: &quot;string&quot;,
+    &quot;signature_header&quot;: &quot;string&quot;,
+    &quot;signature_prefix&quot;: &quot;string&quot;,
+    &quot;timestamp_header&quot;: &quot;string&quot;,
+    &quot;tolerance_seconds&quot;: 0,
+    &quot;workspace_id&quot;: &quot;string&quot;,
+    &quot;workspace_path&quot;: &quot;string&quot;
+  },
+  &quot;sticky_paused&quot;: false,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;timezone&quot;: &quot;string&quot;,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-emitterMetrics">
+<h3><code>emitterMetrics</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/emitters/metrics</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.emitter_metrics()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-emittermetrics"><code>EmitterMetrics</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;dlq_depth&quot;: 0,
+  &quot;enabled_emitters&quot;: 0,
+  &quot;events_24h&quot;: {
+    &quot;key&quot;: 0
+  },
+  &quot;memory_dispatch_failures&quot;: 0,
+  &quot;orphaned_emitters&quot;: 0,
+  &quot;total_emitters&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-getEmitter">
+<h3><code>getEmitter</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/emitters/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.get_emitter()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-emitter"><code>Emitter</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;code_origin&quot;: &quot;string&quot;,
+  &quot;cron_expression&quot;: &quot;string&quot;,
+  &quot;enabled&quot;: false,
+  &quot;event_types&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;input&quot;: {},
+  &quot;interval_seconds&quot;: 0,
+  &quot;kind&quot;: &quot;string&quot;,
+  &quot;last_registered_at&quot;: 0,
+  &quot;managed_by&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;next_due_at&quot;: 0,
+  &quot;orphaned&quot;: false,
+  &quot;revision&quot;: 0,
+  &quot;secret_env&quot;: &quot;string&quot;,
+  &quot;source&quot;: &quot;string&quot;,
+  &quot;source_config&quot;: {
+    &quot;actions&quot;: [
+      &quot;set&quot;
+    ],
+    &quot;auth_mode&quot;: &quot;string&quot;,
+    &quot;basic_username&quot;: &quot;string&quot;,
+    &quot;event_id_path&quot;: &quot;string&quot;,
+    &quot;event_type_header&quot;: &quot;string&quot;,
+    &quot;event_type_path&quot;: &quot;string&quot;,
+    &quot;header&quot;: &quot;string&quot;,
+    &quot;idempotency_header&quot;: &quot;string&quot;,
+    &quot;job_ids&quot;: [
+      {}
+    ],
+    &quot;kinds&quot;: [
+      &quot;value&quot;
+    ],
+    &quot;prefix&quot;: &quot;string&quot;,
+    &quot;scheme&quot;: &quot;string&quot;,
+    &quot;scope&quot;: &quot;session&quot;,
+    &quot;scope_id&quot;: &quot;string&quot;,
+    &quot;signature_header&quot;: &quot;string&quot;,
+    &quot;signature_prefix&quot;: &quot;string&quot;,
+    &quot;timestamp_header&quot;: &quot;string&quot;,
+    &quot;tolerance_seconds&quot;: 0,
+    &quot;workspace_id&quot;: &quot;string&quot;,
+    &quot;workspace_path&quot;: &quot;string&quot;
+  },
+  &quot;sticky_paused&quot;: false,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;timezone&quot;: &quot;string&quot;,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-updateEmitter">
+<h3><code>updateEmitter</code></h3>
+<p class="meta"><span class="method">PATCH</span> <code>/api/v2/emitters/{id}</code></p>
+<p class="meta">Requires: admin role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.update_emitter()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-emitterupdate"><code>EmitterUpdate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;expected_revision&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-emitter"><code>Emitter</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;code_origin&quot;: &quot;string&quot;,
+  &quot;cron_expression&quot;: &quot;string&quot;,
+  &quot;enabled&quot;: false,
+  &quot;event_types&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;input&quot;: {},
+  &quot;interval_seconds&quot;: 0,
+  &quot;kind&quot;: &quot;string&quot;,
+  &quot;last_registered_at&quot;: 0,
+  &quot;managed_by&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;next_due_at&quot;: 0,
+  &quot;orphaned&quot;: false,
+  &quot;revision&quot;: 0,
+  &quot;secret_env&quot;: &quot;string&quot;,
+  &quot;source&quot;: &quot;string&quot;,
+  &quot;source_config&quot;: {
+    &quot;actions&quot;: [
+      &quot;set&quot;
+    ],
+    &quot;auth_mode&quot;: &quot;string&quot;,
+    &quot;basic_username&quot;: &quot;string&quot;,
+    &quot;event_id_path&quot;: &quot;string&quot;,
+    &quot;event_type_header&quot;: &quot;string&quot;,
+    &quot;event_type_path&quot;: &quot;string&quot;,
+    &quot;header&quot;: &quot;string&quot;,
+    &quot;idempotency_header&quot;: &quot;string&quot;,
+    &quot;job_ids&quot;: [
+      {}
+    ],
+    &quot;kinds&quot;: [
+      &quot;value&quot;
+    ],
+    &quot;prefix&quot;: &quot;string&quot;,
+    &quot;scheme&quot;: &quot;string&quot;,
+    &quot;scope&quot;: &quot;session&quot;,
+    &quot;scope_id&quot;: &quot;string&quot;,
+    &quot;signature_header&quot;: &quot;string&quot;,
+    &quot;signature_prefix&quot;: &quot;string&quot;,
+    &quot;timestamp_header&quot;: &quot;string&quot;,
+    &quot;tolerance_seconds&quot;: 0,
+    &quot;workspace_id&quot;: &quot;string&quot;,
+    &quot;workspace_path&quot;: &quot;string&quot;
+  },
+  &quot;sticky_paused&quot;: false,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;timezone&quot;: &quot;string&quot;,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-deleteEmitter">
+<h3><code>deleteEmitter</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/emitters/{id}</code></p>
+<p class="meta">Requires: admin role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.delete_emitter()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-deleted"><code>Deleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-emitterEvents">
+<h3><code>emitterEvents</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/emitters/{id}/events</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.emitter_events()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-inboundeventlist"><code>InboundEventList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;created_at&quot;: 0,
+      &quot;delivery_key&quot;: &quot;string&quot;,
+      &quot;emitter_id&quot;: &quot;string&quot;,
+      &quot;error&quot;: {},
+      &quot;event_type&quot;: &quot;string&quot;,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;input&quot;: {},
+      &quot;raw_payload&quot;: {},
+      &quot;replay_of&quot;: &quot;string&quot;,
+      &quot;status&quot;: &quot;string&quot;,
+      &quot;traverser_id&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-fireEmitter">
+<h3><code>fireEmitter</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/emitters/{id}/fire</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.fire_emitter()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-emitterfire"><code>EmitterFire</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;delivery_key&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>202</code></td><td><a href="../schemas/index.html#schema-admission"><code>Admission</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>202</code></h4>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;root_id&quot;: &quot;string&quot;,
+  &quot;status&quot;: &quot;queued&quot;,
+  &quot;step_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-replayEmitterEvent">
+<h3><code>replayEmitterEvent</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/emitters/{id}/replay</code></p>
+<p class="meta">Requires: admin role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.emitters_api.EmittersApi.replay_emitter_event()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-emitterreplay"><code>EmitterReplay</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;event_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>202</code></td><td><a href="../schemas/index.html#schema-inboundevent"><code>InboundEvent</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>202</code></h4>
+<pre><code class="language-json">{
+  &quot;created_at&quot;: 0,
+  &quot;delivery_key&quot;: &quot;string&quot;,
+  &quot;emitter_id&quot;: &quot;string&quot;,
+  &quot;error&quot;: {},
+  &quot;event_type&quot;: &quot;string&quot;,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;input&quot;: {},
+  &quot;raw_payload&quot;: {},
+  &quot;replay_of&quot;: &quot;string&quot;,
+  &quot;status&quot;: &quot;string&quot;,
+  &quot;traverser_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

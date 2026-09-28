@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install and run a first node — ATFGraph vNext reference</title>
+<meta name="description" content="Install and run a first node: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Install and run a first node</h1>
+<p>By the end of this page you will have installed the <code>atfgraph</code> wheel, written an agent node with one traversal and one skill, run its worker three different ways, called it from the <code>atfg</code> CLI and from <code>Client</code>, and read the path the graph server recorded. It requires a Rust toolchain to build <code>atfgraphd</code> and <code>atfg</code>, and Python 3.10 or newer; nothing here needs a model provider or credentials.</p>
+<p>Prerequisites: the repository cloned (the Rust server and CLI at its root, the Python package under <code>python/</code>), <code>cargo</code>, Node 22 for the console, and a <code>python3.10+</code> interpreter (the macOS system <code>python3</code> is 3.9 and will not install the wheel). If you use a managed graph server, install the client instead (the release&#x27;s <code>install.sh --from github:fclimited/ai-lab-atfgraph@vnext-&lt;version&gt;</code>, see <a href="install.html">../install.md</a>) and skip to step 2.</p>
+<h2 id="1-build-the-server-and-install-the-sdk">1. Build the server and install the SDK</h2>
+<p>The graph server and the CLI are Rust binaries built at the root of the repository; the SDK is one Python package under <code>python/</code>. Everything runs from the one checkout, as in <a href="quickstart.html">../quickstart.md</a>.</p>
+<pre><code class="language-bash">cargo build --bin atfgraphd --bin atfg
+(cd ui &amp;&amp; npm ci &amp;&amp; npm run build)             # the web console, served by the daemon at /ui/
+export PATH=&quot;$PWD/target/debug:$PATH&quot;
+
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -e &#x27;python[test]&#x27;</code></pre>
+<p><code>python/pyproject.toml</code> declares <code>requires-python = &quot;&gt;=3.10&quot;</code> and depends on <code>httpx</code>, <code>pydantic</code> (v2), <code>jsonschema</code>, <code>python-dateutil</code> and <code>typing-extensions</code>. The wheel installs both halves of the SDK: <code>Agent</code> for writing nodes and <code>Client</code> for calling them. The OpenAPI-generated internals ship inside the same wheel; there is no second package.</p>
+<h2 id="2-write-the-node">2. Write the node</h2>
+<p>An agent node is one <code>Agent</code> object: a label (<code>node_id</code>) plus a version, and the capabilities registered on it. The example below is <code>examples/python/first_node/agent.py</code>, unchanged apart from the module docstring.</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from pydantic import BaseModel
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;hello&quot;, version=&quot;1.0.0&quot;, description=&quot;Greets travellers&quot;)
+
+
+class Greeting(BaseModel):
+    greeting: str
+    shouted: str
+    length: int
+
+
+@app.skill()
+def shout(text: str) -&gt; dict:
+    &quot;&quot;&quot;Upper-case a string. Synchronous handlers run in a worker thread; heartbeats keep going.&quot;&quot;&quot;
+    return {&quot;text&quot;: text.upper()}
+
+
+@app.traversal()
+async def greet(name: str, punctuation: str = &quot;!&quot;) -&gt; Greeting:
+    &quot;&quot;&quot;Greet by name, using the ``shout`` skill as a nested child step.&quot;&quot;&quot;
+    if not name.strip():
+        raise ValueError(&quot;name must not be empty&quot;)
+    loud = await app.traverse(&quot;hello.shout&quot;, text=f&quot;hello {name}&quot;)
+    return Greeting(greeting=f&quot;Hello {name}{punctuation}&quot;, shouted=loud[&quot;text&quot;], length=len(name))
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run()</code></pre>
+<p>What the pieces mean:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Piece</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>Agent(node_id=&quot;hello&quot;, version=&quot;1.0.0&quot;)</code></td><td>The label and version the node registers under. <code>node_id</code> must not contain <code>.</code>, <code>/</code> or spaces (<code>python/atfgraph/agent.py</code> raises <code>ValueError</code> otherwise).</td></tr><tr><td><code>@app.skill()</code></td><td>A deterministic capability. <code>shout</code> is a plain <code>def</code>, so the worker runs it in a thread.</td></tr><tr><td><code>@app.traversal()</code></td><td>A capability that may route through the graph. <code>greet</code> calls <code>hello.shout</code> with <code>app.traverse</code>, which becomes a child step.</td></tr><tr><td><code>-&gt; Greeting</code></td><td>The return annotation becomes the registered output schema; the Pydantic instance is serialised with <code>model_dump(mode=&quot;json&quot;)</code>.</td></tr><tr><td><code>app.run()</code></td><td>The foreground worker: register, enroll, claim, and drain on Ctrl+C.</td></tr></tbody></table></div>
+<p>The input schema is derived from the keyword parameters: <code>name</code> is required, <code>punctuation</code> is optional because it has a default. Page <a href="02-traversals-skills-and-routers.html">02-traversals-skills-and-routers.md</a> covers the derivation rules.</p>
+<h2 id="3-start-the-graph-server">3. Start the graph server</h2>
+<pre><code class="language-bash">atfg server start</code></pre>
+<p>It prints the API and console addresses; the default is <code>http://127.0.0.1:18880</code>. Loopback without an API key is development mode. The SDK reads <code>ATFGRAPH_SERVER</code> and <code>ATFGRAPH_API_KEY</code> from the environment and falls back to that loopback address (<code>python/atfgraph/transport.py</code>), so on one machine nothing else has to be configured. See <code>../howto-run-graph-server.md</code> for other ways to run it.</p>
+<h2 id="4-run-the-worker-three-ways">4. Run the worker, three ways</h2>
+<p>All three start the same outbound worker. There are no inbound callbacks: the worker registers the definition, enrolls with a capacity, then claims work, heartbeats each lease and completes tasks. Pick the form that fits the moment.</p>
+<h3 id="app-run-in-the-module"><code>app.run()</code> in the module</h3>
+<p>The <code>if __name__ == &quot;__main__&quot;:</code> block above makes the module runnable. From the checkout:</p>
+<pre><code class="language-bash">.venv/bin/python -m examples.python.first_node.agent</code></pre>
+<p>Ctrl+C sets the stop event; the worker drains running tasks and exits.</p>
+<h3 id="python-m-atfgraph-worker-module"><code>python -m atfgraph.worker --module</code></h3>
+<p>The generic worker CLI imports the module and looks for an <code>Agent</code> named <code>app</code> (then <code>agent</code>), or the attribute you name after the colon. Its docstring in <code>examples/python/first_node/agent.py</code> shows this form.</p>
+<pre><code class="language-bash">.venv/bin/python -m atfgraph.worker --module examples.python.first_node.agent:app --server http://127.0.0.1:18880</code></pre>
+<p>Flags, from <code>python/atfgraph/worker.py</code>:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Flag</th><th scope="col">Effect</th></tr></thead><tbody><tr><td><code>--server URL</code></td><td>Graph server (default <code>$ATFGRAPH_SERVER</code> or the loopback address).</td></tr><tr><td><code>--api-key KEY</code></td><td>API key, sent as the <code>X-API-Key</code> header (default <code>$ATFGRAPH_API_KEY</code>, then the key <code>atfg login</code> saved for this server).</td></tr><tr><td>`--edge-auth none\</td><td>databricks`</td><td>Credential for a platform proxy in front of the server (default <code>$ATFGRAPH_EDGE_AUTH</code>, then what <code>atfg login</code> saved, then <code>none</code>).</td></tr><tr><td><code>--databricks-profile NAME</code></td><td>Databricks profile for <code>--edge-auth databricks</code> (default <code>$ATFGRAPH_DATABRICKS_PROFILE</code>). Never chosen for you.</td></tr><tr><td><code>--capacity N</code></td><td>Concurrent handler permits (default <code>Agent(capacity=8)</code>).</td></tr><tr><td><code>--max-waiting N</code></td><td>Parents allowed to release their permit while waiting on children.</td></tr><tr><td><code>--once</code></td><td>Exit when the queue is empty and nothing is running.</td></tr><tr><td><code>--no-register</code></td><td>Skip registration (the definition is already on the server).</td></tr><tr><td><code>--log-level LEVEL</code></td><td>Python logging level, default <code>INFO</code>.</td></tr></tbody></table></div>
+<h3 id="atfg-dev"><code>atfg dev</code></h3>
+<p><code>atfg dev</code> wraps the same worker command, checks that the interpreter can import <code>atfgraph</code>, and reports when the label appears in the registry (<code>../cli-reference.md</code>).</p>
+<pre><code class="language-bash">atfg dev --module examples.python.first_node.agent:app --python .venv/bin/python --expect-label hello</code></pre>
+<p>Whichever way you start it, the first thing <code>serve</code> does is <code>register</code>. Registration is immutable per label and version: if <code>hello@1.0.0</code> is already registered with a different definition the server answers 409 and the SDK raises <code>ConflictError</code> with the message <code>bump Agent(version=...)</code>. Change the code, bump the version.</p>
+<h2 id="5-call-it">5. Call it</h2>
+<h3 id="from-the-cli">From the CLI</h3>
+<pre><code class="language-bash">atfg ls
+atfg traverse hello.greet --in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;</code></pre>
+<p><code>atfg ls</code> lists <code>hello.greet</code> (kind <code>traversal</code>) and <code>hello.shout</code> (kind <code>skill</code>), each with its timeout and attempt budget. <code>atfg traverse</code> submits a traverser, waits at the barrier and prints the output:</p>
+<pre><code class="language-json">{
+  &quot;greeting&quot;: &quot;Hello Ada!&quot;,
+  &quot;length&quot;: 3,
+  &quot;shouted&quot;: &quot;HELLO ADA&quot;
+}</code></pre>
+<p>The input is always a JSON object whose keys are the capability&#x27;s parameter names, unwrapped. <code>../howto-start-a-traverser.md</code> lists the other <code>traverse</code> flags (<code>--async</code>, <code>--session</code>, <code>--node-version</code>, <code>--idempotency-key</code>).</p>
+<h3 id="from-python-with-client">From Python with <code>Client</code></h3>
+<p>Adapted from <code>examples/python/first_node/call.py</code>. <code>Client</code> is an async client; one instance per event loop, used with <code>async with</code>.</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+import os
+
+from atfgraph import Client
+
+
+async def main(name: str) -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        handle = await client.submit(&quot;hello.greet&quot;, {&quot;name&quot;: name})
+        print(&quot;submitted&quot;, handle.id, handle.status)
+        result = await handle.result(timeout=60)
+        print(&quot;result&quot;, result)
+        path = await handle.path()
+        for step in path.items:
+            print(f&quot;  {step.target:&lt;14} {step.status:&lt;10} attempts={len(step.attempts)}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main(&quot;Ada&quot;))</code></pre>
+<p><code>client.submit</code> returns a <code>Handle</code>; <code>handle.result(timeout)</code> waits for a terminal state and returns the output, or raises <code>TraversalFailed</code>, <code>TraversalCancelled</code> or <code>TraversalTimedOut</code>. <code>client.traverse(target, input, timeout=...)</code> does submit and result in one call. <code>Client(None)</code> uses <code>ATFGRAPH_SERVER</code> or the loopback default.</p>
+<p><code>tests/python_test_examples.py</code> asserts the exact output above and that the registered output schema requires <code>greeting</code>, <code>shouted</code> and <code>length</code>.</p>
+<h2 id="6-read-the-path">6. Read the path</h2>
+<pre><code class="language-bash">atfg path &lt;traverser-id&gt;</code></pre>
+<p><code>atfg traverse</code> prints the traverser id on its first line; <code>atfg path</code> prints one row per step:</p>
+<pre><code class="language-text">#  STEP  TARGET       STATUS     ATTEMPT  PARENT  ELAPSED
+1  ...   hello.greet  succeeded  1        -       314ms
+2  ...   hello.shout  succeeded  1        &lt;step 1&gt; 6ms</code></pre>
+<p>Two steps: the traversal you called and the skill it called through the graph server. In Python the same data is <code>Path.items</code>, a list of <code>PathStep</code> with <code>step_id</code>, <code>traverser_id</code>, <code>target</code>, <code>status</code>, <code>parent_step_id</code> and <code>attempts</code> (<code>python/atfgraph/models.py</code>). The step with no parent is the root; the edge from step 1 to step 2 is the <code>app.traverse</code> call inside <code>greet</code>. Nothing in the handler recorded that edge explicitly: the call went through the server as a nested child, so the server recorded it.</p>
+<h2 id="when-the-handler-raises">When the handler raises</h2>
+<p><code>greet</code> raises <code>ValueError</code> for a blank name. The worker completes the task with an error envelope <code>{&quot;code&quot;: &quot;ValueError&quot;, &quot;message&quot;: &quot;name must not be empty&quot;, &quot;retryable&quot;: false}</code> and the traverser ends <code>failed</code>. <code>atfg traverse</code> exits with code 3 and prints the envelope; <code>handle.result()</code> raises <code>TraversalFailed</code> whose <code>.code</code> is <code>&quot;ValueError&quot;</code>. Page <a href="03-calling-other-nodes.html">03-calling-other-nodes.md</a> shows how <code>RetryableError</code> changes that.</p>
+<h2 id="connecting-to-a-server-that-needs-credentials">Connecting to a server that needs credentials</h2>
+<p>Loopback development needs none of this. A shared graph server does, and there are two separate layers, each in its own header:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Layer</th><th scope="col">Header</th><th scope="col">What it answers</th><th scope="col">How you supply it</th></tr></thead><tbody><tr><td>ATFGraph API key</td><td><code>X-API-Key</code></td><td>which namespace, principal and roles you are</td><td><code>--api-key</code>, <code>Client(api_key=...)</code>, <code>Agent(api_key=...)</code>, <code>$ATFGRAPH_API_KEY</code>, or <code>atfg login</code></td></tr><tr><td>Edge credential (optional)</td><td><code>Authorization</code></td><td>whether a platform proxy in front of the server lets the request through</td><td><code>--edge-auth</code>, <code>Client(edge_auth=...)</code>, <code>$ATFGRAPH_EDGE_AUTH</code> (<code>none</code> by default, or <code>databricks</code>)</td></tr></tbody></table></div>
+<p>The two never share a header, and the API key is never sent as <code>Authorization</code>. (<code>Client(bearer_token=...)</code> still sets a literal <code>Authorization: Bearer</code> value for a server that takes its key that way; it no longer suppresses <code>api_key</code>, and it cannot be combined with an edge provider.)</p>
+<p><strong>Log in once.</strong> <code>atfg login</code> checks the credentials against the server and saves them to <code>~/.config/atfgraph/credentials</code> (mode 0600; a file other users can read is refused, not used):</p>
+<pre><code class="language-console">$ atfg login https://graph.example.com
+API key (leave empty for a server without keys):
+server   https://graph.example.com  (credentials accepted)
+api key  atfg_9f2…
+edge     none
+saved    /home/you/.config/atfgraph/credentials (0600); this is now the current server</code></pre>
+<p>After that <code>atfg ls</code>, <code>Client()</code>, <code>Agent(&quot;x&quot;)</code> and <code>python -m atfgraph.worker</code> need no server or key argument. Each setting resolves on its own: an explicit argument or flag, then the environment variable, then the saved entry <strong>for the server being called</strong>, then the default. A saved key is only ever sent to the server it was saved for. <code>atfg whoami</code> shows the resolved server, the first characters of the key and where each value came from; <code>atfg logout [url]</code> removes one saved server and leaves the others alone.</p>
+<p><strong>Behind a Databricks Apps proxy.</strong> Set the edge mode and name the profile; a profile is never picked for you:</p>
+<pre><code class="language-console">$ atfg login https://graph.example.com --edge-auth databricks --databricks-profile my-profile
+$ pip install &#x27;atfgraph[databricks]&#x27;</code></pre>
+<p>The CLI obtains the workspace token with <code>databricks auth token --profile my-profile</code> and keeps it in memory until shortly before it expires. The Python SDK uses <code>databricks-sdk</code> unified authentication, which also finds the client id and secret a Databricks App injects, so a node running as an App sets <code>ATFGRAPH_EDGE_AUTH=databricks</code> and needs no profile. Tokens are refreshed for you and are never written to disk or logged; the credentials file records only the profile name. Pass your own provider as <code>Client(edge_auth=obj)</code> where <code>obj.headers()</code> returns the <code>Authorization</code> header.</p>
+<h2 id="stop">Stop</h2>
+<p>Ctrl+C in the worker terminal, then <code>atfg server stop</code>.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="02-traversals-skills-and-routers.html">02-traversals-skills-and-routers.md</a>: how parameters and return types become schemas, sync versus async handlers, grouping capabilities with <code>AgentRouter</code>.</li><li><a href="03-calling-other-nodes.html">03-calling-other-nodes.md</a>: nested calls, fan-out with <code>asyncio.gather</code>, progress, cancellation and retries.</li><li><a href="15-testing.html">15-testing.md</a>: run this node inside a test against a real <code>atfgraphd</code>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

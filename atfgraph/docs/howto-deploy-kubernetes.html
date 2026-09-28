@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploy to Kubernetes, Helm or Databricks — ATFGraph vNext reference</title>
+<meta name="description" content="Deploy to Kubernetes, Helm or Databricks: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Deploy to Kubernetes, Helm or Databricks</h1>
+<p><strong>Problem:</strong> you want the graph server and workers on a cluster or in a Databricks workspace rather than on one machine.</p>
+<p>These targets are applied with their own tools; the CLI validates and scaffolds but does not manage their state the way it does for Compose. The rendered files live under <code>deploy/</code>.</p>
+<h2 id="kubernetes-with-kustomize">Kubernetes with kustomize</h2>
+<pre><code class="language-bash">kubectl -n atfgraph-vnext apply -k deploy/kubernetes/base</code></pre>
+<p><code>deploy/kubernetes/base</code> renders a ServiceAccount, the graph server and a worker Deployment; <code>deploy/kubernetes/overlays</code> holds environment variants. The worker reads its API key from a Secret named <code>atfgraph-vnext-api</code>, key <code>api-key</code>.</p>
+<h2 id="helm">Helm</h2>
+<pre><code class="language-bash">helm install atfgraph deploy/helm/atfgraph-vnext -n atfgraph-vnext --set auth.existingSecret=atfgraph-api</code></pre>
+<h2 id="databricks">Databricks</h2>
+<pre><code class="language-bash">scripts/product/build-databricks-bundle.sh
+# then, from target/dist/databricks/&lt;label&gt;:
+databricks bundle deploy -t dev --profile &lt;PROFILE&gt; --var server_app_name=&lt;graph-server App&gt; --var api_key_scope=&lt;SCOPE&gt;</code></pre>
+<p>The bundle runs the worker as a Databricks App. It binds the graph server&#x27;s own App with <code>CAN_USE</code>, discovers its URL at start and sends the App&#x27;s workspace OAuth token as the edge credential (<code>Authorization</code>) with the ATFGraph key from the secret scope as <code>X-API-Key</code>. For a graph server on Kubernetes or Compose instead, replace the <code>graph-server</code> resource and the <code>ATFGRAPH_SERVER_APP</code> entry in the built <code>databricks.yml</code> with a static <code>ATFGRAPH_SERVER</code> URL and deploy with <code>--var edge_auth=none</code>. Pass the workspace profile explicitly; nothing here selects one for you. Details: <code>deploy/databricks/README.md</code>.</p>
+<h2 id="kubernetes-files-for-your-own-node">Kubernetes files for your own node</h2>
+<pre><code class="language-bash">atfg deploy scaffold ./my-node --label my-node --module my_node:app --target kubernetes</code></pre>
+<pre><code class="language-text">wrote my-node/k8s/deployment.yaml
+wrote my-node/k8s/kustomization.yaml
+next: build the image, create secret atfgraph-vnext-api with key api-key, then `kubectl apply -k k8s/`.</code></pre>
+<h2 id="validate-before-applying">Validate before applying</h2>
+<pre><code class="language-bash">atfg deploy validate --path deploy --target kubernetes
+atfg deploy validate --path deploy --target helm --require-tools</code></pre>
+<p><code>validate</code> runs <code>kubectl kustomize</code>, <code>helm lint</code> and <code>helm template</code> locally. No cluster or registry is contacted. Tools that are not on <code>PATH</code> are skipped unless <code>--require-tools</code> is given.</p>
+<h2 id="readiness">Readiness</h2>
+<p>Every target uses <code>GET /health</code> for server readiness and <code>node-healthcheck.py</code> (the server lists the label) for worker readiness, and requires an API key because the daemon listens on <code>0.0.0.0</code> inside a container.</p>
+<h2 id="related">Related</h2>
+<ul><li>Single-machine containers with managed state: <a href="howto-deploy-compose.html">Deploy with Docker Compose</a>.</li><li>Publish capabilities from a deployed server: <a href="catalog.html">Discovery publication</a>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

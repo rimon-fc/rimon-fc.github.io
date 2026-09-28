@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On-demand node — ATFGraph vNext reference</title>
+<meta name="description" content="On-demand node: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>On-demand node</h1>
+<p class="meta">Directory <code>examples/python/on_demand_node</code></p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<p class="meta">Agent node label <code>on-demand-node</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>hello</code></td><td>traversal</td><td><code>(name: str = &#x27;ATFGraph&#x27;) -&gt; dict</code></td><td><code>examples/python/on_demand_node/agent.py</code></td><td></td></tr><tr><td><code>ping_child</code></td><td>traversal</td><td><code>(target: str, message: str) -&gt; dict</code></td><td><code>examples/python/on_demand_node/agent.py</code></td><td></td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">atfg server start
+atfg traverse on-demand-node.hello --in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;
+cargo build --bin atfgraphd --bin atfg
+python -m atfgraph.worker --module examples.python.on_demand_node.agent:app
+python -m examples.python.on_demand_node.call --discover
+python -m examples.python.on_demand_node.call hello &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;
+python -m examples.python.on_demand_node.call ping_child &#x27;{&quot;target&quot;:&quot;on-demand-node.hello&quot;,&quot;message&quot;:&quot;Ada&quot;}&#x27;
+python -m pip install -e ./python</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/on_demand_node/README.md</code></li><li><code>examples/python/on_demand_node/__init__.py</code></li><li><code>examples/python/on_demand_node/agent.py</code></li><li><code>examples/python/on_demand_node/agentnode.yaml</code></li><li><code>examples/python/on_demand_node/call.py</code></li><li><code>examples/python/on_demand_node/requirements.txt</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/on_demand_node/README.md</code>; the source file is not modified.</p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<pre><code class="language-bash">python -m pip install -e ./python
+cargo build --bin atfgraphd --bin atfg
+export PATH=&quot;$PWD/target/debug:$PATH&quot;
+atfg server start</code></pre>
+<p>The server defaults to <code>http://127.0.0.1:18880</code>; its browser UI is <code>/ui/</code>. Set <code>ATFGRAPH_SERVER</code> and <code>ATFGRAPH_API_KEY</code> for a different server.</p>
+<pre><code class="language-bash">python -m examples.python.on_demand_node.call --discover
+python -m examples.python.on_demand_node.call hello &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;
+python -m examples.python.on_demand_node.call ping_child &#x27;{&quot;target&quot;:&quot;on-demand-node.hello&quot;,&quot;message&quot;:&quot;Ada&quot;}&#x27;</code></pre>
+<p>Each invocation starts a bounded outbound worker, submits a real traversal, claims its work and returns the graph server&#x27;s recorded result and path. No permanent worker process or inbound <code>/execute</code> callback is required. <code>ping_child</code> records another step and can target another registered node (that node needs an active worker).</p>
+<p>A function runtime can invoke <code>agent.handler(event, context)</code> with <code>{&quot;action&quot;:&quot;invoke&quot;,&quot;capability&quot;:&quot;hello&quot;,&quot;input&quot;:{&quot;name&quot;:&quot;Ada&quot;}}</code>. The handler also accepts <code>discover</code>, <code>serve</code> (consume queued work) and <code>drain</code>. Configure the runtime&#x27;s graph server URL, authentication and network egress. Cloud provider trigger wiring is deployment-specific; this example is locally runnable and does not provision a cloud function.</p>
+<p>For ordinary long-running hosting and CLI calls:</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.on_demand_node.agent:app
+atfg traverse on-demand-node.hello --in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;</code></pre>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

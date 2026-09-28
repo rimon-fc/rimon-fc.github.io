@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decisions: confidence you can query, and a human when it matters — ATFGraph vNext reference</title>
+<meta name="description" content="Decisions: confidence you can query, and a human when it matters: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Decisions: confidence you can query, and a human when it matters</h1>
+<p><strong>Problem:</strong> a traversal asked a model for a judgement, the model was not sure, your code quietly used a coded default instead, and the step still says <code>succeeded</code>. Nothing in the path, the logs or the totals distinguishes that run from a healthy one. You find out when someone compares two runs by hand.</p>
+<p>That is not hypothetical. It is how the feature described here came to exist. A travel-planning node ran 34 steps where the same request had previously run 40; six of the difference was one decision returning <code>confident: false</code>, which threw away a four-lookup research plan and substituted a single generic question. The output read <code>&quot;1 of 1 advisory lookups answered.&quot;</code></p>
+<p>Everything below was captured from a running server. Off loopback add the ATFGraph key as <code>X-API-Key: &lt;key&gt;</code> (<code>Authorization</code> is reserved for a platform proxy&#x27;s credential).</p>
+<h2 id="what-a-decision-is">What a decision is</h2>
+<p>A <strong>decision</strong> is a traversal whose job is one typed judgement: it calls a model, returns a schema, and reports its own confidence. It is dispatched exactly like a traversal — nothing branches on the kind — so declaring one changes what the graph and the console know about the step, not how it runs.</p>
+<pre><code class="language-python">@router.decision()
+async def plan_context_lookups(situation: str, model: str | None = None) -&gt; dict:
+    ...</code></pre>
+<p><code>CapabilityKind</code> is now <code>traversal</code>, <code>skill</code> or <code>decision</code>, and the kind travels onto every recorded step:</p>
+<pre><code class="language-json">[{&quot;kind&quot;: &quot;decision&quot;, &quot;status&quot;: &quot;succeeded&quot;, &quot;target&quot;: &quot;docs.plan&quot;}]</code></pre>
+<h2 id="step-1-say-what-confident-means">Step 1: say what <code>confident</code> means</h2>
+<p>A self-reported confidence flag is the model grading its own homework. If the field carries no criterion, it is being asked to assess itself against a standard nobody wrote down — and that arbitrary boolean is then wired to a hard fallback.</p>
+<p>Give every such field a criterion specific to its decision, and state the cost where the cost is high:</p>
+<pre><code class="language-python">class ContextPlan(BaseModel):
+    lookups: list[PlannedLookup] = Field(description=&quot;Only the lookups this brief needs. At most four.&quot;)
+    confident: bool = Field(description=(
+        &quot;False ONLY if you cannot name a single worthwhile lookup. False DISCARDS every lookup &quot;
+        &quot;you listed and replaces the whole plan with one generic fare question, so a plan you are &quot;
+        &quot;merely unsure about should still be confident. Uncertainty belongs in the questions, not here.&quot;
+    ))</code></pre>
+<h2 id="step-2-close-the-enums">Step 2: close the enums</h2>
+<p>A field that lists its valid values in prose accepts anything. Downstream code then filters out what it does not recognise, so an invented value and a genuinely unconfident model produce the same silent outcome.</p>
+<pre><code class="language-python">ContextEngine = Literal[&quot;fare_insights&quot;, &quot;destination_context&quot;, &quot;map_context&quot;, &quot;web_context&quot;, &quot;reviews_context&quot;]
+
+class PlannedLookup(BaseModel):
+    engine: ContextEngine = Field(description=&quot;Which advisory engine answers this question.&quot;)</code></pre>
+<p>A <code>Literal</code> becomes an <code>enum</code> in the JSON schema, which constrains generation rather than filtering after it, and anything else fails validation loudly.</p>
+<h2 id="step-3-record-the-outcome">Step 3: record the outcome</h2>
+<p>Pass <code>confidence_field</code> and the SDK records the decision&#x27;s own confidence on the usage row that produced it:</p>
+<pre><code class="language-python">return await app.ai(schema=schema, system=system, user=user, confidence_field=&quot;confident&quot;)</code></pre>
+<p>The field is named by the caller, not assumed: <code>confident</code> is your node&#x27;s vocabulary, not the SDK&#x27;s. This works because <code>app.ai</code> records usage <em>before</em> it returns, so the parsed result is already available — which matters, because the usage insert deduplicates on <code>(traverser, attempt, call_id)</code> and a second write to attach the outcome would be dropped rather than merged.</p>
+<p>A recorded row:</p>
+<pre><code class="language-json">{&quot;capability&quot;: &quot;plan&quot;, &quot;confident&quot;: false, &quot;fallback&quot;: &quot;model reported confident=false after proposing 3 lookup(s)&quot;,
+ &quot;input_tokens&quot;: 1412, &quot;output_tokens&quot;: 96, &quot;model&quot;: &quot;verify-model&quot;, &quot;operation&quot;: &quot;chat&quot;, &quot;source&quot;: &quot;llm&quot;}</code></pre>
+<p>Both fields are nullable and <strong>absent is not false</strong>. A call that reported neither stays distinguishable from one that reported an unconfident decision, for the same reason <code>cost_usd</code> is null rather than zero when no price is known.</p>
+<p><strong>Record on the model call, not on the handler.</strong> A resumed attempt re-runs the handler from the top. If you record usage unconditionally rather than where the model is actually consulted, a replay writes a second row for a call that never happened and every total downstream overcounts. Using <code>app.ai</code> gets this right for free, because <code>app.ai</code> is what a cache or checkpoint skips.</p>
+<h2 id="step-4-aggregate-it">Step 4: aggregate it</h2>
+<p><code>group_by=capability</code> buckets usage by the traversal or skill that spent it, which is what turns &quot;which decisions are we falling back on&quot; into one request:</p>
+<pre><code>GET /api/v2/usage/totals?group_by=capability</code></pre>
+<pre><code class="language-json">{&quot;groups&quot;: [{&quot;key&quot;: &quot;plan&quot;, &quot;calls&quot;: 2, &quot;unconfident_calls&quot;: 2, &quot;fallback_calls&quot;: 1,
+             &quot;input_tokens&quot;: 2824, &quot;output_tokens&quot;: 192, &quot;total_tokens&quot;: 3016,
+             &quot;priced_calls&quot;: 0, &quot;unpriced_calls&quot;: 2, &quot;cost_usd&quot;: null, &quot;cost_complete&quot;: false}],
+ &quot;group_by&quot;: &quot;capability&quot;, &quot;scanned&quot;: 2}</code></pre>
+<p><code>unconfident_calls</code> and <code>fallback_calls</code> are counted apart on purpose. A decision can be unconfident without falling back, and can fall back with no model reply at all — so one number could not mean both. Every <code>group_by</code> value carries them, including <code>none</code>, <code>model</code>, <code>run</code> and <code>day</code>.</p>
+<h2 id="step-5-measure-it-where-the-provider-lets-you">Step 5: measure it, where the provider lets you</h2>
+<p>A self-report is an opinion. A token probability is an observation. Ask for the distribution and the SDK records one beside the other, never instead:</p>
+<pre><code class="language-bash">export ATFGRAPH_MODEL_LOGPROBS=1</code></pre>
+<p>Opt-in, because some gateways reject the parameter rather than ignoring it, and one diagnostic is not worth turning every call into an error. <code>atfgraph.model.boolean_field_probability</code> finds the token that actually produced a boolean field and returns its probability, landing in the row&#x27;s <code>extra</code> as <code>confident_p</code>. It returns nothing when the answer cannot be established beyond doubt — no logprobs, field absent, token not recognisably a boolean. A weak signal is better than a fabricated one.</p>
+<p>Read the caveat before you trust the number: this is the model&#x27;s probability for the value it emitted, which is <strong>not</strong> a calibrated probability of being correct. A high probability on a <code>false</code> is a model that is confidently unsure.</p>
+<h2 id="step-6-calibrate-before-you-threshold">Step 6: calibrate before you threshold</h2>
+<pre><code class="language-bash">scripts/calibrate-decisions.py --server http://127.0.0.1:18880</code></pre>
+<p>Reads the ledger and reports, per capability, confidence rate, fallback rate and mean measured probability. Read-only; it adds no storage.</p>
+<h3 id="the-label-retrieval-feedback">The label: retrieval feedback</h3>
+<p>Reliability means <em>&quot;when a decision said it was confident, was it right&quot;</em>, and <code>right</code> needs a labelled outcome. Retrieval used to have none — a search reports <code>scanned</code> and <code>strategy</code> and stores nothing — so the script had to say out loud that it could not compute one.</p>
+<p>Record a verdict where a retrieved item is consumed:</p>
+<pre><code class="language-python">await app.memory.feedback(item_key, &quot;useful&quot;)       # or irrelevant | outdated | wrong</code></pre>
+<p>Four verdicts, a closed set, because a free-text label cannot be aggregated and an open one stops being comparable between runs. <strong>Append-only</strong>: an item useful in March and outdated in June is two true facts, so calling it twice records two rows rather than overwriting. Inside a traversal the capability is taken from the lease and any value in the body is ignored, so feedback joins to usage rows on something neither side can invent.</p>
+<pre><code>POST /api/v2/retrieval/feedback/totals   {&quot;group_by&quot;: &quot;capability&quot;}</code></pre>
+<pre><code class="language-json">{&quot;groups&quot;: [{&quot;key&quot;: &quot;plan&quot;, &quot;useful&quot;: 2, &quot;irrelevant&quot;: 0, &quot;outdated&quot;: 1, &quot;wrong&quot;: 1, &quot;total&quot;: 4}],
+ &quot;group_by&quot;: &quot;capability&quot;, &quot;scanned&quot;: 4}</code></pre>
+<p>Every verdict appears with its count, zero included: a bucket missing <code>wrong</code> and a bucket with zero <code>wrong</code> are different facts. With feedback recorded, the calibration table gains <code>judged</code> and <code>useful</code> columns and reports <code>labelled: true</code>.</p>
+<p><strong>It labels the inputs, not the judgement.</strong> A useful-rate says whether the items a decision was handed helped; whether the decision itself was right still needs evals. Those are different questions, and <strong>do not set a gating threshold on a confidence rate alone</strong> — that is the difference between a measurement and a guess wearing its clothes.</p>
+<p>Calibration needs volume, and volume normally means spend. It does not have to: decision routing and supplier routing are separate switches, so real model calls with fixture suppliers give you cheap repetitions. In the bundled travel example that is <code>CO_CONSULT_DECISIONS=model CO_CONSULT_MODE=fixture</code>. Expect most decisions to report <code>confident=false</code> in that combination: the synthetic offers and context do not answer the questions the model is asked, so low confidence is the calibration working, not a model or deployment fault. A failed decision records <code>fallback: &quot;model call failed: &lt;error&gt;: &lt;message&gt;&quot;</code> in the run&#x27;s usage rows (0.3.4+ keeps the message; earlier releases kept only the error type).</p>
+<h2 id="step-7-gate-it-on-a-human">Step 7: gate it on a human</h2>
+<p>When discarding the decision is expensive, stop and ask instead:</p>
+<pre><code class="language-python">verdict = await app.request_approval(
+    {&quot;question&quot;: &quot;run this plan anyway?&quot;, &quot;proposed&quot;: lookups},
+    operation_key=&quot;plan_context_lookups&quot;,
+    checkpoint={&quot;plan&quot;: result.model_dump()},
+)
+if verdict[&quot;status&quot;] == &quot;approved&quot;:
+    return {&quot;lookups&quot;: lookups, &quot;confident&quot;: True}</code></pre>
+<p><code>request_approval</code> is a <strong>durable server-side pause</strong>, not an in-process wait. The worker drops its lease and goes away; the traverser waits on the server through restarts and deploys; <code>GET /api/v2/approvals</code> is the queue and <code>POST /api/v2/approvals/{id}/decide</code> takes <code>approved</code> or <code>rejected</code>. When it is decided the handler starts again with a fresh lease and the same call returns the decision.</p>
+<p>Two things are load-bearing, and both follow from that replay:</p>
+<ul><li><strong>Attach the proposal and reuse it.</strong> The handler re-runs from the top, so a second consultation would produce a different plan and the human would have
+approved one that never ran. Read the checkpoint first and only consult the
+model on a miss; see <a href="08-approvals-pauses-and-checkpoints.html">approvals, pauses and
+checkpoints</a> for the mechanics
+and <code>expected_revision</code> compare-and-set.</li><li><strong>Use a stable `operation_key`.</strong> It is the idempotency handle: the same key returns the existing decision instead of asking again.</li></ul>
+<p>Gate on the <strong>event</strong> — a decision is about to be discarded — rather than on a confidence threshold, until step 6 has given you a number that means something. And gate narrowly: an approval queue nobody drains is worse than a logged fallback. In the travel example the gate is off unless a capability is named in <code>CO_CONSULT_GATE_DECISIONS</code>.</p>
+<h2 id="the-order-is-the-point">The order is the point</h2>
+<p>Each step is cheap only because the one before it happened:</p>
+<ol><li><strong>Record</strong> the outcome. Nothing else works without the data.</li><li><strong>Aggregate</strong> it, and the standing question becomes a query.</li><li><strong>Measure</strong> it, so you have something better than a self-report to calibrate.</li><li><strong>Calibrate</strong> against observed outcomes.</li><li><strong>Gate</strong> on a human, on the few decisions where it pays.</li></ol>
+<p>Doing 5 first gives you a threshold you cannot defend. Doing 1 and skipping 2 records evidence nobody reads — which was the original failure: the confidence was already in the recorded path, and no query returned it.</p>
+<h2 id="a-note-on-vector-storage">A note on vector storage</h2>
+<p>Memory vectors are stored as little-endian <strong>float32, base64-encoded</strong>, not as JSON text. The search is still an exact linear scan of the scope — there is no approximate index — so this changed the constant, not the complexity.</p>
+<p>Measured on a real daemon at dimension 1024 (<code>databricks-gte-large-en</code>), before and after:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">vectors</th><th scope="col">search before</th><th scope="col">search after</th><th scope="col">database before</th><th scope="col">after</th></tr></thead><tbody><tr><td>100</td><td>41 ms</td><td><strong>8 ms</strong></td><td>1.8 MB</td><td><strong>1.2 MB</strong></td></tr><tr><td>500</td><td>196 ms</td><td><strong>36 ms</strong></td><td>10.2 MB</td><td><strong>3.4 MB</strong></td></tr><tr><td>2,000</td><td>776 ms</td><td><strong>136 ms</strong></td><td>39.6 MB</td><td><strong>12.6 MB</strong></td></tr><tr><td>5,000</td><td>1,955 ms</td><td><strong>337 ms</strong></td><td>98.3 MB</td><td><strong>30.7 MB</strong></td></tr></tbody></table></div>
+<p>87% of the old per-vector cost was turning 21,153 characters of <code>[0.0142,-0.981,...]</code> back into numbers; the arithmetic was the other 13%.</p>
+<p><strong>Two consequences worth knowing.</strong> Values round to float32 on write, so a caller storing float64 of its own reads back about seven significant digits — embedding models emit float32, so this is normally exact for real embeddings. <code>MemoryVectorWrite.embedding</code> says so in the contract.</p>
+<p>And the scan is still linear: <code>scanned</code> in every response is the whole scope. Sub-second now means roughly 15,000 vectors rather than 2,500, but it is a <strong>small-corpus store</strong>, not a search engine. Past that you want a real index — <code>pgvector</code> in Postgres keeps the data where it is, which is a different and larger decision than this one.</p>
+<h2 id="verify-it-yourself">Verify it yourself</h2>
+<pre><code class="language-bash">scripts/verify-decisions.py</code></pre>
+<p>Starts an isolated server on its own port with its own temporary database, exercises all five steps, prints a pass/fail table, and leaves the server up so you can browse it. No model or supplier calls, so no credentials and no spend.</p>
+<h2 id="where-to-see-it-in-the-console">Where to see it in the console</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col"></th><th scope="col">Page</th><th scope="col">What to look at</th></tr></thead><tbody><tr><td>A, B</td><td><strong>Costs</strong></td><td>The <strong>By decision</strong> panel: one row per capability, with <strong>Unsure</strong> and <strong>Fell back</strong> beside the token columns. A capability that reported neither shows a dash, not a <code>0</code></td></tr><tr><td>C</td><td><strong>Runs</strong> → a run → <strong>Path</strong></td><td>The <strong>Kind</strong> column reads <code>decision</code>. The step list indents children by depth and each step is selectable</td></tr><tr><td>E</td><td><strong>Policies</strong></td><td>The <strong>Approvals</strong> panel lists a paused decision with its <code>operation_key</code>, and approves or rejects it</td></tr><tr><td>D</td><td>command line</td><td><code>scripts/calibrate-decisions.py</code>; an analysis over recorded runs, not a live view</td></tr><tr><td>F</td><td>command line</td><td><code>POST /api/v2/retrieval/feedback/totals</code>; recorded from the SDK with <code>app.memory.feedback</code></td></tr></tbody></table></div>
+<p>Two things are deliberately not there. A <code>decision</code> step has no distinct colour or icon in the path diagram — it is named in the Kind column and nowhere else, because status is what a reader scans a path for. And per-step confidence is not shown on the step itself: the outcome is recorded on the usage row that produced it, so it aggregates per capability rather than decorating one step.</p>
+<p><a href="howto-monitor-over-http.html">Monitor over HTTP</a> covers the same data as requests, and <a href="14-observability.html">observability</a> covers the ledger it lives in.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

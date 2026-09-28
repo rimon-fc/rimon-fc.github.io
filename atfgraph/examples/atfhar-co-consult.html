@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>atfHar profile: co-consult chat through the vNext MCP endpoint — ATFGraph vNext reference</title>
+<meta name="description" content="atfHar profile: co-consult chat through the vNext MCP endpoint: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>atfHar profile: co-consult chat through the vNext MCP endpoint</h1>
+<p class="meta">Directory <code>examples/atfhar/co-consult</code></p>
+<p>Use this profile to chat with co-consult through atfHar. It points the <code>atfgraph</code> MCP server at <code>http://127.0.0.1:18880/mcp</code> (the vNext daemon&#x27;s default listen address) and allows exactly the five tools the graph server&#x27;s MCP surface currently exposes:</p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.co_consult.main:app --server http://127.0.0.1:18880</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/atfhar/co-consult/README.md</code></li><li><code>examples/atfhar/co-consult/extensions/session.ts</code></li><li><code>examples/atfhar/co-consult/harness.yml</code></li><li><code>examples/atfhar/co-consult/mcp.example.json</code></li><li><code>examples/atfhar/co-consult/prompts/coordinator.md</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/atfhar/co-consult/README.md</code>; the source file is not modified.</p>
+<p>Use this profile to chat with co-consult through atfHar. It points the <code>atfgraph</code> MCP server at <code>http://127.0.0.1:18880/mcp</code> (the vNext daemon&#x27;s default listen address) and allows exactly the five tools the graph server&#x27;s MCP surface currently exposes:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Tool</th><th scope="col">Use</th></tr></thead><tbody><tr><td><code>discover_agents</code></td><td>list nodes and their entry points</td></tr><tr><td><code>get_reasoner_schema</code></td><td>read the input/output schema of <code>co-consult.chat</code></td></tr><tr><td><code>execute_reasoner</code></td><td>submit one chat turn; returns a run ID</td></tr><tr><td><code>get_run</code></td><td>inspect a run</td></tr><tr><td><code>wait_run</code></td><td>wait up to 120 s for a terminal state</td></tr></tbody></table></div>
+<p>Normalised tool names in <code>harness.yml</code> are <code>mcp__atfgraph_&lt;tool&gt;</code>.</p>
+<h2 id="files">Files</h2>
+<ul><li><code>harness.yml</code>: the profile manifest. The model role is <code>${ATFHAR_DEFAULT_MODEL}</code> and <code>modelProviders.allow</code> is empty, so the operator&#x27;s own atfHar model
+configuration decides which provider is used. No provider or credential is
+named in this repository.</li><li><code>mcp.example.json</code>: the MCP server definition. atfHar reads it as <code>.mcp.json</code> inside the profile directory, so rename it when you install the profile
+(dotfiles are kept out of this example tree). If the daemon requires an API
+key, add an environment-backed <code>X-API-Key</code> header following the atfHar MCP
+documentation; never write the key into the file.</li><li><code>prompts/coordinator.md</code>: the coordinator prompt (vNext session semantics).</li><li><code>extensions/session.ts</code>: scopes every <code>co-consult.chat</code> call to one harness conversation. Because vNext sessions are server-created, the extension lets
+the first turn run without a <code>session_id</code>, records the ID the node returns in
+the <code>wait_run</code> / <code>get_run</code> result, and forces it on later turns. It also sets
+<code>request_id</code> from the tool-call ID so a retried turn is idempotent.</li></ul>
+<h2 id="use">Use</h2>
+<p>This directory is an example; it does not modify <code>~/atf-harness/profiles</code>. To load it, point <code>atfHar serve --profile-dir</code> at a directory that contains this profile (for example by copying <code>examples/atfhar</code> somewhere under your harness workspace), start the vNext daemon on 18880, run the co-consult worker, then start the harness UI:</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.co_consult.main:app --server http://127.0.0.1:18880
+atfHar serve --workspace-root &quot;$PWD&quot; --profile-dir /path/to/profiles --ui-dir packages/ui/dist</code></pre>
+<h2 id="check-your-connection">Check your connection</h2>
+<p>Start with a new conversation and ask for a travel plan. Confirm the first <code>wait_run</code> result contains a <code>session_id</code>, then ask a follow-up about a saved offer. Subsequent calls should use that same session ID.</p>
+<p>This profile is an example configuration; end-to-end operation with your atfHar installation and model provider must be verified before relying on it. If a tool is missing, check that MCP is enabled on the graph server and the profile has the correct server URL and API key. If follow-ups start new sessions, check that your atfHar version loads <code>extensions/session.ts</code> and supports its <code>tool_result</code> hook.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

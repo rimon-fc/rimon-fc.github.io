@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATF Harness as a graph traversal — ATFGraph vNext reference</title>
+<meta name="description" content="ATF Harness as a graph traversal: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>ATF Harness as a graph traversal</h1>
+<p class="meta">Directory <code>examples/harness</code></p>
+<p><code>python/agent.py</code> calls the local <code>atfHar</code> runtime through the SDK&#x27;s harness bridge (<code>app.harness(...)</code>, provider <code>atf-harness</code>). The traversal <code>harness-example.answer</code> returns the text, token usage, cost and harness session id the CLI reported, and the run is recorded as an ordinary traverser with its path and progress events. It does not substitute a fixture when the provider fails: a failed invocation fails the traverser with the harness&#x27;s message.</p>
+<p class="meta">Agent node label <code>remote-coder</code>, version <code>0.1.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>answer</code></td><td>traversal</td><td><code>(prompt: str, model: Optional[str] = None, cwd: Optional[str] = None, variant: Optional[str] = None, provider: Optional[str] = None, timeout: float = DEFAULT_TIMEOUT_SECONDS) -&gt; dict</code></td><td><code>examples/harness/python/agent.py</code></td><td>Run one prompt through the harness with no tools and return what it reported.</td></tr><tr><td><code>doctor</code></td><td>skill</td><td><code>() -&gt; dict</code></td><td><code>examples/harness/python/agent.py</code></td><td>Which harness CLIs are available on this worker (nothing is executed).</td></tr><tr><td><code>continue</code></td><td>traversal</td><td><code>(task: str, timeout: Optional[float] = None) -&gt; dict</code></td><td><code>examples/harness/remote/agent.py</code></td><td>A follow-up in the same harness session (same ATFGraph session id required).</td></tr><tr><td><code>doctor</code></td><td>skill</td><td><code>() -&gt; dict</code></td><td><code>examples/harness/remote/agent.py</code></td><td>Reachability, readiness and profile availability of the configured harness. No turn is started.</td></tr><tr><td><code>implement</code></td><td>traversal</td><td><code>(task: str, timeout: Optional[float] = None) -&gt; dict</code></td><td><code>examples/harness/remote/agent.py</code></td><td>Run ``task`` in the operator&#x27;s workspace. One attempt: coding work has side effects.</td></tr></tbody></table></div>
+<p class="meta">Non-default capability options: <code>answer</code>: <code>max_attempts=1</code>, <code>timeout_seconds=180</code>; <code>continue</code>: <code>max_attempts=1</code>, <code>timeout_seconds=1800</code>; <code>implement</code>: <code>max_attempts=1</code>, <code>timeout_seconds=1800</code></p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">atfg traverse remote-coder.continue  --in &#x27;{&quot;task&quot;: &quot;Now add a test&quot;}&#x27; --session &lt;id&gt;
+atfg traverse remote-coder.doctor --in &#x27;{}&#x27;
+atfg traverse remote-coder.implement --in &#x27;{&quot;task&quot;: &quot;Fix the failing parser tests&quot;}&#x27; --new-session
+python -m atfgraph.worker --module examples.harness.python.agent:app
+python -m atfgraph.worker --module examples.harness.remote.agent:app
+python -m examples.harness.python.call &quot;Reply with the word ready.&quot;
+python -m examples.harness.python.call --doctor
+python -m examples.harness.remote.call &quot;Fix the failing parser tests and explain the change&quot;
+python -m examples.harness.remote.call &quot;Fix the failing parser tests&quot;       # new ATFGraph session → new harness session
+python -m examples.harness.remote.call --doctor
+python -m examples.harness.remote.call --session &lt;id&gt; &quot;Now add a test&quot;      # follow-up in the same harness session</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/harness/README.md</code></li><li><code>examples/harness/__init__.py</code></li><li><code>examples/harness/python/__init__.py</code></li><li><code>examples/harness/python/agent.py</code></li><li><code>examples/harness/python/agentnode.yaml</code></li><li><code>examples/harness/python/call.py</code></li><li><code>examples/harness/python/requirements.txt</code></li><li><code>examples/harness/remote/__init__.py</code></li><li><code>examples/harness/remote/agent.py</code></li><li><code>examples/harness/remote/agentnode.yaml</code></li><li><code>examples/harness/remote/call.py</code></li><li><code>examples/harness/remote/requirements.txt</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/harness/README.md</code>; the source file is not modified.</p>
+<p><code>python/agent.py</code> calls the local <code>atfHar</code> runtime through the SDK&#x27;s harness bridge (<code>app.harness(...)</code>, provider <code>atf-harness</code>). The traversal <code>harness-example.answer</code> returns the text, token usage, cost and harness session id the CLI reported, and the run is recorded as an ordinary traverser with its path and progress events. It does not substitute a fixture when the provider fails: a failed invocation fails the traverser with the harness&#x27;s message.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">What it does</th></tr></thead><tbody><tr><td><code>answer</code></td><td>traversal</td><td>one prompt, no tools, one attempt, 120 s harness timeout</td></tr><tr><td><code>doctor</code></td><td>skill</td><td>which harness CLIs are installed on the worker host (none is executed)</td></tr></tbody></table></div>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Python 3.10+, the vNext SDK (<code>python -m pip install -e &#x27;python[test]&#x27;</code> from the this repository&#x27;s root), a running graph server, <code>atfHar</code> on the worker process PATH, a configured model and that provider&#x27;s credentials. The harness configuration lives in <code>~/.atf-harness/agent/config.yml</code> and <code>models.yml</code>; this example does not change it and does not log into a provider.</p>
+<h2 id="run">Run</h2>
+<pre><code class="language-bash">atfHar --version
+export ATFGRAPH_HARNESS_MODEL=&#x27;your-provider/your-model&#x27;
+export ATFGRAPH_HARNESS_WORKDIR=&quot;$PWD&quot;
+# Export the provider credentials your harness model needs into this shell:
+# the worker process is what runs atfHar.
+target/debug/atfgraphd
+python -m atfgraph.worker --module examples.harness.python.agent:app
+# Another terminal:
+python -m examples.harness.python.call --doctor
+python -m examples.harness.python.call &quot;Reply with the word ready.&quot;</code></pre>
+<p><code>ATFGRAPH_SERVER</code> defaults to <code>http://127.0.0.1:18880</code>. <code>answer</code> also accepts <code>model</code>, <code>cwd</code>, <code>variant</code>, <code>provider</code> and <code>timeout</code> in its input, so one worker can serve several models or directories; the environment variables are the defaults. Set <code>ATFGRAPH_HARNESS_THINKING</code> only to override the configured model variant. Other providers (<code>claude-code</code>, <code>codex</code>, <code>opencode</code>) are selected with <code>ATFGRAPH_HARNESS_PROVIDER</code> or <code>--provider</code>; tool access stays disabled where the provider can control it.</p>
+<p>A provider credential that is absent or expired surfaces as a failed traverser whose error message is the harness&#x27;s own report (a 401 from the model provider included). <code>doctor</code> checks only that the CLI is discoverable; it does not prove provider authentication.</p>
+<h2 id="package-or-install">Package or install</h2>
+<pre><code class="language-bash">target/debug/atfg install examples/harness/python --python python3 --sdk python
+target/debug/atfg run harness-example</code></pre>
+<p>The manifest declares <code>ATFGRAPH_HARNESS_MODEL</code> and <code>ATFGRAPH_HARNESS_WORKDIR</code> as required user environment; the installer prompts for them and never copies a provider credential.</p>
+<h2 id="differences-from-the-original">Differences from the original</h2>
+<ul><li>The node is an outbound worker (<code>app.run()</code> claims tasks); there is no inbound HTTP port, so the original <code>PORT</code> variable and <code>app.run(host, port)</code> are gone.</li><li><code>HarnessConfig(max_retries=0)</code> became <code>@app.traversal(max_attempts=1)</code>: retries are a capability property enforced by the graph server.</li><li>The original passed <code>max_turns=1</code>; the <code>atf-harness</code> provider runs one print turn by construction and has no such flag. <code>claude-code</code> accepts <code>max_turns</code>
+through <code>app.harness(..., max_turns=1)</code> if you switch providers.</li><li>Harness failures raise <code>HarnessFailure</code> inside the worker instead of returning <code>is_error=True</code>; the traverser&#x27;s <code>error.message</code> carries the report.</li><li>Progress: every harness JSON event is recorded as a durable progress event on the traverser (<code>call.py</code> counts them), which the original did not do.</li></ul>
+<p>Tests: <code>tests/test_migrated_ops_examples.py</code> runs the worker against a real daemon with a fixture <code>atfHar</code> executable on <code>PATH</code>; no model provider is contacted.</p>
+<h2 id="remote-harness-remote">Remote harness (<code>remote/</code>)</h2>
+<p><code>remote/agent.py</code> is <code>remote-coder</code>: the same <code>app.harness(...)</code> call with <code>transport=RemoteHarness(...)</code> and <code>workspace=ExistingWorkspace(...)</code>, so the coding work runs in a workspace on a remote ATF Harness host while ATFGraph records the path, pauses for approvals and totals usage. No harness CLI is needed on the worker.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">What it does</th></tr></thead><tbody><tr><td><code>implement</code></td><td>traversal</td><td>one task in the operator&#x27;s workspace, one attempt</td></tr><tr><td><code>continue</code></td><td>traversal</td><td>a follow-up in the same harness session (same ATFGraph session id)</td></tr><tr><td><code>doctor</code></td><td>skill</td><td>reachability, readiness and profile availability of the harness; no turn</td></tr></tbody></table></div>
+<p>Configure <code>ATFGRAPH_HARNESS_URL</code>, <code>ATFGRAPH_HARNESS_PROFILE</code>, <code>ATFGRAPH_HARNESS_WORKSPACE</code> (and <code>ATFGRAPH_HARNESS_EDGE_AUTH</code>, <code>ATFGRAPH_HARNESS_TOKEN</code> when the deployment needs them), then <code>python -m atfgraph.worker --module examples.harness.remote.agent:app</code> and <code>python -m examples.harness.remote.call &quot;...&quot;</code>. The workspace must already exist on the harness host: this example does not clone repositories or return patches. See <a href="../docs/07-harness.html#remote-harness-the-same-call-a-workspace-on-another-machine">docs/python/07-harness.md</a>.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

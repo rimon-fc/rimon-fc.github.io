@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Use the web console — ATFGraph vNext reference</title>
+<meta name="description" content="Use the web console: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Use the web console</h1>
+<p><strong>Problem:</strong> you want to see what your agents are doing, test a capability, publish it, and find out where runs fail and what they cost, in a browser instead of the CLI.</p>
+<p>Open <code>http://127.0.0.1:18880/ui/</code>. The console is served by the graph server itself and talks to the same-origin <code>/api/v2</code> API. From a source checkout, build it once with <code>cd ui &amp;&amp; npm ci &amp;&amp; npm run build</code>; the daemon serves the checkout&#x27;s <code>ui/dist</code>, and reports &quot;UI assets unavailable&quot; at <code>/ui/</code> until it exists. Installed distributions use <code>share/atfgraph/ui</code> beside the installation&#x27;s <code>bin</code> directory. <code>ATFGRAPH_UI_DIR</code> overrides either location. Deep links such as <code>/ui/runs/&lt;id&gt;</code> and <code>/ui/agents/&lt;label&gt;</code> open directly, and the older <code>/ui/traversers/&lt;id&gt;</code> links still resolve.</p>
+<p>Every figure on every page comes from a recorded response. Where the API has no route for something (a denied-request history, for example) the page says so in place instead of showing a plausible number.</p>
+<h2 id="authentication">Authentication</h2>
+<p>When the server requires a bearer token, click the key icon in the top bar and paste it. It is kept in the tab&#x27;s <code>sessionStorage</code> and sent in authorization headers, including streaming requests, never in URLs or <code>localStorage</code>. Closing the tab forgets it. Admin-only panels (connector grants, webhook, retention, observability settings) show the server&#x27;s message and the role they need instead of disappearing.</p>
+<h2 id="pages">Pages</h2>
+<p>The left rail has four groups.</p>
+<h3 id="operate">Operate</h3>
+<ul><li><strong>Overview</strong>: runs, failure rate, tokens and spend for the last 24 hours; a single failure-rate line per hour; the runs failing right now with their
+error codes; tokens by model and cost per run; agents and workers by state;
+all-time retained totals.</li><li><strong>Runs</strong>: newest first, filtered by state, window, principal and session, with cursor pagination. Expanding a failed run shows the failing step first
+with the exact error envelope the worker returned, then the path. Open,
+Cancel and Restart use the server&#x27;s traverser operations. The run detail
+keeps the Debug, Path, Events, Logs, Artifacts, Checkpoints, Usage, Metadata,
+Proofs and MLflow tabs, live over the run&#x27;s event stream. The MLflow tab links
+to the trace the worker exported (trace id and experiment URL from run
+metadata); spans themselves are read in MLflow, not proxied by the server.</li><li><strong>Costs</strong>: totals for 24 hours, 7 or 30 days, grouped by model, node, provider, day, run and principal, with input/output/cache token splits.
+Unpriced calls are counted as unpriced, never as zero dollars.</li><li><strong>Observability</strong>: pick a run and read its trace waterfall (one bar per step), its event log, its run metadata and its node logs filtered by level,
+stream and text. While the run is active, new log lines are pushed over
+<code>GET /api/v2/logs/events</code>; finished runs are re-read on demand.</li></ul>
+<h3 id="build">Build</h3>
+<ul><li><strong>Agents</strong>: every registered node joined with its workers. Select one to <strong>Test</strong> a capability with a form generated from its input schema (or raw
+JSON) and watch the path, output, error envelope and usage arrive live;
+<strong>Publish</strong> it to the agent registry over MCP, A2A or HTTP; read its
+<strong>Schema</strong> (kind, tags and, for realtime entrypoints, provider and transport); and see its <strong>Versions</strong> with the runs each has served. Tags show in the node table; realtime entrypoints cannot be run from the Test tab because the server refuses to admit them.</li><li><strong>Triggers</strong>: schedule, webhook and memory-change emitters with their next due time, enable/disable with revision checks, inbound event history with replay,
+fire-now with a delivery key, and creation of new triggers.</li><li><strong>Studio</strong>: turn a brief into an agent node. <strong>My builds</strong> lists every build session (label, stage from the run&#x27;s metadata, latest run, attachments,
+owner) with Open, Runs and Delete; <strong>New build</strong> creates the session, takes
+attachments (specs, documents, screenshots, samples, a reference node; each
+is stored on the server as a brief artifact and staged into the builder&#x27;s
+workspace) and the typed brief form rendered from the node&#x27;s own schema;
+a build shows <strong>Plan</strong> (the plan checkpoint and the plan gate with its
+questions), <strong>Build</strong> (harness progress per turn and the shell-command gate,
+with &quot;approve every pending command&quot;), <strong>Review</strong> (per-file diffs, the
+verification table and the accept gate), <strong>Install</strong> (the accepted tree,
+Deploy as a node App, the deploy plan gate, secrets the node needs, held on
+the server for the deploy run to collect once) and <strong>Continue chat</strong> for
+another turn on the same session. Delete discards the harness session
+through the node, then soft-deletes the session: attachments, session memory
+and knowledge go, the runs stay under Runs. Requires the <code>studio</code> node
+registered and a worker for it; without one the page lists builds but a new
+build stays queued.</li><li><strong>Sessions &amp; memory</strong>: your sessions from the server&#x27;s session index (newest activity first, with label and run count), scoped memory entries
+with compare-and-set writes, the change feed and vector search.</li><li><strong>Knowledge</strong>: BM25 corpus statistics per scope, documents, a search test with scored hits and citations, and document put/get/delete with revision
+checks.</li></ul>
+<h3 id="evaluate">Evaluate</h3>
+<ul><li><strong>Playground</strong>: choose a node version and capability, fill the typed form or raw JSON, optionally bind a session, and run. Status, path, tokens, cost
+and output update live; every run here is a real traverser. Runs started in
+the tab are listed for re-running and comparison.</li><li><strong>Compare</strong>: two runs side by side: status, duration, steps, tokens, cost, first failing step, an aligned path diff and a line diff of the outputs.</li><li><strong>Evaluations</strong>: case sets of inputs with assertions for one capability. Run a set against a version; every case becomes a real traverser and is
+scored on status, output, duration, tokens and cost. Scores are grouped by
+version so a regression is visible as a moved pass rate.</li></ul>
+<h3 id="govern">Govern</h3>
+<ul><li><strong>Policies</strong>: access policies (allow, deny, rate limit) with create, enable/disable and delete; an access evaluator that explains the decision
+reason; pending approvals with approve/reject. Input and output guardrails
+run in the node&#x27;s worker (<code>guardrails=[...]</code> in the Python SDK) and surface
+as <code>guardrail_violation</code> errors on the Runs page. Budgets cap tokens, cost or
+runs per principal, node, target or namespace over a rolling window and show
+what each window has consumed. A denied-request history is labelled as not
+available.</li><li><strong>Access</strong>: what each role may do, stored API tokens (create with roles and expiry, rotate, revoke; the secret is shown once), the principals seen,
+connector grants, signing identities, credentials, the tag policy and
+ledger, and DIDs. Tokens in <code>atfgraph.yaml</code> under <code>auth.tokens</code> stay valid
+and are not listed.</li><li><strong>Health</strong>: server identity and features, workers, model-health probes, node log ingestion settings, the observability webhook with delivery status,
+stored runtime documents (save, apply, delete) and retention preview before
+apply.</li></ul>
+<p>The top bar has search (<code>/</code> or <code>⌘K</code>) across pages, runs and nodes, the token entry and a light/dark theme toggle that persists; without a stored choice the console follows the operating system.</p>
+<h2 id="related">Related</h2>
+<ul><li>The same data as JSON: <a href="howto-monitor-over-http.html">Monitor over HTTP</a>.</li><li>Runtime documents and the observability webhook from Python: <a href="python.html">Python SDK</a>.</li></ul>
+<h2 id="managed-server-on-databricks-apps-where-the-credential-comes-from">Managed server on Databricks Apps: where the credential comes from</h2>
+<p>Behind the Apps proxy the Console first needs the workspace login (single sign-on) and then the graph server&#x27;s own key, which it asks for once and keeps in the tab&#x27;s sessionStorage as <code>X-API-Key</code>. The key sits in the server App&#x27;s secret scope (<code>atfgraph</code>, key <code>api-key</code>, unless the deployment chose other names). Read it back with the profile that deployed the server; the CLI returns it base64-encoded:</p>
+<pre><code class="language-sh">databricks secrets get-secret atfgraph api-key --profile &lt;p&gt; -o json | python3 -c &quot;import json,sys,base64;print(base64.b64decode(json.load(sys.stdin)[&#x27;value&#x27;]).decode())&quot;</code></pre>
+<p>Paste the printed value into the Console prompt, or feed it to <code>atfg login &lt;url&gt; --api-key-stdin --edge-auth databricks --databricks-profile &lt;p&gt;</code> for the CLI. Never put a Databricks token in that box: the proxy already carries it in <code>Authorization</code>.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

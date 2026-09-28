@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATFGraph vNext overview — ATFGraph vNext reference</title>
+<meta name="description" content="ATFGraph vNext overview: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>ATFGraph vNext overview</h1>
+<p>ATFGraph vNext is a graph server for multi-agent systems: agent nodes register their functions, and every call between them is routed and recorded by the server as a step on a path. You write nodes in Python, start work with a CLI or HTTP call, and get back a result plus the complete, inspectable record of how it was produced.</p>
+<h2 id="what-it-is-not">What it is not</h2>
+<ul><li><strong>Not a model provider or an LLM framework.</strong> The server never calls a model. Your traversals call whatever provider you configure; the server records the
+steps and their usage.</li><li><strong>Not a message bus.</strong> Nodes do not talk to each other. Every call crosses the graph server, which is the only inbound endpoint. Workers connect outbound and
+open no port.</li><li><strong>Not a hosted service.</strong> Nothing here runs anywhere until you start a graph server and at least one worker. Deployment targets exist, but a package is not
+a service until a deployment reports healthy workers.</li><li><strong>Installed from a release, not from a package index.</strong> There is no <code>pip install</code> or Homebrew formula. The client (the <code>atfg</code> CLI, the <code>atfgraph</code>
+wheel, the coding-assistant skills) installs from a GitHub Release with the
+release&#x27;s own <code>install.sh</code>, which verifies every file against the release&#x27;s
+checksums and then connects you to a graph server (<a href="install.html">Install</a>). A
+graph server is a source build or a deployment target. See *How it is
+installed today*.</li></ul>
+<h2 id="the-three-processes">The three processes</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Process</th><th scope="col">What it does</th><th scope="col">Command</th></tr></thead><tbody><tr><td>Graph server</td><td>Owns the graph: routes edges, schedules traversers, stores paths and memory</td><td><code>atfgraphd</code></td></tr><tr><td>CLI</td><td>Starts the server, lists elements, starts traversers, reads paths</td><td><code>atfg</code></td></tr><tr><td>Worker</td><td>Runs one agent node and connects outbound to the server</td><td><code>python -m atfgraph.worker</code></td></tr></tbody></table></div>
+<p>Default ports: the graph server listens on <code>127.0.0.1:18880</code> and serves the web console at <code>http://127.0.0.1:18880/ui/</code>. The optional gRPC admin surface uses <code>18882</code>.</p>
+<h2 id="how-it-is-installed-today">How it is installed today</h2>
+<p>Installation is a source build. You need a Rust toolchain and Python 3.10 or newer. From a checkout of the repository:</p>
+<pre><code class="language-bash">cargo build --bin atfgraphd --bin atfg          # the server and the CLI, in target/debug/
+python3.12 -m venv .venv                        # any interpreter &gt;= 3.10
+.venv/bin/python -m pip install ./python        # the atfgraph Python package</code></pre>
+<p><code>target/debug/atfg</code> is not installed over any other <code>atfg</code> you may have; put <code>target/debug</code> on your <code>PATH</code> or call it by path. The state directory is <code>~/.atfgraph-vnext</code>.</p>
+<p>The <a href="quickstart.html">Quickstart</a> takes it from here. If a command in these pages does not behave as written, the <a href="troubleshooting.html">Troubleshooting</a> page lists the messages you may see.</p>
+<h2 id="where-to-go-next">Where to go next</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">You want to</th><th scope="col">Read</th></tr></thead><tbody><tr><td>See it work in five minutes</td><td><a href="quickstart.html">Quickstart</a></td></tr><tr><td>Understand the words the CLI and console use</td><td><a href="concepts.html">Core concepts</a></td></tr><tr><td>Write a node</td><td><a href="python.html">Python SDK</a></td></tr><tr><td>Start work and read the result</td><td><a href="howto-start-a-traverser.html">Start a traverser</a></td></tr><tr><td>Know what an API area is for</td><td><a href="api-reference.html">API reference</a></td></tr><tr><td>Decode an error message</td><td><a href="troubleshooting.html">Troubleshooting</a></td></tr></tbody></table></div>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research Path — ATFGraph vNext reference</title>
+<meta name="description" content="Research Path: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Research Path</h1>
+<p class="meta">Directory <code>examples/python/research_path</code></p>
+<p>Build a bounded research dependency graph, run independent searches concurrently, and synthesize dependent findings from saved citations. Live search supports Tavily and Parallel. Cycles, unknown dependencies and exceeded task budgets are rejected.</p>
+<p class="meta">Agent node label <code>research_path</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>create_research_plan</code></td><td>traversal</td><td><code>(research_question: str, max_depth: int = 1, max_tasks_per_level: int = 2) -&gt; dict</code></td><td><code>examples/python/research_path/main.py</code></td><td></td></tr><tr><td><code>execute_deep_research</code></td><td>traversal</td><td><code>(research_question: str, max_depth: int = 1, max_tasks_per_level: int = 2) -&gt; dict</code></td><td><code>examples/python/research_path/main.py</code></td><td></td></tr><tr><td><code>execute_research_task</code></td><td>traversal</td><td><code>(task: dict, dependencies: list[dict] | None = None) -&gt; dict</code></td><td><code>examples/python/research_path/main.py</code></td><td></td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">EXAMPLE_MODE=fixture python -m atfgraph.worker --module examples.python.research_path.main:app
+atfg install ./examples/python/research_path
+atfg run research_path
+atfg server start
+atfg traverse research_path.execute_deep_research --in &#x27;{&quot;research_question&quot;: &quot;How does vector retrieval work?&quot;, &quot;max_depth&quot;: 1, &quot;max_tasks_per_level&quot;: 2}&#x27;
+python -m examples.python.research_path.call</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/research_path/README.md</code></li><li><code>examples/python/research_path/__init__.py</code></li><li><code>examples/python/research_path/agentnode.yaml</code></li><li><code>examples/python/research_path/call.py</code></li><li><code>examples/python/research_path/main.py</code></li><li><code>examples/python/research_path/node.py</code></li><li><code>examples/python/research_path/requirements.txt</code></li><li><code>examples/python/research_path/support.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/research_path/README.md</code>; the source file is not modified.</p>
+<p>Build a bounded research dependency graph, run independent searches concurrently, and synthesize dependent findings from saved citations. Live search supports Tavily and Parallel. Cycles, unknown dependencies and exceeded task budgets are rejected.</p>
+<h2 id="run-locally">Run locally</h2>
+<p>From the <code>atfgraph-vnext</code> checkout, with its Python SDK installed in your active environment:</p>
+<pre><code class="language-bash">atfg server start
+EXAMPLE_MODE=fixture python -m atfgraph.worker --module examples.python.research_path.main:app
+# In a second terminal:
+python -m examples.python.research_path.call</code></pre>
+<p>Or install and run the node as a managed local installation:</p>
+<pre><code class="language-bash">atfg install ./examples/python/research_path
+atfg run research_path</code></pre>
+<p>The <code>node.py</code> entrypoint also works when this folder is copied out of the checkout. The graph server defaults to <code>http://127.0.0.1:18880</code>; inspect traversers and child calls at <code>http://127.0.0.1:18880/ui/</code>.</p>
+<h2 id="call-with-the-cli">Call with the CLI</h2>
+<pre><code class="language-bash">atfg traverse research_path.execute_deep_research --in &#x27;{&quot;research_question&quot;: &quot;How does vector retrieval work?&quot;, &quot;max_depth&quot;: 1, &quot;max_tasks_per_level&quot;: 2}&#x27;</code></pre>
+<h2 id="providers">Providers</h2>
+<p><code>EXAMPLE_MODE=fixture</code> is the default: deterministic local example data and calculations, no model or search calls. Fixture scores demonstrate mechanics, not model quality.</p>
+<p>To use live model decisions, set <code>EXAMPLE_MODE=live</code>, <code>ATFGRAPH_MODEL_URL</code>, <code>ATFGRAPH_MODEL_NAME</code> and, when needed, <code>ATFGRAPH_MODEL_API_KEY</code>. Configure these before starting the worker. Missing settings fail explicitly; live failures never silently fall back to fixture answers.</p>
+<h2 id="python-client">Python client</h2>
+<pre><code class="language-python">from atfgraph import Client
+
+async with Client(&quot;http://127.0.0.1:18880&quot;) as client:
+    result = await client.traverse(
+        &quot;research_path.execute_deep_research&quot;,
+        {&#x27;research_question&#x27;: &#x27;How does vector retrieval work?&#x27;, &#x27;max_depth&#x27;: 1, &#x27;max_tasks_per_level&#x27;: 2},
+        timeout=300,
+    )
+    print(result)</code></pre>
+<p>For live research, choose <code>SEARCH_PROVIDER=tavily</code> with <code>TAVILY_API_KEY</code>, or <code>SEARCH_PROVIDER=parallel</code> with <code>PARALLEL_API_KEY</code>. <code>TAVILY_SEARCH_URL</code> and <code>PARALLEL_MCP_URL</code> override those provider endpoints for testing or a gateway. Search is bounded to five results per independent task; depth is 0–2 and tasks per depth 1–4. Dependent tasks reuse source evidence instead of issuing redundant searches. Fixture citations use <code>fixture://</code> and do not represent web sources.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

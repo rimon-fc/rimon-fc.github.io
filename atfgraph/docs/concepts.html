@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core concepts — ATFGraph vNext reference</title>
+<meta name="description" content="Core concepts: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Core concepts</h1>
+<p>Ten nouns. Every CLI command, console label and SDK docstring uses exactly these words, so once you know them the rest of the documentation reads directly. The full vocabulary, including the structural terms, is in the repository&#x27;s graph model document; this page is the subset you need first.</p>
+<h2 id="graph-server">Graph server</h2>
+<p>The server that owns the graph. It routes every edge, schedules traversers, stores memory and records paths. It is the only inbound endpoint in the system: clients call it, workers connect out to it, and nothing calls a node directly. Binary: <code>atfgraphd</code>. Default address: <code>127.0.0.1:18880</code>.</p>
+<h2 id="agent-node">Agent node</h2>
+<p>A deployable process that registers under a <strong>label</strong> (for example <code>hello</code>) with a version and a set of traversals and skills. In Python it is an <code>Agent</code> object run by <code>python -m atfgraph.worker</code>. Registration is immutable per version: to change what a node offers, register a new version.</p>
+<h2 id="traversal">Traversal</h2>
+<p>An LLM-backed function on an agent node. It decides its own route through the graph by calling other traversals and skills with <code>await app.traverse(...)</code>. Declared with <code>@app.traversal()</code>.</p>
+<h2 id="skill">Skill</h2>
+<p>A deterministic function on an agent node. No model, no routing decision. It does one thing and returns. Declared with <code>@app.skill()</code>. Traversals call skills; skills do not call anything through the graph.</p>
+<h2 id="traverser">Traverser</h2>
+<p>One live walk through the graph, started by a request or an emitter. It has an id, a status (<code>queued</code>, <code>running</code>, <code>waiting</code>, <code>succeeded</code>, <code>failed</code>, <code>cancelled</code>, <code>timed_out</code>), memory and a path. <code>atfg traverse</code> starts one; <code>atfg ps</code> lists them; <code>atfg wait</code> blocks at the <strong>barrier</strong> until one is terminal. The word is always traverser, in the CLI, the console and the SDK.</p>
+<h2 id="path">Path</h2>
+<p>The recorded sequence of steps a traverser took. <code>atfg path &lt;id&gt;</code> prints it; the console shows it; <code>atfg share &lt;id&gt;</code> exports it as a self-contained file. When node identity is enabled, each step also carries a signature, and the chain of signatures is a <strong>signed path</strong> that can be verified offline.</p>
+<h2 id="step">Step</h2>
+<p>One edge as recorded in a path: which target was called, by which parent step, with what status, attempt number and elapsed time. In the quickstart, the traversal <code>hello.greet</code> is step 1 and the skill <code>hello.shout</code> it called is step 2, with step 1 as its parent.</p>
+<h2 id="decision">Decision</h2>
+<p>A traversal whose job is one typed judgement: it calls a model, returns a schema, and reports its own confidence. Declared with <code>@app.decision()</code> and dispatched exactly like a traversal; the kind travels onto the step, and <code>confidence_field=</code> on <code>app.ai</code> records the confidence and any fallback on the usage row, so unsure and fallen-back decisions can be counted per capability. See <a href="decisions.html">Decisions</a>.</p>
+<h2 id="harness">Harness</h2>
+<p>A coding-agent CLI (the bundled harness, Claude Code, Codex, Gemini CLI or OpenCode) run as one bounded step of a traversal with <code>app.harness</code>: confined to a directory, tools off unless listed, a wall-clock deadline and a dollar cap, every CLI event a progress event on the path. See <a href="07-harness.html">Delegating to a coding harness</a>.</p>
+<h2 id="emitter">Emitter</h2>
+<p>An external event source that starts a traverser without a caller: a cron schedule, an inbound webhook or a queue. Emitters are declared on traversals and have their own delivery log. The console&#x27;s Triggers page configures and fires them.</p>
+<h2 id="how-they-fit-together">How they fit together</h2>
+<ol><li>An agent node registers its label, version, traversals and skills with the graph server and then claims work from it as an outbound <strong>worker</strong>.</li><li>A request (or an emitter) starts a <strong>traverser</strong> on <code>label.capability</code>.</li><li>The graph server hands the task to a worker for that label. Inside the <strong>traversal</strong>, each <code>app.traverse(...)</code> call goes back through the server,
+which records it as a <strong>step</strong> and routes it to the right node.</li><li>When the traverser is terminal, its <strong>path</strong> holds every step, and <code>atfg wait</code> returns from the barrier.</li></ol>
+<p>Two words you will also meet: a <strong>session</strong> is one conversation across many traversers, and <strong>memory</strong> is key-value state scoped to <code>global</code>, <code>session</code>, <code>actor</code> or <code>workflow</code> that traversers read and write.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

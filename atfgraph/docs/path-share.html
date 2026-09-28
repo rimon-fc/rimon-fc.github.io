@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sharing a path offline — ATFGraph vNext reference</title>
+<meta name="description" content="Sharing a path offline: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Sharing a path offline</h1>
+<p><code>atfg share</code> turns a recorded path — the steps one traverser took through the graph — into a single file you can keep, archive, screenshot or hand to someone else.</p>
+<p>Nothing is uploaded. There is no link to mint, no host to reach and no account to have: the file <em>is</em> the artifact.</p>
+<pre><code class="language-console">$ atfg share 7720ccc2-e96d-436b-b06b-39b51bb67ad5
+/home/you/path-7720ccc2-e96d-436b-b06b-39b51bb67ad5.html
+2 step(s), succeeded — 16405 bytes</code></pre>
+<p>Open it in any browser, from disk, on a machine that has never heard of your graph server.</p>
+<h2 id="using-it">Using it</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Flag</th><th scope="col">What it does</th></tr></thead><tbody><tr><td><code>&lt;ID&gt;</code></td><td>The traverser whose path is exported. Any step id works: the export follows the path the graph server returns for it.</td></tr><tr><td><code>-o</code>, <code>--out PATH</code></td><td>Where to write. Default <code>path-&lt;id&gt;.html</code> (<code>.json</code> with <code>--format json</code>) in the working directory.</td></tr><tr><td>`--format html\</td><td>json`</td><td><code>html</code> (default) is the readable, self-contained document. <code>json</code> writes the versioned bundle on its own.</td></tr><tr><td><code>--title TEXT</code></td><td>Names the path. Default: <code>path of &lt;target&gt;</code> taken from the entry step.</td></tr><tr><td><code>--redact</code></td><td>Replaces every input, output and error preview with <code>[redacted]</code> before anything is written.</td></tr><tr><td><code>--force</code></td><td>Required to overwrite an existing file. Without it the command stops and writes nothing.</td></tr></tbody></table></div>
+<p>The global flags work as they do everywhere else: <code>--server</code>, <code>--api-key</code> (<code>ATFGRAPH_SERVER</code>, <code>ATFGRAPH_API_KEY</code>), <code>--timeout</code>, and <code>--json</code> for a machine-readable summary of the export:</p>
+<pre><code class="language-console">$ atfg --json share $ID --out audit.html
+{
+  &quot;id&quot;: &quot;7720ccc2-…&quot;,
+  &quot;root_id&quot;: &quot;7720ccc2-…&quot;,
+  &quot;out&quot;: &quot;audit.html&quot;,
+  &quot;format&quot;: &quot;html&quot;,
+  &quot;bundle_version&quot;: 1,
+  &quot;bytes&quot;: 16405,
+  &quot;steps&quot;: 2,
+  &quot;steps_omitted&quot;: 0,
+  &quot;status&quot;: &quot;succeeded&quot;,
+  &quot;redacted&quot;: false
+}</code></pre>
+<p>Sharing is a read, not a privilege escalation. The export calls <code>GET /api/v2/traversers/{id}/path</code> and <code>GET /api/v2/usage?root_id=…</code> with your own credentials; if you cannot read the path, you cannot export it.</p>
+<h2 id="what-is-in-the-artifact">What is in the artifact</h2>
+<p>The HTML document shows, in this order:</p>
+<ul><li>the path&#x27;s title, id, export time and rolled-up status;</li><li>a summary strip — steps, status, wall clock, cost, tokens;</li><li>the DAG, as a tree of steps linked to their detail;</li><li>one card per step: ids, kind, version, attempt, start, finish, duration, model, cost, error code, and disclosure panels for the input, output and
+error previews;</li><li>the caveats that apply to this particular export; and</li><li>the same data as a versioned JSON bundle, inlined in a <code>&lt;script type=&quot;application/json&quot; id=&quot;atfgraph-path-bundle&quot;&gt;</code> block.</li></ul>
+<p>That inlined bundle is byte-identical to what <code>--format json</code> writes (modulo the export timestamp), so a program can read either one.</p>
+<h3 id="bundle-schema-version-1">Bundle schema, version 1</h3>
+<pre><code class="language-jsonc">{
+  &quot;bundle_version&quot;: 1,
+  &quot;kind&quot;: &quot;atfgraph.path-share&quot;,
+  &quot;product&quot;: &quot;ATFGraph vNext&quot;,
+  &quot;path_id&quot;: &quot;…&quot;, &quot;root_id&quot;: &quot;…&quot;, &quot;title&quot;: &quot;path of travel.plan&quot;,
+  &quot;generated_at&quot;: &quot;2026-09-15T04:11:07.123Z&quot;,
+  &quot;generated_by&quot;: &quot;atfg share (ATFGraph vNext 0.1.0)&quot;,
+  &quot;redacted&quot;: false,
+  &quot;limits&quot;: { &quot;preview_limit_bytes&quot;: 2048, &quot;max_nodes&quot;: 1000, &quot;nodes_omitted&quot;: 0 },
+  &quot;totals&quot;: {
+    &quot;steps&quot;: 2, &quot;status&quot;: &quot;succeeded&quot;,
+    &quot;status_counts&quot;: { &quot;succeeded&quot;: 2 },
+    &quot;wall_clock_ms&quot;: 219,
+    &quot;cost_usd&quot;: 0.0125,          // null = unknown, never a stand-in for 0
+    &quot;cost_complete&quot;: true,
+    &quot;total_tokens&quot;: 15
+  },
+  &quot;nodes&quot;: [ { &quot;id&quot;: &quot;…&quot;, &quot;step_id&quot;: &quot;…&quot;, &quot;parent_id&quot;: null,
+               &quot;target&quot;: &quot;travel.plan&quot;, &quot;label&quot;: &quot;travel&quot;, &quot;capability&quot;: &quot;plan&quot;,
+               &quot;version&quot;: &quot;1.0.0&quot;, &quot;kind&quot;: &quot;traversal&quot;,
+               &quot;status&quot;: &quot;succeeded&quot;, &quot;attempt&quot;: 1, &quot;max_attempts&quot;: 1,
+               &quot;created_at_ms&quot;: 0, &quot;started_at_ms&quot;: 0, &quot;finished_at_ms&quot;: 0,
+               &quot;duration_ms&quot;: 219,
+               &quot;input_preview&quot;:  { &quot;state&quot;: &quot;unavailable&quot;, &quot;text&quot;: null, &quot;truncated&quot;: false, &quot;source_bytes&quot;: null },
+               &quot;output_preview&quot;: { &quot;state&quot;: &quot;available&quot;, &quot;text&quot;: &quot;{…}&quot;, &quot;truncated&quot;: false, &quot;source_bytes&quot;: 434 },
+               &quot;error_preview&quot;:  { &quot;state&quot;: &quot;absent&quot;, &quot;text&quot;: null, &quot;truncated&quot;: false, &quot;source_bytes&quot;: null },
+               &quot;error_code&quot;: null, &quot;model&quot;: null, &quot;cost_usd&quot;: null, &quot;total_tokens&quot;: null } ],
+  &quot;edges&quot;: [ { &quot;from&quot;: &quot;…&quot;, &quot;to&quot;: &quot;…&quot; } ],
+  &quot;notes&quot;: [ &quot;…&quot; ]
+}</code></pre>
+<p><code>bundle_version</code> is the contract. Bump it on any breaking change to this shape.</p>
+<p><strong>Preview states.</strong> A preview never silently conflates &quot;nothing there&quot; with &quot;nothing shown&quot;, because on a shared path those mean very different things:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">State</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>available</code></td><td>Text is present (possibly truncated; <code>truncated</code> and <code>source_bytes</code> say so).</td></tr><tr><td><code>empty</code></td><td>The step recorded this field, and it was empty.</td></tr><tr><td><code>absent</code></td><td>The step recorded nothing here — no output yet, or no error at all.</td></tr><tr><td><code>unavailable</code></td><td>The read API does not carry this field, so the export could not include it.</td></tr><tr><td><code>redacted</code></td><td>Present, and deliberately stripped by <code>--redact</code>.</td></tr></tbody></table></div>
+<p><strong>Unknown is not zero.</strong> <code>cost_usd</code> and <code>model</code> are <code>null</code> when the graph server reported nothing, and the document renders them as <code>unknown</code>. A step that recorded a priced call at $0 renders <code>$0.0000</code>; a step with no usage record never does. When a step has several model calls and only some were priced, its cost stays <code>null</code> rather than reporting the priced subtotal as if it were the whole.</p>
+<h2 id="safety">Safety</h2>
+<p>The artifact is built to be sent to someone. Everything in it except the headings is attacker-influenced — a step&#x27;s output is whatever an agent node returned — so:</p>
+<ul><li><strong>No JavaScript.</strong> The document has exactly one <code>&lt;script&gt;</code> element, and it is <code>type=&quot;application/json&quot;</code>: data, never executed. Everything visible is
+server-rendered HTML; the collapsible panels are <code>&lt;details&gt;</code>. There is no
+code path in the file that could run a payload.</li><li><strong>No network.</strong> No remote asset, no <code>@import</code>, no <code>url()</code>, no absolute URL anywhere — not even in the stylesheet. The only links are <code>#step-…</code>
+fragments within the file. A <code>Content-Security-Policy</code> meta tag
+(<code>default-src &#x27;none&#x27;</code>) makes a browser enforce this too.</li><li><strong>Escaped at both layers.</strong> Text is HTML-escaped (<code>&amp; &lt; &gt; &quot; &#x27;</code>). The inlined bundle is escaped for its container: <code>&lt;</code>, <code>&gt;</code>, <code>&amp;</code>, U+2028 and U+2029 become
+<code>\uXXXX</code>, so a payload containing <code>&lt;/script&gt;</code> cannot close the block. A
+status the renderer does not recognise becomes <code>unknown</code> rather than reaching
+a CSS class name.</li><li><strong>Sanitised text.</strong> C0/C1 control characters (so <code>cat</code>-ing the file is safe) and Unicode bidi/invisible-format characters (so a preview cannot display in
+an order other than the bytes it holds) are dropped from untrusted text.</li><li><strong>Bounded.</strong> 2 KiB per preview, 1000 steps per artifact; both record what was dropped. A 100× larger payload produces the same-sized file.</li><li><strong>No credentials.</strong> The bundle is built from response bodies only. No API key, no bearer token, not even the server address is written to it.</li><li><strong>No publishing.</strong> There is no <code>--public</code>, no upload and no browser launch; posting a bundle to a hosted share service is deliberately not implemented.</li></ul>
+<p><code>--redact</code> is the stronger setting, not the default one: the default is already safe to keep, and redaction is for when the payloads themselves must not leave the machine. It removes input, output <strong>and</strong> error previews. Structure — the DAG, statuses, timing, attempts, token counts and <code>error_code</code> — survives, so a redacted export is still worth sending.</p>
+<h2 id="not-available-over-http">Not available over HTTP</h2>
+<p>The export exists only in the CLI. There is no <code>GET /api/v2/traversers/{id}/share</code> route; a browser or another client that wants the same artifact runs <code>atfg share</code>.</p>
+<h2 id="known-gap-step-inputs">Known gap: step inputs</h2>
+<p>The export marks every input preview <code>unavailable</code>, and says so in the artifact and in the bundle notes. This is a data gap, not a renderer one: <code>GET /api/v2/traversers/{id}/path</code> returns each step&#x27;s status, timing, output and error, but not its input. <code>Trav::to_json</code> in <code>src/store.rs</code> does not carry <code>input_json</code>; the only place an input crosses the wire is <code>worker/claim</code>, which is a worker-role lease operation and not a read API.</p>
+<p>Closing it needs a contract change (an <code>input</code> field on the path item). The renderer already reads <code>item[&quot;input&quot;]</code> leniently, so input previews start working the day the field appears, with no change to the export.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

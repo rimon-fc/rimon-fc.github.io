@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>examples/python/features/serverless — ATFGraph vNext reference</title>
+<meta name="description" content="examples/python/features/serverless: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>examples/python/features/serverless</h1>
+<p class="meta">Directory <code>examples/python/features/serverless</code></p>
+<p>Fixture pricing: deterministic, no supplier call.</p>
+<p class="meta">Agent node label <code>quoter</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>flaky_price</code></td><td>skill</td><td><code>(origin: str, destination: str, fail: bool = False) -&gt; dict</code></td><td><code>examples/python/features/serverless/agent.py</code></td><td>Fails with a non-retryable envelope when asked, to show the failure path.</td></tr><tr><td><code>price</code></td><td>skill</td><td><code>(origin: str, destination: str, nights: int = 1) -&gt; dict</code></td><td><code>examples/python/features/serverless/agent.py</code></td><td>Fixture pricing: deterministic, no supplier call.</td></tr><tr><td><code>quote</code></td><td>traversal</td><td><code>(legs: list[dict]) -&gt; dict</code></td><td><code>examples/python/features/serverless/agent.py</code></td><td>Price every leg as a nested child; cache repeats; admit calls per node.</td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m examples.python.features.serverless.invoke --action drain
+python -m examples.python.features.serverless.invoke --action serve
+python -m examples.python.features.serverless.invoke quote &#x27;{&quot;legs&quot;:[{&quot;origin&quot;:&quot;BNE&quot;,&quot;destination&quot;:&quot;SYD&quot;}]}&#x27;</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/serverless/__init__.py</code></li><li><code>examples/python/features/serverless/agent.py</code></li><li><code>examples/python/features/serverless/agentnode.yaml</code></li><li><code>examples/python/features/serverless/invoke.py</code></li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

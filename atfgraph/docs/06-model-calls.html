@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model calls — ATFGraph vNext reference</title>
+<meta name="description" content="Model calls: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Model calls</h1>
+<p>By the end of this page you will be able to call a model from a handler with <code>app.ai</code>, get a typed answer back, let the model call your node&#x27;s own capabilities as tools, stream deltas, send images and audio, generate media, and read what each call cost. It requires the SDK, a running graph server and, for anything that actually contacts a model, provider credentials in the worker&#x27;s environment; every snippet says which.</p>
+<p>Prerequisites: a chat provider reachable from the worker (<code>ATFGRAPH_MODEL_URL</code> and <code>ATFGRAPH_MODEL_NAME</code>, or <code>ATFGRAPH_MODEL_PROVIDER=anthropic</code> with <code>ANTHROPIC_API_KEY</code>) for the <code>app.ai</code> snippets; <code>OPENAI_API_KEY</code> or another media key for the generation snippets.</p>
+<h2 id="configure-a-provider">Configure a provider</h2>
+<p><code>Agent(...)</code> reads the model provider from the environment once at construction (<code>python/atfgraph/model.py</code>, <code>model_from_env</code>), unless you pass <code>model=</code> explicitly. Nothing is contacted until a handler calls <code>app.ai</code>.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Variable</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>ATFGRAPH_MODEL_PROVIDER</code></td><td><code>openai-compatible</code> (default) or <code>anthropic</code>. Any other value raises <code>ModelNotConfigured</code> at construction.</td></tr><tr><td><code>ATFGRAPH_MODEL_URL</code></td><td>Base URL of the chat-completions endpoint. Required for <code>openai-compatible</code>; optional for <code>anthropic</code> (defaults to the Anthropic API).</td></tr><tr><td><code>ATFGRAPH_MODEL_NAME</code></td><td>Default model name. Required for both providers.</td></tr><tr><td><code>ATFGRAPH_MODEL_API_KEY</code></td><td>Bearer key for <code>openai-compatible</code>. <code>ATFGRAPH_MODEL_API_KEY_ENV</code> names a different variable to read instead.</td></tr><tr><td><code>ATFGRAPH_MODEL_AUTH</code></td><td><code>auto</code> (default), <code>key</code> or <code>databricks</code>. <code>auto</code> sends the key when one is set and, only for a Databricks serving host with no key, signs with the workspace identity instead. <code>databricks</code> always uses the identity; <code>key</code> never does.</td></tr><tr><td><code>ANTHROPIC_API_KEY</code></td><td>Key for <code>anthropic</code> when <code>ATFGRAPH_MODEL_API_KEY_ENV</code> is not set.</td></tr><tr><td><code>ATFGRAPH_MODEL_PRICES</code></td><td>Optional rate table for estimating what a call cost when the provider states no price: inline JSON, or the path of a JSON file, keyed by model name with <code>input_per_million</code> and <code>output_per_million</code> in USD (optional <code>cache_read_per_million</code>, <code>cache_creation_per_million</code>, <code>cache_included_in_input</code>). Estimates are recorded with <code>cost_source=&quot;table&quot;</code>; see <a href="#what-a-call-cost">What a call cost</a>.</td></tr></tbody></table></div>
+<p>With none of these set, <code>app.model</code> is <code>None</code> and the first <code>app.ai</code> call raises <code>ModelNotConfigured</code> with the message &quot;no model provider: pass model= to Agent or set ATFGRAPH_MODEL_URL and ATFGRAPH_MODEL_NAME (and optionally ATFGRAPH_MODEL_PROVIDER=anthropic)&quot;. The two provider classes are <code>HTTPChatModel</code> and <code>AnthropicMessagesModel</code>; <code>tests/test_authoring_parity.py::test_model_from_env_selects_provider</code> pins the selection rules. <code>app.model = HTTPChatModel(url, name, transport=...)</code> is how the tests substitute a scripted provider, and <code>ModelRouter</code> (<a href="11-resilience-and-controls.html">11-resilience-and-controls.md</a>) is a <code>ModelProvider</code> that dispatches per model name.</p>
+<h3 id="per-provider-recipes">Per-provider recipes</h3>
+<p>The node code is the same in every case; only the environment changes. Any one of these blocks makes the <code>plan</code> traversal in <a href="02-traversals-skills-and-routers.html">02-traversals-skills-and-routers.md</a> call a real model.</p>
+<pre><code class="language-bash"># Databricks Model Serving: the workspace URL, not an App URL; the endpoint name is the model.
+# Two ways to authenticate, both supported:
+export ATFGRAPH_MODEL_URL=https://adb-1234567890.12.azuredatabricks.net/serving-endpoints
+export ATFGRAPH_MODEL_NAME=databricks-claude-sonnet-5
+#  (a) a token you hold: `databricks tokens create`, or a service-principal OAuth token, with CAN_QUERY
+export ATFGRAPH_MODEL_API_KEY=dapi-your-token
+#  (b) no token at all: leave ATFGRAPH_MODEL_API_KEY unset and the call is signed by the workspace identity
+#      through databricks-sdk unified auth -- inside a Databricks App that is the App&#x27;s own service principal
+#      (grant it CAN_QUERY on the endpoint), on a laptop an explicit ATFGRAPH_DATABRICKS_PROFILE. Needs the
+#      [databricks] extra. ATFGRAPH_MODEL_AUTH=databricks forces (b) even when a key is set; =key forbids it.
+
+# OpenRouter: reports usage.cost, so recorded calls carry a price
+export ATFGRAPH_MODEL_URL=https://openrouter.ai/api/v1
+export ATFGRAPH_MODEL_NAME=anthropic/claude-sonnet-4
+export ATFGRAPH_MODEL_API_KEY=sk-or-your-key
+
+# Anthropic directly
+export ATFGRAPH_MODEL_PROVIDER=anthropic
+export ATFGRAPH_MODEL_NAME=claude-sonnet-4-20250514
+export ANTHROPIC_API_KEY=sk-ant-your-key
+
+# A local OpenAI-compatible server (Ollama, vLLM): no key
+export ATFGRAPH_MODEL_URL=http://127.0.0.1:11434/v1
+export ATFGRAPH_MODEL_NAME=llama3.1</code></pre>
+<p>The Databricks shape is the one <code>examples/databricks/presets/databricks-model-serving.yml</code> writes out for an App, with the token bound from a secret scope rather than typed into a shell. <code>examples/databricks/presets/openrouter.yml</code> is the OpenRouter equivalent.</p>
+<h3 id="where-the-key-lives-by-how-you-run-the-worker">Where the key lives, by how you run the worker</h3>
+<p>The graph server never holds a model key and has no route to accept one. The key is in the environment of the worker process, and the manifest declares its name so the tooling can check it is present.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">You run the worker with</th><th scope="col">Put the variables in</th></tr></thead><tbody><tr><td><code>atfg dev</code> or <code>python -m atfgraph.worker</code></td><td>the shell, or a <code>.env</code> beside the node</td></tr><tr><td><code>atfg install</code> then <code>atfg run</code></td><td>your shell, then <code>&lt;package&gt;/.env</code> or the package&#x27;s own <code>.env</code>; <code>run</code> refuses to start when a required variable is missing and never copies <code>.env</code> into the package</td></tr><tr><td>Docker Compose</td><td>the <code>.env</code> beside <code>deploy/docker/compose.yaml</code> (<a href="howto-deploy-compose.html">howto-deploy-compose.md</a>)</td></tr><tr><td>Kubernetes</td><td>a Secret referenced by the worker Deployment the scaffold writes</td></tr><tr><td>a Databricks App</td><td><code>value_from</code> a secret scope in the bundle</td></tr></tbody></table></div>
+<p>Declare the names in <code>agentnode.yaml</code> so <code>atfg install</code> and <code>atfg run</code> know what to look for. Adapted from <code>examples/python/features/model_tools/agentnode.yaml</code>:</p>
+<pre><code class="language-yaml">user_environment:
+  required:
+    - name: ATFGRAPH_MODEL_URL
+      description: OpenAI-compatible chat base URL
+    - name: ATFGRAPH_MODEL_NAME
+      description: Model or serving-endpoint name
+  optional:
+    - name: ATFGRAPH_MODEL_PROVIDER
+      default: openai-compatible
+    - name: ATFGRAPH_MODEL_API_KEY
+      type: secret
+      description: Provider key when the endpoint needs one</code></pre>
+<p>The manifest carries the name and the type, never the value. Without any provider configured the worker still starts and its skills work; the first <code>app.ai</code> call raises <code>ModelNotConfigured</code> naming the variables to set.</p>
+<h3 id="several-providers-in-one-node">Several providers in one node</h3>
+<p>When one node wants a cheap model for triage and a strong one for drafting, or a Databricks endpoint for some calls and Anthropic for others, build a <code>ModelRouter</code> and register each provider with the environment variable that holds its key (<code>api_key_env</code>); the value is still read from the environment, never passed in code. Constructor signatures are those of <code>HTTPChatModel(base_url, model, *, api_key_env=...)</code> and <code>AnthropicMessagesModel(model, *, api_key_env=...)</code> in <code>python/atfgraph/model.py</code>; routing rules are in <a href="11-resilience-and-controls.html">11-resilience-and-controls.md</a>.</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from pydantic import BaseModel
+
+from atfgraph import Agent, AnthropicMessagesModel, HTTPChatModel, ModelRouter
+
+router = ModelRouter()
+router.register(
+    &quot;databricks&quot;,
+    HTTPChatModel(
+        &quot;https://adb-1234567890.12.azuredatabricks.net/serving-endpoints&quot;,
+        &quot;claude-sonnet-4-endpoint&quot;,
+        api_key_env=&quot;DATABRICKS_TOKEN&quot;,
+    ),
+    models=[&quot;claude-sonnet-4-endpoint&quot;],
+    default=True,
+    default_model=&quot;claude-sonnet-4-endpoint&quot;,
+)
+router.register(
+    &quot;openrouter&quot;,
+    HTTPChatModel(&quot;https://openrouter.ai/api/v1&quot;, &quot;openai/gpt-4o-mini&quot;, api_key_env=&quot;OPENROUTER_API_KEY&quot;),
+    prefixes=[&quot;openai/&quot;, &quot;google/&quot;],
+)
+router.register(
+    &quot;anthropic&quot;,
+    AnthropicMessagesModel(&quot;claude-opus-4-1&quot;, api_key_env=&quot;ANTHROPIC_API_KEY&quot;),
+    models=[&quot;claude-opus-4-1&quot;],
+)
+
+app = Agent(node_id=&quot;concierge&quot;, version=&quot;1.0.0&quot;, model=router)
+
+
+class Route(BaseModel):
+    needs_expert: bool
+    reason: str
+
+
+@app.traversal()
+async def triage(message: str) -&gt; dict:
+    verdict = await app.ai(user=message, model=&quot;openai/gpt-4o-mini&quot;, schema=Route)  # OpenRouter, by prefix
+    if verdict.needs_expert:
+        return {&quot;reply&quot;: await app.ai(user=message, model=&quot;claude-opus-4-1&quot;)}        # Anthropic, by name
+    return {&quot;reply&quot;: await app.ai(user=message)}                                      # default route: Databricks</code></pre>
+<p>Each call is recorded under its own provider and model, so usage totals show the split. Not verified: the three endpoints above against live accounts; the routing rules are pinned by <code>tests/test_python_controls.py</code> with a fixture provider.</p>
+<h3 id="structured-output-on-databricks-serving-endpoints">Structured output on Databricks serving endpoints</h3>
+<p><code>app.ai(schema=…)</code> asks an OpenAI-compatible endpoint for structured output and steps down one shape at a time until the endpoint accepts one, remembering the answer for the rest of the process:</p>
+<ol><li><strong>`response_format: json_schema` with `strict: true`</strong> on Databricks hosts (documented support). The schema is first rewritten into the shape Databricks documents: nested models inlined instead
+of <code>$ref</code>, optionals as <code>[type, &quot;null&quot;]</code>, <code>title</code>/<code>default</code> dropped, and <strong>every property required</strong>,
+because constrained decoding enforces nothing else and a self-report field is exactly what a model
+likes to skip. A schema that still uses <code>pattern</code>, <code>allOf</code>, <code>oneOf</code> or a recursive reference is sent
+without <code>strict</code> instead of failing every call. <code>ATFGRAPH_MODEL_STRICT=true</code> forces strict for any
+host, <code>false</code> never sends it. Live: <code>databricks-claude-sonnet-5</code> accepts strict and then always
+states the fields it used to leave out.</li><li><strong>plain `response_format: json_schema`</strong>, when the strict request came back <code>400</code>/<code>422</code>.</li><li><strong>one forced tool call</strong> (the schema as the function&#x27;s parameters, arguments read back).</li><li><strong>the schema in the prompt</strong>: no <code>response_format</code>, no tools, a system instruction spelling out the JSON Schema; the reply&#x27;s first JSON object (fences and prose tolerated) is validated like any
+other. This is the only shape the Claude Fable endpoints (<code>databricks-claude-fable-5</code>, <code>-5-1</code>)
+accept: they answer <code>400</code> to <code>response_format</code> (&quot;Structured output is not supported for this
+model…&quot;) and to forced tool use (&quot;tool_choice: type tool and any are not supported&quot;).</li></ol>
+<p><code>ATFGRAPH_MODEL_STRUCTURED=json_schema</code> (default) starts at the top; <code>tools</code> or <code>prompt</code> start lower when you know the endpoint. A <code>400</code>/<code>422</code> at the last step, and every other HTTP error, surfaces as <code>ModelError</code> with <code>.status</code> and <code>.detail</code>, the endpoint&#x27;s own message (scrubbed): for example <code>databricks-claude-sonnet-5</code> refuses the <code>temperature</code> parameter, and the message says so.</p>
+<p>Whatever the shape, <strong>a reply that does not validate is repaired once</strong>: the SDK sends the conversation back with the model&#x27;s reply and the validation error quoted, then validates again; the second miss surfaces as the <code>ModelError</code>. <code>ModelResponse.repaired</code> says when the answer came from that second call. <code>ATFGRAPH_MODEL_REPAIR=0</code> makes the first miss final.</p>
+<p>When a traversal wraps model calls in a fixture fallback — the <code>co_consult</code> example does — a rejected structured call does not fail the run; it degrades it. Read the run&#x27;s usage rows (<code>operation: fallback</code>, message <code>model call failed: ModelError</code>) or the <code>degraded</code> flag in its metadata before trusting a suspiciously short path.</p>
+<h2 id="one-call-typed-output">One call, typed output</h2>
+<p><code>app.ai(&quot;text&quot;)</code> and <code>app.ai(user=&quot;text&quot;)</code> are equivalent. Without <code>schema=</code> the call returns the response text; with <code>schema=</code> (a Pydantic model or a JSON Schema dict) it requests structured output and returns the parsed instance. <code>system=</code>, <code>model=</code>, <code>temperature=</code> and <code>max_tokens=</code> pass through; <code>context=</code> is appended to the user message as JSON. Adapted from <code>examples/python/image_studio/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from pydantic import BaseModel
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;image-studio&quot;, version=&quot;1.0.0&quot;)
+
+
+class DetailedPrompt(BaseModel):
+    prompt: str
+    style_notes: str
+
+
+@app.traversal()
+async def create_prompt(topic: str) -&gt; dict:
+    answer = await app.ai(
+        user=topic,
+        system=&quot;Write a vivid one or two sentence image prompt with composition, colour and lighting.&quot;,
+        schema=DetailedPrompt,
+    )
+    return answer.model_dump()</code></pre>
+<p>Two more forms are pinned by <code>test_ai_accepts_positional_text_context_and_rejects_unsupported_inputs</code>: <code>response_format=&quot;json&quot;</code> returns a parsed dict without a schema, and <code>return_response=True</code> returns the full <code>ModelResponse</code> (<code>text</code>, <code>parsed</code>, <code>model</code>, <code>usage</code>, <code>tool_calls</code>, <code>finish_reason</code>, <code>provider</code>). A call with only <code>system=</code> and no user content raises <code>ValueError</code>; unknown keyword arguments such as the previous runtime&#x27;s <code>memory_scope=</code> raise <code>TypeError</code>.</p>
+<h2 id="tools-the-model-calls-your-capabilities">Tools: the model calls your capabilities</h2>
+<p><code>tools=&quot;self&quot;</code> offers this node&#x27;s own capabilities to the model as function tools. Every tool call the model makes runs through <code>app.traverse</code>, so it is a recorded child step on the path. The loop is bounded by <code>max_tool_rounds=8</code> and <code>max_tool_calls=25</code>. From <code>examples/python/features/model_tools/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from datetime import date
+from typing import List
+
+from pydantic import BaseModel
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;planner&quot;, version=&quot;1.0.0&quot;, description=&quot;Structured trip planning with tool calls&quot;)
+
+FIXTURE_RATES_TO_AUD = {&quot;AUD&quot;: 1.0, &quot;NZD&quot;: 0.92, &quot;USD&quot;: 1.52, &quot;EUR&quot;: 1.65, &quot;JPY&quot;: 0.0101}
+
+
+class TripPlan(BaseModel):
+    destination: str
+    nights: int
+    budget_aud: float
+    highlights: List[str]
+
+
+@app.skill()
+def nights(check_in: str, check_out: str) -&gt; dict:
+    &quot;&quot;&quot;Nights between two ISO dates.&quot;&quot;&quot;
+    return {&quot;nights&quot;: (date.fromisoformat(check_out) - date.fromisoformat(check_in)).days}
+
+
+@app.skill()
+def convert(amount: float, currency: str) -&gt; dict:
+    &quot;&quot;&quot;Convert an amount to AUD with fixture rates.&quot;&quot;&quot;
+    rate = FIXTURE_RATES_TO_AUD.get(currency.upper())
+    if rate is None:
+        raise ValueError(f&quot;unknown currency {currency!r}&quot;)
+    return {&quot;amount_aud&quot;: round(amount * rate, 2), &quot;rate&quot;: rate}
+
+
+@app.traversal()
+async def plan(brief: str) -&gt; TripPlan:
+    answer = await app.ai(
+        system=&quot;You plan trips. Use the tools for date arithmetic and currency conversion; never guess numbers.&quot;,
+        user=brief,
+        tools=&quot;self&quot;,
+        schema=TripPlan,
+    )
+    return answer.parsed</code></pre>
+<p>With tools the return value is a <code>ToolCallResponse</code>: <code>.text</code>, <code>.parsed</code> (when a schema was given), <code>.usage</code> and <code>.trace</code>, a <code>ToolCallTrace</code> with <code>calls</code> (each a <code>ToolCallRecord</code> with <code>tool_name</code>, <code>target</code>, <code>arguments</code>, <code>result</code>, <code>error</code>, <code>latency_ms</code>, <code>round</code>), <code>rounds</code> and <code>stopped_by_limit</code>. What <code>tests/test_authoring_parity.py::test_ai_tool_loop_runs_capabilities_as_child_steps_and_returns_structured_output</code> verifies with a scripted provider:</p>
+<ul><li>Tool names are <code>label__capability</code> (<code>planner__nights</code>); the running capability is never offered to itself.</li><li>A tool that raises returns <code>{&quot;error&quot;: ...}</code> to the model instead of failing the traversal, and the loop continues.</li><li>The path under <code>planner.plan</code> shows one <code>planner.nights</code> step and two <code>planner.convert</code> steps, one per tool call.</li><li>When the round limit is reached the closing turn is sent without tools so the model must answer (<code>test_tool_loop_stops_at_round_limit_and_asks_for_a_final_answer</code>).</li></ul>
+<p>Other values: <code>tools=&quot;discover&quot;</code> offers every registered node&#x27;s capabilities; a list mixes <code>label.capability</code> targets and ready-made tool schemas (<code>capability_to_tool_schema(target, capability)</code> builds one). Any other string raises <code>ValueError</code>. <code>stream=True</code> and <code>modalities=</code> cannot be combined with tools; both raise <code>TypeError</code>.</p>
+<p>Run the example from this repository&#x27;s root with a provider configured:</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.model_tools.agent:app
+python -m examples.python.features.model_tools.call</code></pre>
+<h2 id="streaming">Streaming</h2>
+<p><code>stream=True</code> returns a <code>ModelStream</code> immediately. Iterate <code>stream.text()</code> for text deltas, or iterate the stream itself for <code>StreamEvent</code> objects (<code>type</code> is <code>text</code>, <code>tool_call</code>, <code>audio</code>, <code>transcript</code>, <code>usage</code> or <code>done</code>). After the stream ends, <code>stream.response()</code> is the assembled <code>ModelResponse</code>, and usage is recorded on the current task at that point. From <code>examples/python/features/multimodal/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import List
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;media&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal()
+async def narrate_stream(text: str) -&gt; dict:
+    stream = await app.ai(f&quot;Rewrite this as a two-sentence travel teaser: {text}&quot;, stream=True)
+    chunks: List[str] = []
+    async for delta in stream.text():
+        chunks.append(delta)
+        await app.note(delta, tags=[&quot;delta&quot;])
+    return {&quot;text&quot;: &quot;&quot;.join(chunks), &quot;usage&quot;: stream.response().usage, &quot;cost&quot;: app.execution_cost()}</code></pre>
+<p>Forwarding deltas as <code>app.note</code> progress events is what lets a caller watch the text arrive through <code>client.events(traverser_id)</code>.</p>
+<h2 id="images-and-audio-as-input">Images and audio as input</h2>
+<p>Positional arguments to <code>app.ai</code> may mix text with <code>Image</code>, <code>Audio</code>, <code>File</code>, <code>pathlib.Path</code> or ready-made content parts; they become one user message with content parts. <code>Image.from_url(url)</code>, <code>Image.from_file(path)</code> and <code>Image.from_bytes(data)</code> build image parts; <code>Audio.from_file(path)</code> and <code>Audio.from_bytes(data, format)</code> build inline audio; <code>Audio.from_url</code> accepts only <code>data:</code> URLs. The <code>describe</code> traversal from the multimodal example:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+from atfgraph import Agent, Image
+
+app = Agent(node_id=&quot;media&quot;, version=&quot;1.0.0&quot;)
+
+
+class Findings(BaseModel):
+    summary: str
+    objects: List[str]
+    readable_text: Optional[str] = None
+
+
+@app.traversal()
+async def describe(image_url: str, question: str = &quot;What is in this image?&quot;) -&gt; dict:
+    findings = await app.ai(question, Image.from_url(image_url), schema=Findings)
+    return {&quot;findings&quot;: findings.model_dump(), &quot;cost&quot;: app.execution_cost()}</code></pre>
+<p>Each provider declares capabilities (<code>text</code>, <code>vision</code>, <code>audio_in</code>, <code>audio_out</code>, <code>files</code>, <code>tools</code>, <code>structured</code>, <code>stream</code>, <code>image_out</code>). A request the provider cannot serve raises <code>MediaCapabilityError</code> before any I/O; <code>tests/test_media_parity.py</code> shows Anthropic Messages rejecting audio input this way while converting images and documents. Raw <code>bytes</code> passed positionally raise <code>TypeError</code> asking for a media type. <code>ai_with_multimodal(...)</code> is the explicit spelling of the same call with <code>modalities=</code> and <code>audio_config=</code>; <code>ai_with_audio(...)</code> asks for spoken output, either through the chat provider (<code>modalities=[&quot;text&quot;, &quot;audio&quot;]</code>) or, when <code>model=</code> names a TTS model, through the media router.</p>
+<h2 id="generating-media">Generating media</h2>
+<p>Image, speech, music, video and transcription go through <code>app.media</code>, a <code>MediaRouter</code> built lazily from the environment (<code>python/atfgraph/media_providers.py</code>, <code>default_media_router</code>). The model prefix picks the provider; the key is read at request time, so a missing key raises <code>MediaProviderNotConfigured</code> naming the variable.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Prefix</th><th scope="col">Provider</th><th scope="col">Key variable</th></tr></thead><tbody><tr><td><code>dall-e</code>, <code>gpt-image</code>, <code>tts-</code>, <code>whisper</code>, <code>gpt-4o-transcribe</code>, <code>openai/</code></td><td>OpenAI</td><td><code>OPENAI_API_KEY</code></td></tr><tr><td><code>openrouter/</code></td><td>OpenRouter</td><td><code>OPENROUTER_API_KEY</code></td></tr><tr><td><code>fal-ai/</code>, <code>fal/</code></td><td>fal</td><td><code>FAL_KEY</code></td></tr><tr><td><code>minimax/</code></td><td>MiniMax</td><td><code>MINIMAX_API_KEY</code></td></tr></tbody></table></div>
+<p>Defaults when <code>model=</code> is omitted: <code>ATFGRAPH_IMAGE_MODEL</code> (default <code>dall-e-3</code>), <code>ATFGRAPH_AUDIO_MODEL</code> (<code>tts-1</code>), <code>ATFGRAPH_TRANSCRIPTION_MODEL</code> (<code>whisper-1</code>); video and music have no default unless <code>ATFGRAPH_VIDEO_MODEL</code> or <code>ATFGRAPH_MUSIC_MODEL</code> is set, and asking without one raises <code>MediaCapabilityError</code> with the hint &quot;pass model=&quot;.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Method</th><th scope="col">Returns</th></tr></thead><tbody><tr><td><code>ai_generate_image(prompt, model=, size=, quality=, style=, response_format=, n=)</code></td><td><code>MultimodalResponse</code> with <code>images</code></td></tr><tr><td><code>ai_with_vision(prompt, ...)</code></td><td>retained name for <code>ai_generate_image</code></td></tr><tr><td><code>ai_generate_audio(text, model=, voice=, format=, speed=)</code></td><td><code>MultimodalResponse</code> with <code>audio</code></td></tr><tr><td><code>ai_generate_music(prompt, model=, duration=, format=)</code></td><td><code>MultimodalResponse</code> with <code>audio</code></td></tr><tr><td><code>ai_generate_video(prompt, model=, image_url=, duration=)</code></td><td><code>MultimodalResponse</code> with <code>videos</code></td></tr><tr><td><code>ai_transcribe_audio(audio, model=, language=)</code></td><td><code>MultimodalResponse</code> with <code>text</code></td></tr></tbody></table></div>
+<p>Every output carries either a <code>url</code> or inline <code>data</code>. <code>save_all(directory, prefix=)</code> writes the inline outputs and skips URL-only outputs; nothing is downloaded implicitly. From <code>examples/python/features/multimodal/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Optional
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;media&quot;, version=&quot;1.0.0&quot;)
+ARTIFACT_DIR = Path(os.environ.get(&quot;ATFGRAPH_MEDIA_DIR&quot;, &quot;/tmp/atfgraph-media&quot;))
+
+
+@app.traversal()
+async def poster(prompt: str, model: Optional[str] = None, size: str = &quot;1024x1024&quot;) -&gt; dict:
+    result = await app.ai_generate_image(prompt, model=model, size=size)
+    saved = [str(p) for p in result.save_all(ARTIFACT_DIR, prefix=&quot;poster&quot;)]
+    return {&quot;saved&quot;: saved, &quot;urls&quot;: [i.url for i in result.images if not i.is_inline], &quot;cost_usd&quot;: result.cost_usd, &quot;cost&quot;: app.execution_cost()}</code></pre>
+<p>The same example&#x27;s <code>transcribe</code> traversal wraps base64 input as <code>Audio(input_audio={&quot;data&quot;: ..., &quot;format&quot;: &quot;wav&quot;})</code> and passes it to <code>ai_transcribe_audio</code>, which also accepts raw <code>bytes</code>, a <code>data:</code> URL or an http(s) URL. The provider tests in <code>tests/test_media_parity.py</code> run every provider over <code>httpx.MockTransport</code>; <code>examples/python/features/multimodal</code> has no fixture mode and needs real keys to produce media.</p>
+<h2 id="what-a-call-cost">What a call cost</h2>
+<p>Every <code>app.ai</code> and <code>ai_generate_*</code> call records a <code>CostEntry</code> (<code>python/atfgraph/costs.py</code>) on the current task: <code>model</code>, <code>provider</code>, <code>source</code> (<code>llm</code>, <code>media</code>, <code>realtime</code>, <code>harness</code>), <code>operation</code> (<code>chat</code>, <code>image</code>, <code>audio</code>, <code>music</code>, <code>video</code>, <code>transcription</code>, <code>realtime</code>), token counts, <code>cost_usd</code> and <code>cost_source</code>. Without a rate table the price is only what the provider reported (OpenRouter&#x27;s <code>usage.cost</code>, or a media provider&#x27;s own field); the SDK has no price table, so <code>cost_usd</code> stays <code>None</code> for calls whose provider reports none, which is not the same as <code>0.0</code> (<code>test_openai_compatible_vision_posts_content_parts_and_records_usage</code>).</p>
+<p><strong>Estimating a price the provider does not state.</strong> Databricks serving, Azure OpenAI and most self-hosted endpoints return token counts and no price, so their calls are <code>unpriced</code> in the ledger and the Console. A node that wants an estimate configures a rate table, either <code>Agent(prices={...})</code> or <code>ATFGRAPH_MODEL_PRICES</code> in its <code>.env</code> (inline JSON, or the path of a JSON file):</p>
+<pre><code class="language-bash">export ATFGRAPH_MODEL_PRICES=&#x27;{&quot;databricks-claude-sonnet-5&quot;: {&quot;input_per_million&quot;: 2.00, &quot;output_per_million&quot;: 10.00, &quot;cache_read_per_million&quot;: 0.20}}&#x27;</code></pre>
+<p>The table fills <code>cost_usd</code> only when the provider stated nothing and the call carried tokens, marks the entry <code>cost_source=&quot;table&quot;</code>, and keeps the rates it used in <code>extra[&quot;rate&quot;]</code>; a provider-reported price always wins. The Console shows such calls as <code>≈ $0.0123</code> with an <code>estimated</code> tag on the run page, MLflow and OpenTelemetry spans carry <code>atfgraph.usage.cost_source = table</code>, and the usage totals count them as priced. Keys match either the model name the provider reports in its response (the ledger&#x27;s <code>model</code>, which for a Databricks <code>databricks-claude-sonnet-5</code> endpoint is <code>global.anthropic.claude-sonnet-5</code>) or the name the node requested (<code>ATFGRAPH_MODEL_NAME</code> or <code>model=</code>), ignoring case; <code>provider/model</code> keys match on the part after the slash. When the two names differ the ledger keeps the requested one in <code>extra.requested_model</code>. Cached prompt tokens are priced at <code>cache_read_per_million</code> when given, otherwise as input; set <code>cache_included_in_input: false</code> for Anthropic-shaped <code>usage</code>, whose <code>input_tokens</code> excludes them.</p>
+<p>The SDK ships no rates: they are the node&#x27;s to choose and maintain. Databricks publishes pay-per-token rates in DBU per million tokens on its pricing page for Anthropic foundation model serving; multiply by your workspace&#x27;s USD rate per DBU for the serving SKU. On 2026-09-23 that page listed Claude Sonnet 5 at 28.571 DBU input, 142.857 DBU output and 2.857 DBU cache read per million tokens, which at the commonly quoted $0.07 per DBU list rate is the $2.00, $10.00 and $0.20 above. Check the page and your contract before copying these figures; an estimate is a planning number, not a bill.</p>
+<p><code>app.execution_cost()</code> returns the totals for the current execution as a dict with <code>total_calls</code>, <code>total_input_tokens</code>, <code>total_output_tokens</code>, <code>total_tokens</code>, <code>total_cost_usd</code>, <code>calls_without_price</code> and <code>by_model</code> (per model: <code>calls</code>, <code>tokens</code>, <code>cost_usd</code>). <code>total_cost_usd</code> is <code>None</code> unless at least one call reported a price; <code>calls_without_price</code> says how many did not. The same entry is written to the traverser&#x27;s event log as a <code>usage</code> progress event and, by default, shipped to the graph server&#x27;s usage store (<code>test_usage_is_recorded_as_progress_events_on_the_execution</code>). A caller reads the events back with <code>UsageEvent.from_event</code>, adapted from <code>examples/python/features/multimodal/call.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+import os
+
+from atfgraph import Client, UsageEvent
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        handle = await client.submit(&quot;media.narrate&quot;, {&quot;text&quot;: &quot;Welcome to Brisbane. Your gate is B12.&quot;})
+        print(await handle.result(timeout=300))
+        async for event in client.events(handle.id):
+            usage = UsageEvent.from_event(event)
+            if usage is not None:
+                print(f&quot;  usage {usage.operation:&lt;14} {usage.model:&lt;28} tokens={usage.total_tokens} cost_usd={usage.cost_usd}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p><code>app.record_usage(CostEntry(...))</code> records a call you made outside the SDK&#x27;s providers; <a href="14-observability.html">14-observability.md</a> covers the durable store, <code>usage_totals</code> and the reporting counters.</p>
+<p>Not verified: the exact <code>usage</code> fields each live provider returns for media calls (image and speech endpoints), and therefore which of them populate <code>cost_usd</code>. The tests pin OpenRouter&#x27;s <code>usage.cost</code> over a mock transport; confirming the others needs a run of <code>examples/python/features/multimodal</code> with real keys.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="07-harness.html">07-harness.md</a>: delegating a whole task to a coding-agent CLI instead of a single model call.</li><li><a href="11-resilience-and-controls.html">11-resilience-and-controls.md</a>: <code>ModelRouter</code>, <code>RateLimiter</code> and retrying rate-limited calls.</li><li><a href="14-observability.html">14-observability.md</a>: where the recorded usage goes and how to total it per run.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

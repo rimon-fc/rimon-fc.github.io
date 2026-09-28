@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLflow tracing (optional, developer opt-in) — ATFGraph vNext reference</title>
+<meta name="description" content="MLflow tracing (optional, developer opt-in): generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>MLflow tracing (optional, developer opt-in)</h1>
+<p><code>atfgraph.mlflow</code> adds MLflow Tracing to an agent without changing how it is written or registered. It is off unless you turn it on, <code>import atfgraph</code> never imports <code>mlflow</code>, and no tracking server is contacted unless you name one. The optional dependency supports MLflow versions <code>&gt;=3.11,&lt;4</code>.</p>
+<pre><code class="language-sh">python -m pip install &#x27;./python[mlflow]&#x27;</code></pre>
+<h2 id="from-configuration-alone">From configuration alone</h2>
+<p><code>Agent.serve()</code> (and therefore <code>app.run()</code> and <code>atfg run</code>) calls <code>enable_from_env(app)</code> before the first claim, so a node needs no code change to be traced: set <code>ATFGRAPH_MLFLOW_TRACING=true</code> and a tracking URI in the worker&#x27;s environment or its package <code>.env</code>. For Databricks:</p>
+<pre><code class="language-sh">ATFGRAPH_MLFLOW_TRACING=true
+MLFLOW_TRACKING_URI=databricks
+DATABRICKS_HOST=https://&lt;workspace&gt;.cloud.databricks.com
+DATABRICKS_TOKEN=&lt;personal access token&gt;            # or DATABRICKS_CONFIG_PROFILE=&lt;profile&gt;
+ATFGRAPH_MLFLOW_EXPERIMENT=/Shared/atfgraph/co-consult   # optional; this is the default for that node</code></pre>
+<p><code>mlflow</code> must be installed in the node&#x27;s environment (<code>pip install &#x27;./python[mlflow]&#x27;</code>, or <code>mlflow&gt;=3.11,&lt;4</code> into the package venv); without it the worker logs one warning and runs untraced. Inputs and outputs are not captured unless <code>ATFGRAPH_MLFLOW_CAPTURE_PAYLOADS=true</code>.</p>
+<h2 id="three-ways-in-all-combinable">Three ways in, all combinable</h2>
+<pre><code class="language-python">from atfgraph import Agent
+from atfgraph import mlflow as tracing
+
+app = Agent(node_id=&quot;pricing&quot;)
+
+@app.traversal()
+async def quote(city: str, nights: int) -&gt; dict:
+    with tracing.span(&quot;lookup-rates&quot;, kind=&quot;retriever&quot;) as s:   # 1. context manager
+        rates = await load_rates(city)
+        if s is not None:
+            s.set_attribute(&quot;rates&quot;, len(rates))
+    total = await price(rates, nights)                          # helper below
+    breakdown = await app.traverse(&quot;pricing.breakdown&quot;, total=total)
+    return {&quot;total&quot;: total, **breakdown}
+
+@tracing.trace(kind=&quot;tool&quot;)                                     # 2. decorator (helpers or handlers)
+async def price(rates: dict, nights: int) -&gt; float: ...
+
+@app.skill()
+@tracing.trace()                                                # on a handler: keeps the schema, span type from the registration
+def breakdown(total: float) -&gt; dict: ...
+
+if __name__ == &quot;__main__&quot;:
+    tracing.enable(app, tracking_uri=&quot;sqlite:///./data/mlflow.db&quot;)  # 3. instrument the whole agent
+    app.run()</code></pre>
+<p><code>enable(app)</code> (or <code>python -m atfgraph.mlflow --module pkg:app --tracking-uri ...</code>, which takes every <code>atfgraph.worker</code> argument) wraps, on <strong>this</strong> <code>Agent</code> instance only:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">What</th><th scope="col">Span</th><th scope="col">Type</th><th scope="col">Notes</th></tr></thead><tbody><tr><td>every registered handler, and handlers registered later</td><td><code>&lt;node&gt;.&lt;capability&gt;</code></td><td><code>AGENT</code> (traversal) / <code>TOOL</code> (skill)</td><td>the root span of the task&#x27;s trace</td></tr><tr><td><code>await app.traverse(...)</code></td><td><code>traverse &lt;label.capability&gt;</code></td><td><code>CHAIN</code></td><td><code>atfgraph.child.traverser_id</code> once submitted; the child&#x27;s spans hang under it</td></tr><tr><td><code>await app.ai(...)</code></td><td><code>ai</code></td><td><code>LLM</code></td><td><code>app.record_usage</code> adds <code>mlflow.chat.tokenUsage</code>, <code>mlflow.llm.model</code>/<code>provider</code>, <code>atfgraph.usage.cost_usd</code> when the provider priced the call</td></tr><tr><td><code>await app.harness(...)</code></td><td><code>harness</code></td><td><code>CHAIN</code></td><td>provider, model, return code, duration</td></tr><tr><td><code>@tracing.trace</code> helper</td><td>function name</td><td><code>TOOL</code> (or <code>kind=</code>)</td><td>nested under whatever is active</td></tr><tr><td><code>with tracing.span(...)</code></td><td>as named</td><td><code>kind=</code> (default <code>TOOL</code>)</td><td>MLflow&#x27;s <code>LiveSpan</code>, or <code>None</code> while tracing is off</td></tr></tbody></table></div>
+<p><code>kind</code> accepts the friendly names in <code>tracing.SPAN_KINDS</code> (<code>tool</code>, <code>chain</code>, <code>agent</code>, <code>llm</code>, <code>retriever</code>, <code>embedding</code>, <code>parser</code>, <code>memory</code>, <code>workflow</code>, <code>task</code>, <code>guardrail</code>) or any MLflow <code>SpanType</code> verbatim. Decorator order: <code>@app.traversal()</code> stays outermost so the signature-derived input schema is unchanged; <code>instrument</code> recognises a <code>@trace</code>-decorated handler and does not wrap it twice.</p>
+<p>This is <strong>manual instrumentation with an instance-level hook</strong>, not <code>mlflow.autolog()</code>: model providers called through <code>app.ai</code> are covered by the <code>ai</code> span, but a framework you call directly (LangChain, OpenAI SDK, …) is only traced if you enable that framework&#x27;s own <code>mlflow.&lt;framework&gt;.autolog()</code> yourself; its spans then nest under the handler span because the context is shared.</p>
+<h2 id="what-a-trace-carries">What a trace carries</h2>
+<p>Attributes on every span (fixed set, never a lease token, API key or worker credential): <code>atfgraph.node</code>, <code>atfgraph.version</code>, <code>atfgraph.capability</code>, <code>atfgraph.kind</code>, <code>atfgraph.traverser_id</code>, <code>atfgraph.step_id</code>, <code>atfgraph.root_id</code> (and its alias <code>atfgraph.run_id</code>), <code>atfgraph.attempt</code>, <code>atfgraph.is_root</code>, <code>atfgraph.session_id</code>, <code>atfgraph.parent_id</code>, <code>atfgraph.worker_id</code>, and for emitter deliveries <code>atfgraph.trigger.source</code> / <code>atfgraph.trigger.event_type</code>.</p>
+<p>Trace tags (<code>tracing.TRACE_TAG_KEYS</code>): <code>atfgraph.node</code>, <code>atfgraph.capability</code>, <code>atfgraph.traverser_id</code>, <code>atfgraph.root_id</code>, <code>atfgraph.session_id</code>; the session also becomes MLflow&#x27;s own session (<code>mlflow.trace.session</code>), so the MLflow UI groups a conversation. Find everything about one traverser tree:</p>
+<pre><code class="language-python">mlflow.search_traces(locations=[experiment_id], filter_string=&quot;tag.atfgraph.root_id = &#x27;&lt;root id&gt;&#x27;&quot;)</code></pre>
+<h3 id="nesting-concurrency-threads-cancellation">Nesting, concurrency, threads, cancellation</h3>
+<p>MLflow rides on OpenTelemetry&#x27;s <code>contextvars</code>, which the worker already uses for the traverser context: concurrent handlers in one worker never see each other&#x27;s spans, and a synchronous handler running in <code>asyncio.to_thread</code> inherits its parent. A child traverser claimed by the same process joins its parent&#x27;s trace under the <code>traverse</code> span (<code>link_children=&quot;process&quot;</code>, the default; nothing leaves the process). <code>link_children=&quot;metadata&quot;</code> also writes the W3C <code>traceparent</code> of the root step into the root traverser&#x27;s metadata (<code>mlflow_traceparent</code>) and a child claimed by <strong>another</strong> worker process reads it under its lease and joins too (one <code>GET .../metadata</code> per child task). <code>link_children=False</code> keeps every task in its own trace; they stay related by tag.</p>
+<p>When the graph server cancels a task or the lease is lost, the handler&#x27;s span ends with status <code>ERROR</code>, description <code>cancelled: CancelledError</code> and <code>atfgraph.cancelled = true</code>, and the cancellation keeps propagating. (MLflow&#x27;s own context manager records only <code>Exception</code> subclasses and would have closed the span <code>OK</code>.)</p>
+<h3 id="payloads-are-opt-in">Payloads are opt-in</h3>
+<p>Nothing about inputs or outputs is recorded by default. Turn it on per process (<code>enable(capture_inputs=True, capture_outputs=True)</code>, <code>ATFGRAPH_MLFLOW_CAPTURE_INPUTS</code>, <code>_OUTPUTS</code>, or the retained <code>ATFGRAPH_MLFLOW_CAPTURE_PAYLOADS</code> for both) or per function (<code>@tracing.trace(capture_inputs=True)</code>). Captured values pass through <code>redact</code> first:</p>
+<pre><code class="language-python">def redact(value):
+    if isinstance(value, dict):
+        return {k: &quot;[redacted]&quot; if &quot;secret&quot; in k or &quot;token&quot; in k else redact(v) for k, v in value.items()}
+    return value
+
+tracing.enable(app, capture_inputs=True, capture_outputs=True, redact=redact)</code></pre>
+<p>Inputs are the handler&#x27;s bound arguments (<code>inspect.signature</code>), outputs its return value; <code>app.ai</code> records <code>user</code>/<code>system</code>/<code>messages</code>/<code>context</code> and the response, <code>app.harness</code> the prompt and the text. The worker&#x27;s lease token, the API key and the MLflow tracking credentials are never in scope of any capture.</p>
+<h2 id="link-traces-to-traversers">Link traces to traversers</h2>
+<p>The <strong>root step</strong> writes <code>mlflow_trace_id</code> and <code>mlflow_experiment_url</code> both keys through <code>app.observability.set_run_metadata(...)</code> under its own lease as soon as its span opens (<code>forward_run_metadata=True</code>, default; bounded by <code>forward_timeout=5.0</code>). <code>experiment_url</code> is only set for browsable stores (an HTTP tracking server or Databricks; SQLite and file stores have none). A failure is counted in <code>tracing.stats()[&quot;metadata_failed&quot;]</code>, logged once, and never reaches the handler. Synchronous handlers hand the write to the agent&#x27;s event loop.</p>
+<p>Read it back like any traverser metadata:</p>
+<pre><code class="language-python">meta = await app.observability.run_metadata(root_id)
+meta.mlflow_trace_id, meta.mlflow_experiment_url</code></pre>
+<p>For traversers traced elsewhere (plain <code>@mlflow.trace</code> with an <code>atfgraph.root_id</code> tag, or a process without lease authority) the bridge in <code>integrations/mlflow</code> (<code>../integrations/mlflow/README.md</code>) writes the same keys from outside a worker, and keeps MLflow traces tagged with the traverser&#x27;s status, target, usage totals and API URL.</p>
+<h2 id="configuration">Configuration</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Argument</th><th scope="col">Environment</th><th scope="col">Default</th></tr></thead><tbody><tr><td><code>tracking_uri</code></td><td><code>ATFGRAPH_MLFLOW_TRACKING_URI</code>, then <code>MLFLOW_TRACKING_URI</code></td><td>MLflow&#x27;s own resolution (a local store); never <code>databricks</code> implicitly</td></tr><tr><td><code>experiment</code></td><td><code>ATFGRAPH_MLFLOW_EXPERIMENT</code></td><td><code>atfgraph/&lt;node_id&gt;</code> (<code>/Shared/atfgraph/&lt;node_id&gt;</code> on a <code>databricks</code> URI)</td></tr><tr><td><code>capture_inputs</code> / <code>capture_outputs</code></td><td><code>ATFGRAPH_MLFLOW_CAPTURE_INPUTS</code> / <code>_OUTPUTS</code> / <code>_PAYLOADS</code></td><td>off</td></tr><tr><td><code>forward_run_metadata</code></td><td><code>ATFGRAPH_MLFLOW_FORWARD_RUN_METADATA</code></td><td>on</td></tr><tr><td><code>link_children</code></td><td><code>ATFGRAPH_MLFLOW_LINK_CHILDREN</code> (<code>process</code>, <code>metadata</code>, <code>off</code>)</td><td><code>process</code></td></tr><tr><td><code>redact</code></td><td>—</td><td>none</td></tr><tr><td>activation</td><td><code>ATFGRAPH_MLFLOW_TRACING=true</code> with <code>tracing.enable_from_env(app)</code></td><td>off</td></tr></tbody></table></div>
+<p>Runtime helpers: <code>tracing.is_enabled()</code>, <code>tracing.settings()</code>, <code>tracing.stats()</code> (<code>spans</code>, <code>span_failures</code>, <code>metadata_forwarded</code>, <code>metadata_failed</code>, <code>metadata_skipped</code>, <code>children_linked</code>, <code>last_error</code>), <code>tracing.current_trace_id()</code>, <code>tracing.trace_headers()</code> (W3C headers for your own outbound HTTP calls), <code>tracing.join_trace(headers)</code>, <code>tracing.flush()</code> (waits for MLflow&#x27;s async export), <code>tracing.uninstrument(app)</code>, <code>tracing.disable()</code>.</p>
+<p>MLflow&#x27;s production knobs apply unchanged: <code>MLFLOW_ENABLE_ASYNC_TRACE_LOGGING</code> (default on), <code>MLFLOW_TRACE_SAMPLING_RATIO</code>, <code>MLFLOW_ASYNC_TRACE_LOGGING_MAX_QUEUE_SIZE</code>. Call <code>tracing.flush()</code> (the <code>python -m atfgraph.mlflow</code> runner does) before a process exits so queued traces are exported.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discovery publication — ATFGraph vNext reference</title>
+<meta name="description" content="Discovery publication: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Discovery publication</h1>
+<p>Set policy in the graph server YAML selected by <code>ATFGRAPH_CONFIG_FILE</code>:</p>
+<pre><code class="language-yaml">atfgraph:
+  protocols:
+    mcp_enabled: true
+    a2a_enabled: true
+    public_base_url: https://graph.example.test
+  ard:
+    enabled: true
+    publish_catalog: true
+    public_registry: false</code></pre>
+<p><code>GET /api/v2/ard/settings</code> explains effective policy and its YAML source. The same three switches can be set from the environment as <code>ATFGRAPH_ARD_ENABLED</code>, <code>ATFGRAPH_ARD_PUBLISH_CATALOG</code> and <code>ATFGRAPH_ARD_PUBLIC_REGISTRY</code> (<code>ATFGRAPH_MCP_ENABLED</code>, <code>ATFGRAPH_A2A_ENABLED</code> and <code>ATFGRAPH_PUBLIC_BASE_URL</code> for the protocols). <code>publish_catalog</code> defaults to false, so a fresh server answers <code>POST /api/v2/ard/publications</code> with <code>403 publication_disabled</code> and the catalog with 404 until it is enabled; the console&#x27;s Agents → Publish tab says so and shows the fix. Publishing also requires <code>protocols.public_base_url</code> (the address callers will use; <code>http://127.0.0.1:18880</code> for a local server), otherwise the request is refused with <code>403 public_url_required</code>. Changing these deployment settings requires a restart (<code>atfg server stop &amp;&amp; atfg server start --config &lt;file&gt;</code>). Public catalog publication and unauthenticated registry search are separate controls. Only explicitly published records appear in the catalog. Starting a traverser continues to require the graph server credentials.</p>
+<p>An administrator publishes a registered node using <code>POST /api/v2/ard/publications</code>:</p>
+<pre><code class="language-json">{&quot;label&quot;:&quot;co-consult&quot;,&quot;artifact_type&quot;:&quot;mcp&quot;,&quot;display_name&quot;:&quot;Travel consultant&quot;,&quot;published&quot;:true}</code></pre>
+<p>Use <code>artifact_type</code> of <code>mcp</code>, <code>a2a</code> or <code>http</code>. The selected protocol must already be enabled. Publication does not create a worker or switch on a protocol. Published MCP and A2A URLs include the immutable node version, so later registrations do not change the published invocation target. The immutable definition version is recorded; configured validation establishes the local registered definition and protocol, not remote reachability.</p>
+<p><code>GET /api/v2/ard/publications</code> and <code>POST /api/v2/ard/search</code> are namespace-scoped; <code>search</code> accepts <code>{&quot;query&quot;: &quot;...&quot;, &quot;tags&quot;: [...]}</code> and returns publications carrying any of the tags (node and capability tags are frozen into the publication at publish time). Realtime entrypoints appear only in <code>http</code> artifacts; a node whose every capability is realtime cannot be published over <code>mcp</code> or <code>a2a</code> (<code>422 realtime_http_only</code>). <code>DELETE /api/v2/ard/publications/{id}</code> removes a record. Publishing again updates the same node/version/protocol record.</p>
+<p>The opt-in public manifest is <code>/.well-known/ai-catalog.json</code>, published artifact documents are <code>/ard/artifacts/{id}</code>, and registry search is <code>/ard/agents?query=travel</code>. Registry search requires credentials unless <code>public_registry</code> is true. A disabled protocol is removed from public results after restart even when its publication record is retained. Public artifacts use the currently configured base URL and authentication requirements after restart.</p>
+<p>Publication and search apply to the catalog on this graph server. Register and run the node on this server before publishing its capabilities.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start a traverser and read its path — ATFGraph vNext reference</title>
+<meta name="description" content="Start a traverser and read its path: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Start a traverser and read its path</h1>
+<p><strong>Problem:</strong> a node is registered and you want to call one of its traversals or skills, get the result, and see the steps it took.</p>
+<p>The target is always <code>label.capability</code>. Input is a JSON <strong>object</strong> whose keys are the capability&#x27;s named inputs, unwrapped.</p>
+<h2 id="from-the-cli">From the CLI</h2>
+<pre><code class="language-bash">atfg ls                                                  # what is registered
+atfg traverse hello.greet --in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;          # wait at the barrier, print the result</code></pre>
+<pre><code class="language-text">traverser 8d2efb59-8a42-4087-bc80-d9b04b4b2b4d queued; waiting at the barrier (up to 300s)
+traverser 8d2efb59-8a42-4087-bc80-d9b04b4b2b4d succeeded (hello.greet)
+{
+  &quot;greeting&quot;: &quot;Hello Ada!&quot;,
+  &quot;length&quot;: 3,
+  &quot;shouted&quot;: &quot;HELLO ADA&quot;
+}</code></pre>
+<p>Asynchronously, then wait and inspect:</p>
+<pre><code class="language-bash">ID=$(atfg traverse hello.greet --in &#x27;{&quot;name&quot;:&quot;Grace&quot;}&#x27; --async)
+atfg wait &quot;$ID&quot; --wait-timeout 120 || echo &quot;exit $?&quot;
+atfg show &quot;$ID&quot;                         # fields, output, error
+atfg path &quot;$ID&quot;                         # every step and attempt
+atfg --json show &quot;$ID&quot; | jq .output
+atfg ps --status running                # live traversers
+atfg cancel &quot;$ID&quot;                       # children are cancelled by the server</code></pre>
+<p>Useful flags on <code>traverse</code>: <code>--in-file PATH</code> (<code>-</code> for stdin), <code>--node-version V</code> to pin a registered version, <code>--session ID</code> or <code>--new-session</code> to attach the traverser to a conversation, <code>--idempotency-key K</code> for safe retries.</p>
+<p>Exit codes: <code>0</code> succeeded; <code>1</code> error (unreachable server, API error envelope, invalid input); <code>2</code> still not terminal after <code>--wait-timeout</code>; <code>3</code> terminal but not <code>succeeded</code> (<code>failed</code>, <code>cancelled</code>, <code>timed_out</code>). A handler that raises gives exit 3 with the error envelope:</p>
+<pre><code class="language-text">traverser 99e794ae-ec1e-4e06-a38c-daf063fb79ab failed (hello.greet)
+error: {
+  &quot;code&quot;: &quot;ValueError&quot;,
+  &quot;message&quot;: &quot;name must not be empty&quot;,
+  &quot;retryable&quot;: false
+}</code></pre>
+<h2 id="over-http">Over HTTP</h2>
+<pre><code class="language-bash">curl -s -X POST http://127.0.0.1:18880/api/v2/traversers \
+  -H &#x27;content-type: application/json&#x27; \
+  -d &#x27;{&quot;target&quot;:&quot;hello.greet&quot;,&quot;input&quot;:{&quot;name&quot;:&quot;Ada&quot;}}&#x27;</code></pre>
+<p>The server answers <code>202</code> with the traverser. Then:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Read</th><th scope="col">Request</th></tr></thead><tbody><tr><td>One traverser</td><td><code>GET /api/v2/traversers/{id}</code></td></tr><tr><td>Its path</td><td><code>GET /api/v2/traversers/{id}/path</code></td></tr><tr><td>Its event log</td><td><code>GET /api/v2/traversers/{id}/events</code> (snapshot) or the stream variant</td></tr><tr><td>Cancel</td><td><code>POST /api/v2/traversers/{id}/cancel</code></td></tr><tr><td>List</td><td><code>GET /api/v2/traversers?status=running&amp;roots_only=true&amp;limit=50</code></td></tr></tbody></table></div>
+<p>Off loopback, send the ATFGraph key as <code>X-API-Key: &lt;key&gt;</code>; <code>Authorization</code> is reserved for a platform proxy&#x27;s credential (<code>ATFGRAPH_EDGE_AUTH=databricks</code>). The operation tables are in the generated <a href="../api/traversers.html">Traversers reference</a>.</p>
+<h2 id="from-python">From Python</h2>
+<pre><code class="language-python">import asyncio, os
+from atfgraph import Client
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;, &quot;http://127.0.0.1:18880&quot;)) as client:
+        handle = await client.submit(&quot;hello.greet&quot;, {&quot;name&quot;: &quot;Ada&quot;})
+        result = await handle.result(timeout=60)
+        path = await handle.path()
+        for step in path.items:
+            print(step.target, step.status, len(step.attempts))
+
+asyncio.run(main())</code></pre>
+<p>This is <code>examples/python/first_node/call.py</code>. Inside a traversal, use <code>await app.traverse(&quot;label.capability&quot;, **inputs)</code> instead; the call is recorded as a child step under the current one.</p>
+<h2 id="reading-a-path">Reading a path</h2>
+<pre><code class="language-text">#  STEP                                  TARGET       STATUS     ATTEMPT  PARENT                                ELAPSED
+1  0a108d2b-e768-483a-bde9-f5ab3208bedb  hello.greet  succeeded  1        -                                     314ms
+2  f6ea3c4a-b8e1-448c-b12c-2183ebe762be  hello.shout  succeeded  1        0a108d2b-e768-483a-bde9-f5ab3208bedb  6ms</code></pre>
+<p>Each row is one step: the target that was called, its status, which attempt this was, and the parent step that called it. A step with no parent is the root. <code>atfg share &lt;id&gt;</code> writes the same path as a self-contained HTML or JSON file.</p>
+<h2 id="related">Related</h2>
+<ul><li>Watch many traversers at once: <a href="howto-monitor-over-http.html">Monitor over HTTP</a>.</li><li>The same views in the browser: <a href="howto-web-console.html">Use the web console</a>.</li><li>Error envelopes you may get back: <a href="troubleshooting.html">Troubleshooting</a>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

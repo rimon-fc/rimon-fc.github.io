@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Access operations — ATFGraph vNext reference</title>
+<meta name="description" content="Access operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Access operations</h1>
+<p>Access policies and connector grants: who may start which traversals, and which external connectors a namespace may reach. Server authorization is authoritative; these operations edit the rules it enforces.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-admitAccess"><code>admitAccess</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/access/admit</code></td></tr><tr><td><a href="#op-getOwnConnector"><code>getOwnConnector</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/access/connector</code></td></tr><tr><td><a href="#op-listConnectors"><code>listConnectors</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/access/connectors</code></td></tr><tr><td><a href="#op-getConnector"><code>getConnector</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/access/connectors/{principal}</code></td></tr><tr><td><a href="#op-putConnector"><code>putConnector</code></a></td><td><span class="method">PUT</span></td><td><code>/api/v2/access/connectors/{principal}</code></td></tr><tr><td><a href="#op-revokeConnector"><code>revokeConnector</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/access/connectors/{principal}/revoke</code></td></tr><tr><td><a href="#op-evaluateAccess"><code>evaluateAccess</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/access/evaluate</code></td></tr><tr><td><a href="#op-listAccessPolicies"><code>listAccessPolicies</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/access/policies</code></td></tr><tr><td><a href="#op-createAccessPolicy"><code>createAccessPolicy</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/access/policies</code></td></tr><tr><td><a href="#op-getAccessPolicy"><code>getAccessPolicy</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/access/policies/{id}</code></td></tr><tr><td><a href="#op-updateAccessPolicy"><code>updateAccessPolicy</code></a></td><td><span class="method">PATCH</span></td><td><code>/api/v2/access/policies/{id}</code></td></tr><tr><td><a href="#op-deleteAccessPolicy"><code>deleteAccessPolicy</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/access/policies/{id}</code></td></tr></tbody></table></div>
+<section class="operation" id="op-admitAccess">
+<h3><code>admitAccess</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/access/admit</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Like evaluate but consumes at most one token per matching rate rule when allowed. This is for additional gateway operations: invocation admission is already charged centrally inside traversers.submit, so do not call it for submissions (they would be charged twice). retry_after_ms is set only for rate_limited.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.admit_access()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-accessadmission"><code>AccessAdmission</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;operation&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accessdecision"><code>AccessDecision</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;allowed&quot;: false,
+  &quot;budget_ids&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;policy_ids&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;reason&quot;: &quot;bearer_authorization&quot;,
+  &quot;retry_after_ms&quot;: 0,
+  &quot;warnings&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;as_of&quot;: 0,
+      &quot;budget_id&quot;: &quot;string&quot;,
+      &quot;consumed&quot;: 0.0,
+      &quot;enabled&quot;: false,
+      &quot;exceeded&quot;: false,
+      &quot;limit&quot;: 0.0,
+      &quot;metric&quot;: &quot;tokens&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;remaining&quot;: 0.0,
+      &quot;scope&quot;: &quot;string&quot;,
+      &quot;subject&quot;: &quot;string&quot;,
+      &quot;window&quot;: &quot;string&quot;,
+      &quot;window_start&quot;: 0
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-getOwnConnector">
+<h3><code>getOwnConnector</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/access/connector</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>The caller&#x27;s connector binding, so a restricted principal can learn its own grants. 404 connector_not_found when the principal is not bound.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.get_own_connector()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accessconnector"><code>AccessConnector</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;enabled&quot;: false,
+  &quot;expires_at&quot;: 0,
+  &quot;grants&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;revoked_at&quot;: 0,
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-listConnectors">
+<h3><code>listConnectors</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/access/connectors</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Every connector binding in the namespace, ordered by principal.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.list_connectors()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accessconnectorlist"><code>AccessConnectorList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;enabled&quot;: false,
+      &quot;expires_at&quot;: 0,
+      &quot;grants&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;revision&quot;: 0,
+      &quot;revoked_at&quot;: 0,
+      &quot;updated_at&quot;: 0
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-getConnector">
+<h3><code>getConnector</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/access/connectors/{principal}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>One principal&#x27;s connector binding. Non-admins may only read their own (404 otherwise).</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.get_connector()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>principal</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accessconnector"><code>AccessConnector</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;enabled&quot;: false,
+  &quot;expires_at&quot;: 0,
+  &quot;grants&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;revoked_at&quot;: 0,
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-putConnector">
+<h3><code>putConnector</code></h3>
+<p class="meta"><span class="method">PUT</span> <code>/api/v2/access/connectors/{principal}</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Bind an authenticated principal to an allow-list of operation patterns (exact names or `prefix*`, at most 128). Create with expected_revision absent or 0; replace with the current revision (409 revision_conflict otherwise). Grants restrict existing roles and never add any; Store::call rejects ungranted operations with 403 connector_forbidden while the connector&#x27;s own read, evaluate and admit stay reachable.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.put_connector()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>principal</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-accessconnectorput"><code>AccessConnectorPut</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;grants&quot;: [
+    &quot;string&quot;
+  ]
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accessconnector"><code>AccessConnector</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;enabled&quot;: false,
+  &quot;expires_at&quot;: 0,
+  &quot;grants&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;revoked_at&quot;: 0,
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-revokeConnector">
+<h3><code>revokeConnector</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/access/connectors/{principal}/revoke</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Disable a connector and record revoked_at permanently; a revoked connector never becomes an unrestricted ordinary principal again. Requires the current expected_revision.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.revoke_connector()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>principal</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-accessconnectorrevoke"><code>AccessConnectorRevoke</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;expected_revision&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accessconnector"><code>AccessConnector</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;enabled&quot;: false,
+  &quot;expires_at&quot;: 0,
+  &quot;grants&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;revoked_at&quot;: 0,
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-evaluateAccess">
+<h3><code>evaluateAccess</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/access/evaluate</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Preview the decision for the authenticated caller without consuming rate tokens. target is `label.capability`; input is matched against constraints. Workers pass task_id/step_id + lease_token to be evaluated as the leased effective principal. Denials are 200 decisions, not errors.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.evaluate_access()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-accessadmission"><code>AccessAdmission</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;operation&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accessdecision"><code>AccessDecision</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;allowed&quot;: false,
+  &quot;budget_ids&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;policy_ids&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;reason&quot;: &quot;bearer_authorization&quot;,
+  &quot;retry_after_ms&quot;: 0,
+  &quot;warnings&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;as_of&quot;: 0,
+      &quot;budget_id&quot;: &quot;string&quot;,
+      &quot;consumed&quot;: 0.0,
+      &quot;enabled&quot;: false,
+      &quot;exceeded&quot;: false,
+      &quot;limit&quot;: 0.0,
+      &quot;metric&quot;: &quot;tokens&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;remaining&quot;: 0.0,
+      &quot;scope&quot;: &quot;string&quot;,
+      &quot;subject&quot;: &quot;string&quot;,
+      &quot;window&quot;: &quot;string&quot;,
+      &quot;window_start&quot;: 0
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-listAccessPolicies">
+<h3><code>listAccessPolicies</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/access/policies</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Policies visible to the caller: every namespace policy for admins, otherwise the caller&#x27;s own. Optional label filter.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.list_access_policies()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>label</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accesspolicylist"><code>AccessPolicyList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;capability&quot;: &quot;string&quot;,
+      &quot;constraints&quot;: {
+        &quot;key&quot;: {
+          &quot;operator&quot;: &quot;string&quot;,
+          &quot;value&quot;: {}
+        }
+      },
+      &quot;created_at&quot;: 0,
+      &quot;effect&quot;: &quot;allow&quot;,
+      &quot;enabled&quot;: false,
+      &quot;expires_at&quot;: 0,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;owner&quot;: &quot;string&quot;,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;rate&quot;: {
+        &quot;burst&quot;: 0,
+        &quot;requests_per_second&quot;: 0.0
+      },
+      &quot;revision&quot;: 0,
+      &quot;tags&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;updated_at&quot;: 0
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-createAccessPolicy">
+<h3><code>createAccessPolicy</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/access/policies</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Create a durable admission policy for one exact node label the caller registered, or `*` for admins. principal and capability accept exact values or a single trailing `*`; embedded wildcards are rejected (400 invalid_access_policy). A matching deny, a violated constraint on a matching allow, or an exhausted rate bucket denies the invocation centrally inside traversers.submit with 403 policy_denied / constraint_denied or 429 rate_limited. No match preserves ordinary bearer authorization; allow rules never grant roles. Namespaces hold at most 1024 policies.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.create_access_policy()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-accesspolicycreate"><code>AccessPolicyCreate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;label&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>201</code></td><td><a href="../schemas/index.html#schema-accesspolicy"><code>AccessPolicy</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>201</code></h4>
+<pre><code class="language-json">{
+  &quot;capability&quot;: &quot;string&quot;,
+  &quot;constraints&quot;: {
+    &quot;key&quot;: {
+      &quot;operator&quot;: &quot;string&quot;,
+      &quot;value&quot;: {}
+    }
+  },
+  &quot;created_at&quot;: 0,
+  &quot;effect&quot;: &quot;allow&quot;,
+  &quot;enabled&quot;: false,
+  &quot;expires_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;owner&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;rate&quot;: {
+    &quot;burst&quot;: 0,
+    &quot;requests_per_second&quot;: 0.0
+  },
+  &quot;revision&quot;: 0,
+  &quot;tags&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-getAccessPolicy">
+<h3><code>getAccessPolicy</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/access/policies/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Read one policy; a policy owned by another principal is 404 policy_not_found rather than 403.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.get_access_policy()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accesspolicy"><code>AccessPolicy</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;capability&quot;: &quot;string&quot;,
+  &quot;constraints&quot;: {
+    &quot;key&quot;: {
+      &quot;operator&quot;: &quot;string&quot;,
+      &quot;value&quot;: {}
+    }
+  },
+  &quot;created_at&quot;: 0,
+  &quot;effect&quot;: &quot;allow&quot;,
+  &quot;enabled&quot;: false,
+  &quot;expires_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;owner&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;rate&quot;: {
+    &quot;burst&quot;: 0,
+    &quot;requests_per_second&quot;: 0.0
+  },
+  &quot;revision&quot;: 0,
+  &quot;tags&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-updateAccessPolicy">
+<h3><code>updateAccessPolicy</code></h3>
+<p class="meta"><span class="method">PATCH</span> <code>/api/v2/access/policies/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Compare-and-set edit of the mutable fields (principal, capability, effect, name, enabled, expires_at, constraints, rate). label is immutable and unknown keys are rejected. expected_revision must equal the current revision or the request fails with 409 revision_conflict. Spent rate tokens survive edits.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.update_access_policy()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-accesspolicyupdate"><code>AccessPolicyUpdate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;expected_revision&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accesspolicy"><code>AccessPolicy</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;capability&quot;: &quot;string&quot;,
+  &quot;constraints&quot;: {
+    &quot;key&quot;: {
+      &quot;operator&quot;: &quot;string&quot;,
+      &quot;value&quot;: {}
+    }
+  },
+  &quot;created_at&quot;: 0,
+  &quot;effect&quot;: &quot;allow&quot;,
+  &quot;enabled&quot;: false,
+  &quot;expires_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;owner&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;rate&quot;: {
+    &quot;burst&quot;: 0,
+    &quot;requests_per_second&quot;: 0.0
+  },
+  &quot;revision&quot;: 0,
+  &quot;tags&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-deleteAccessPolicy">
+<h3><code>deleteAccessPolicy</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/access/policies/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Delete one policy and its rate buckets. expected_revision travels as a query parameter and must match (409 revision_conflict).</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.access_api.AccessApi.delete_access_policy()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>expected_revision</code></td><td>query</td><td>yes</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accesspolicydeleted"><code>AccessPolicyDeleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false,
+  &quot;id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

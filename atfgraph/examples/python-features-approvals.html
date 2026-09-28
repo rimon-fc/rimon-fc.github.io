@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approvals example — ATFGraph vNext reference</title>
+<meta name="description" content="Approvals example: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Approvals example</h1>
+<p class="meta">Directory <code>examples/python/features/approvals</code></p>
+<p>A refund desk that pauses for a human. No model provider, no supplier, no keys: the ticket ledger in <code>agent.py</code> is invented fixture data.</p>
+<p class="meta">Agent node label <code>refunds</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>assess</code></td><td>skill</td><td><code>(ticket: str) -&gt; dict</code></td><td><code>examples/python/features/approvals/agent.py</code></td><td>Look the ticket up in the fixture ledger (one recorded child step per case).</td></tr><tr><td><code>request_refund</code></td><td>traversal</td><td><code>(ticket: str, amount_aud: float, reason: str = &#x27;schedule change&#x27;) -&gt; dict</code></td><td><code>examples/python/features/approvals/agent.py</code></td><td>Settle a refund, pausing for a reviewer above ``AUTO_LIMIT_AUD``.</td></tr></tbody></table></div>
+<p class="meta">Non-default capability options: <code>request_refund</code>: <code>timeout_seconds=3600</code></p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.approvals.agent:app
+python -m examples.python.features.approvals.review --ticket NZ-0882 --amount 150
+python -m examples.python.features.approvals.review --ticket NZ-0882 --amount 150   # under the desk limit
+python -m examples.python.features.approvals.review --ticket QF-4417 --amount 480
+python -m examples.python.features.approvals.review --ticket QF-4417 --amount 480 --decision rejected</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/approvals/README.md</code></li><li><code>examples/python/features/approvals/__init__.py</code></li><li><code>examples/python/features/approvals/agent.py</code></li><li><code>examples/python/features/approvals/agentnode.yaml</code></li><li><code>examples/python/features/approvals/review.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/features/approvals/README.md</code>; the source file is not modified.</p>
+<p>A refund desk that pauses for a human. No model provider, no supplier, no keys: the ticket ledger in <code>agent.py</code> is invented fixture data.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Shows</th></tr></thead><tbody><tr><td><code>assess(ticket)</code></td><td>skill</td><td>the one pre-pause step that must not repeat</td></tr><tr><td><code>request_refund(ticket, amount_aud, reason)</code></td><td>traversal</td><td><code>save_checkpoint</code>/<code>load_checkpoint</code>, <code>request_approval</code>, continuation</td></tr></tbody></table></div>
+<pre><code class="language-bash">target/debug/atfgraphd                                     # 127.0.0.1:18880
+python -m atfgraph.worker --module examples.python.features.approvals.agent:app
+python -m examples.python.features.approvals.review --ticket QF-4417 --amount 480
+python -m examples.python.features.approvals.review --ticket QF-4417 --amount 480 --decision rejected
+python -m examples.python.features.approvals.review --ticket NZ-0882 --amount 150</code></pre>
+<h2 id="what-the-pause-actually-is">What the pause actually is</h2>
+<p><code>app.request_approval(prompt, operation_key=..., checkpoint=...)</code> is a durable server-side pause, not an in-process wait:</p>
+<ul><li>the server records the approval, ends the attempt, sets the traverser to <code>waiting</code> and releases the lease, so the worker permit is free;</li><li>the decision arrives out of band (<code>client.decide_approval</code>, the Console, or any authorised caller) and may be <code>approved</code> or <code>rejected</code>;</li><li>the traverser is queued again with one extra attempt allowed — a continuation is not a retry against the capability&#x27;s failure budget;</li><li>the handler then <strong>runs again from the beginning</strong> with a fresh lease, and <code>request_approval</code> returns the recorded decision instead of pausing.</li></ul>
+<p>Because the handler replays, everything before the pause has to be idempotent. Here the case is written once with <code>save_checkpoint(..., expected_revision=0)</code>; on the continuation <code>load_checkpoint</code> returns it, so the <code>refunds.assess</code> child is not submitted again. <code>review.py</code> prints the path so you can count the steps, and the result carries <code>prepared_on_attempt: 1</code> next to <code>attempts: 2</code>.</p>
+<p>The prompt is built only from the checkpoint. That matters: an approval is keyed by <code>(traverser, operation_key)</code>, and requesting the same key again with a different prompt is a <code>409 approval_conflict</code>. Keep prompts free of clocks, random values and anything else that changes between attempts.</p>
+<p>Approvals are namespaced and owned: a non-admin caller lists and decides only its own traversers&#x27; approvals. Deciding the same approval the same way twice is accepted; deciding it differently afterwards is <code>409 approval_decided</code>.</p>
+<p>Tests: <code>tests/test_feature_examples_extended.py</code> runs this node against a real daemon, including a decision taken while the server and worker are both down.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

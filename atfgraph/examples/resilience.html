@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Execution resilience checks — ATFGraph vNext reference</title>
+<meta name="description" content="Execution resilience checks: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Execution resilience checks</h1>
+<p class="meta">Directory <code>examples/resilience</code></p>
+<p>Sixteen scenarios for what happens when a model backend errors or hangs, a worker is saturated, killed or crashes, or a run outlives its caller&#x27;s patience. Migrated from the parent <code>examples/resilience</code> (the issue #316 scenarios). Every check runs against a real graph server with three fixture agents and a mock model backend; no model provider, credential or network is involved.</p>
+<p class="meta">Agent node label <code>test-slow</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>crash</code></td><td>skill</td><td><code>(message: str = &#x27;boom&#x27;) -&gt; dict</code></td><td><code>examples/resilience/agent_flaky.py</code></td><td>Always raise; the traverser fails with ``RuntimeError`` and this message.</td></tr><tr><td><code>maybe_fail</code></td><td>skill</td><td><code>(fail_rate: float = 0.5) -&gt; dict</code></td><td><code>examples/resilience/agent_flaky.py</code></td><td>Fail with the given probability (0.0 never, 1.0 always); the failure is terminal, not retried.</td></tr><tr><td><code>ping</code></td><td>skill</td><td><code>() -&gt; dict</code></td><td><code>examples/resilience/agent_flaky.py</code></td><td>Instant answer; submitted while the worker is down it waits in the queue until a worker returns.</td></tr><tr><td><code>timeout_then_fail</code></td><td>skill</td><td><code>(delay_seconds: float = 60) -&gt; dict</code></td><td><code>examples/resilience/agent_flaky.py</code></td><td>Hang for a long time, then raise; the 5-second budget ends it first (``handler_timeout``).</td></tr><tr><td><code>add</code></td><td>skill</td><td><code>(a: int = 0, b: int = 0) -&gt; dict</code></td><td><code>examples/resilience/agent_healthy.py</code></td><td>Deterministic, instant arithmetic.</td></tr><tr><td><code>ask</code></td><td>skill</td><td><code>(prompt: str = &#x27;ping&#x27;) -&gt; dict</code></td><td><code>examples/resilience/agent_healthy.py</code></td><td>One model call through the configured provider.</td></tr><tr><td><code>echo</code></td><td>skill</td><td><code>(message: str = &#x27;hello&#x27;) -&gt; dict</code></td><td><code>examples/resilience/agent_healthy.py</code></td><td>Instantly return the input; verifies that basic execution works.</td></tr><tr><td><code>bounded_task</code></td><td>skill</td><td><code>(duration_seconds: float = 30) -&gt; dict</code></td><td><code>examples/resilience/agent_slow.py</code></td><td>Blocks past its 3-second budget on purpose; the worker ends it with ``handler_timeout``.</td></tr><tr><td><code>slow_task</code></td><td>skill</td><td><code>(duration_seconds: float = 30, slice_seconds: float = 0.1) -&gt; dict</code></td><td><code>examples/resilience/agent_slow.py</code></td><td>Wait for ``duration_seconds`` (stopping early on cancel) and report the actual time taken.</td></tr></tbody></table></div>
+<p class="meta">Non-default capability options: <code>timeout_then_fail</code>: <code>timeout_seconds=5</code>; <code>ask</code>: <code>max_attempts=2</code>, <code>timeout_seconds=4</code>; <code>bounded_task</code>: <code>timeout_seconds=3</code>; <code>slow_task</code>: <code>timeout_seconds=600</code></p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -c &#x27;import asyncio; from atfgraph import Client, TraversalError
+python -m atfgraph.worker --module examples.resilience.agent_flaky:app
+python -m atfgraph.worker --module examples.resilience.agent_healthy:app
+python -m atfgraph.worker --module examples.resilience.agent_slow:app
+python -m examples.resilience.mock_llm_server --port 14000
+python -m examples.resilience.run_checks
+python -m examples.resilience.run_checks            # temporary daemon + mock + 3 workers, then teardown
+python -m examples.resilience.run_checks --server http://127.0.0.1:18880 --mock-url http://127.0.0.1:14000
+python -m examples.resilience.run_checks --server http://127.0.0.1:18880 --mock-url http://127.0.0.1:14000 --no-workers</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/resilience/README.md</code></li><li><code>examples/resilience/__init__.py</code></li><li><code>examples/resilience/agent_flaky.py</code></li><li><code>examples/resilience/agent_healthy.py</code></li><li><code>examples/resilience/agent_slow.py</code></li><li><code>examples/resilience/mock_llm_server.py</code></li><li><code>examples/resilience/run_checks.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/resilience/README.md</code>; the source file is not modified.</p>
+<p>Sixteen scenarios for what happens when a model backend errors or hangs, a worker is saturated, killed or crashes, or a run outlives its caller&#x27;s patience. Migrated from the parent <code>examples/resilience</code> (the issue #316 scenarios). Every check runs against a real graph server with three fixture agents and a mock model backend; no model provider, credential or network is involved.</p>
+<pre><code class="language-bash">python -m examples.resilience.run_checks            # temporary daemon + mock + 3 workers, then teardown</code></pre>
+<pre><code>  PASS basic execution
+  PASS model backend healthy
+  PASS backend failure detection: status=failed attempts=2 of 2
+  PASS failure classification: code=retryable message=&#x27;model backend failed on attempt 2: model endpoint returned HTTP 500 ...&#x27;
+  PASS backend recovery
+  PASS concurrency limits: peak running=3 (capacity 3), queued observed=True, all completed=True
+  PASS node visibility
+  PASS worker kill / restart: while dead: status stayed &#x27;queued&#x27; ...; after restart: the same queued run succeeded
+  PASS event stream: 3 events: [&#x27;submitted&#x27;, &#x27;attempt.started&#x27;, &#x27;succeeded&#x27;]
+  PASS backend freeze (issue #316): status=failed code=handler_timeout after 5.4s
+  PASS post-recovery execution
+  PASS crash visibility: code=RuntimeError message=&#x27;Agent crashed: test crash&#x27;
+  PASS error details in records
+  PASS client timeout: WaitTimeout after 2 s, then cancel -&gt; cancelled
+  PASS budget enforcement: status=failed code=handler_timeout after 4.2s
+  PASS worker death mid-run: status=failed code=interrupted ...
+passed 16, failed 0</code></pre>
+<h2 id="what-is-checked-and-which-vnext-mechanism-carries-it">What is checked, and which vNext mechanism carries it</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">#</th><th scope="col">Check</th><th scope="col">Original mechanism</th><th scope="col">vNext mechanism</th></tr></thead><tbody><tr><td>1</td><td>Basic execution</td><td>sync execute</td><td><code>client.traverse(&quot;test-healthy.echo&quot;)</code></td></tr><tr><td>2</td><td>Model backend healthy</td><td><code>GET /llm/health</code></td><td>mock <code>/health</code> 200 and <code>test-healthy.ask</code> answers on attempt 1</td></tr><tr><td>3</td><td>Backend failure detection</td><td>circuit opens after N failed probes</td><td><code>ask</code> re-raises the provider error as <code>RetryableError</code>; <code>max_attempts=2</code> exhausts and the run is <code>failed</code></td></tr><tr><td>4</td><td>Failure classification</td><td><code>error_category: llm_unavailable</code></td><td><code>error.code == &quot;retryable&quot;</code> with the backend&#x27;s message and the attempt count</td></tr><tr><td>5</td><td>Backend recovery</td><td>circuit closes</td><td>mock recovered; <code>ask</code> succeeds</td></tr><tr><td>6</td><td>Concurrency limits</td><td><code>429</code> above <code>MAX_CONCURRENT_PER_AGENT</code></td><td><code>Agent(capacity=3)</code>: at most three attempts run; the rest stay <code>queued</code> on the server</td></tr><tr><td>7</td><td>Node visibility</td><td><code>/nodes/summary</code>, <code>/nodes/:id/status</code></td><td><code>GET /api/v2/agents</code> lists the labels; a probe call confirms a worker serves them</td></tr><tr><td>8</td><td>Worker kill / restart</td><td><code>agent_unreachable</code>, recovery after restart</td><td>the run submitted while the worker is dead stays <code>queued</code>; the restarted worker completes that same run</td></tr><tr><td>9</td><td>Event stream</td><td>SSE log stream</td><td><code>client.events(id)</code> streams <code>submitted</code>, <code>attempt.started</code>, terminal</td></tr><tr><td>10</td><td>Backend freeze (#316)</td><td>probes hang, circuit opens</td><td><code>ask</code> against the frozen mock is ended by its 4 s <code>timeout_seconds</code> budget (<code>handler_timeout</code>)</td></tr><tr><td>11</td><td>Post-recovery execution</td><td></td><td>unfreeze; <code>ask</code> succeeds</td></tr><tr><td>12</td><td>Crash visibility</td><td>error in response</td><td><code>test-flaky.crash</code> fails with <code>code=RuntimeError</code> and its message</td></tr><tr><td>13</td><td>Client timeout</td><td><code>curl --max-time</code></td><td><code>handle.result(timeout=2)</code> raises <code>WaitTimeout</code>; <code>cancel()</code> ends the run <code>cancelled</code></td></tr><tr><td>14</td><td>Error details in records</td><td><code>GET /executions/:id</code></td><td><code>GET /api/v2/traversers/{id}</code> keeps <code>status=failed</code> and the same <code>error</code></td></tr><tr><td>15</td><td>Budget enforcement</td><td>stale reaper</td><td><code>bounded_task</code> (<code>timeout_seconds=3</code>) ends with <code>handler_timeout</code>; a vanished worker would give the server&#x27;s own <code>timed_out</code></td></tr><tr><td>16</td><td>Worker death mid-run</td><td>stale reaper</td><td>SIGKILL during an attempt: the lease expires and the run fails <code>interrupted</code> (&quot;no retries remain&quot;)</td></tr></tbody></table></div>
+<p>The runner also starts the daemon with its model-health monitor pointed at the mock (<code>ATFGRAPH_MODEL_HEALTH_*</code>) and prints the daemon&#x27;s confirmation line. That monitor probes and tracks a circuit per endpoint inside the daemon, but vNext has no API route or admission guard for it yet, so no check depends on it.</p>
+<h2 id="pieces">Pieces</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">File</th><th scope="col">Purpose</th></tr></thead><tbody><tr><td><code>agent_healthy.py</code></td><td><code>echo</code>, <code>add</code> (instant), <code>ask</code> (one model call; <code>max_attempts=2</code>, <code>timeout_seconds=4</code>)</td></tr><tr><td><code>agent_slow.py</code></td><td><code>capacity=3</code>; <code>slow_task</code> (cancel-aware wait), <code>bounded_task</code> (3 s budget)</td></tr><tr><td><code>agent_flaky.py</code></td><td><code>maybe_fail</code>, <code>crash</code>, <code>timeout_then_fail</code> (5 s budget), <code>ping</code></td></tr><tr><td><code>mock_llm_server.py</code></td><td>OpenAI-compatible <code>/v1/chat/completions</code> plus <code>/health</code>, <code>/state</code>, <code>/freeze</code>, <code>/unfreeze</code>, <code>/error</code>, <code>/recover</code></td></tr><tr><td><code>run_checks.py</code></td><td>starts what is missing, runs the checks, prints PASS/FAIL, exits non-zero on failure</td></tr></tbody></table></div>
+<h2 id="manual-use">Manual use</h2>
+<pre><code class="language-bash">python -m examples.resilience.mock_llm_server --port 14000
+export ATFGRAPH_MODEL_URL=http://127.0.0.1:14000/v1 ATFGRAPH_MODEL_NAME=mock-model
+target/debug/atfgraphd
+python -m atfgraph.worker --module examples.resilience.agent_healthy:app
+python -m atfgraph.worker --module examples.resilience.agent_slow:app
+python -m atfgraph.worker --module examples.resilience.agent_flaky:app
+
+# Freeze the backend (the #316 scenario), watch a run hit its budget, thaw it:
+curl -X POST http://127.0.0.1:14000/freeze
+python -c &#x27;import asyncio; from atfgraph import Client, TraversalError
+async def m():
+    async with Client(&quot;http://127.0.0.1:18880&quot;) as c:
+        try: print(await c.traverse(&quot;test-healthy.ask&quot;, {&quot;prompt&quot;: &quot;hi&quot;}, timeout=60))
+        except TraversalError as e: print(e.status, e.code, e.error)
+asyncio.run(m())&#x27;
+curl -X POST http://127.0.0.1:14000/unfreeze
+
+# Run the checks against what you started (skips the two kill/restart checks):
+python -m examples.resilience.run_checks --server http://127.0.0.1:18880 --mock-url http://127.0.0.1:14000 --no-workers</code></pre>
+<h2 id="differences-from-the-original-and-open-gaps">Differences from the original, and open gaps</h2>
+<ul><li><strong>No admission-time model circuit breaker.</strong> The parent refused executions with <code>503 llm_unavailable</code> while its LLM health circuit was open. The vNext daemon
+runs a model-health monitor (<code>src/model_health.rs</code>, <code>ATFGRAPH_MODEL_HEALTH_*</code>)
+but the status route and admission guard are not mounted, so the checks show
+backend failure through retried attempts and budgets instead. Recorded as a
+gap for the coordinator.</li><li><strong>Queueing instead of `429`.</strong> Capacity is a worker property; excess work waits as <code>queued</code> and is never rejected. Callers bound their own concurrency with
+<code>Client(max_in_flight=..., max_pending=...)</code>.</li><li><strong>No agent status endpoint.</strong> vNext lists registered agent definitions, not per-worker health; workers are monitored through leases. The check probes with
+a real call.</li><li><strong>Durable queue while a worker is dead.</strong> The parent reported <code>agent_unreachable</code>; vNext keeps the run <code>queued</code> until a worker returns (a
+run&#x27;s deadline starts at its first claimed attempt). Cancel it if nobody will.</li><li><strong>Error codes</strong> are the SDK&#x27;s envelope (<code>retryable</code>, <code>handler_timeout</code>, <code>timed_out</code>, <code>interrupted</code>, <code>cancelled</code>, the exception class name), not the
+parent&#x27;s <code>error_category</code> vocabulary.</li><li><code>agent_flaky.timeout_then_fail</code> now awaits instead of blocking the event loop.</li><li><code>run_tests.sh</code> became <code>run_checks.py</code>; the checks are importable and <code>tests/test_migrated_ops_examples.py</code> runs them against a real daemon.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

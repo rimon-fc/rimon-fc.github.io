@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auth operations — ATFGraph vNext reference</title>
+<meta name="description" content="Auth operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Auth operations</h1>
+<p>Operations grouped under this contract tag.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-listApiTokens"><code>listApiTokens</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/auth/tokens</code></td></tr><tr><td><a href="#op-createApiToken"><code>createApiToken</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/auth/tokens</code></td></tr><tr><td><a href="#op-revokeApiToken"><code>revokeApiToken</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/auth/tokens/{id}</code></td></tr><tr><td><a href="#op-rotateApiToken"><code>rotateApiToken</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/auth/tokens/{id}/rotate</code></td></tr></tbody></table></div>
+<section class="operation" id="op-listApiTokens">
+<h3><code>listApiTokens</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/auth/tokens</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Every API token of the caller&#x27;s namespace, newest first, without secrets: only the 8-character prefix, principal, roles, label, expiry, revocation and last use (refreshed at most once a minute) are shown. Tokens from atfgraph.yaml are not listed; they are configuration, not store rows.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.auth_api.AuthApi.list_api_tokens()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-apitokenlist"><code>ApiTokenList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;active&quot;: false,
+      &quot;created_at&quot;: 0,
+      &quot;created_by&quot;: &quot;string&quot;,
+      &quot;expires_at&quot;: 0,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;last_used_at&quot;: 0,
+      &quot;prefix&quot;: &quot;string&quot;,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;revoked_at&quot;: 0,
+      &quot;roles&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;rotated_from&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-createApiToken">
+<h3><code>createApiToken</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/auth/tokens</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Issue a bearer credential for a principal of the caller&#x27;s namespace with the given roles (admin, invoke, worker) and optional label and expiry. The plaintext token is in this response only; the server stores its SHA-256 and never logs it. Configured tokens (atfgraph.yaml auth.tokens) stay authoritative and are checked first; a stored token is consulted only when no configured token matches. Namespaces hold at most 1024 tokens (422 api_tokens_full).</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.auth_api.AuthApi.create_api_token()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-apitokencreate"><code>ApiTokenCreate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;roles&quot;: [
+    &quot;string&quot;
+  ]
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>201</code></td><td><a href="../schemas/index.html#schema-apitokencreated"><code>ApiTokenCreated</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>201</code></h4>
+<pre><code class="language-json">{
+  &quot;active&quot;: false,
+  &quot;created_at&quot;: 0,
+  &quot;created_by&quot;: &quot;string&quot;,
+  &quot;expires_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;last_used_at&quot;: 0,
+  &quot;prefix&quot;: &quot;string&quot;,
+  &quot;previous_revoked_at&quot;: 0,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revoked_at&quot;: 0,
+  &quot;roles&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;rotated_from&quot;: &quot;string&quot;,
+  &quot;token&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-revokeApiToken">
+<h3><code>revokeApiToken</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/auth/tokens/{id}</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Revoke a token immediately, bringing forward any rotation grace period. Idempotent: revoking a revoked token returns it unchanged. Requests with the token fail with 401 token_revoked from the next request on; the row is kept for audit and appears in the listing with active false.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.auth_api.AuthApi.revoke_api_token()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-apitoken"><code>ApiToken</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;active&quot;: false,
+  &quot;created_at&quot;: 0,
+  &quot;created_by&quot;: &quot;string&quot;,
+  &quot;expires_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;last_used_at&quot;: 0,
+  &quot;prefix&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revoked_at&quot;: 0,
+  &quot;roles&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;rotated_from&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-rotateApiToken">
+<h3><code>rotateApiToken</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/auth/tokens/{id}/rotate</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Issue a fresh secret for the same principal, roles, label and expiry and schedule the old token&#x27;s revocation grace_seconds from now (default 0: immediately, at most 30 days). The new plaintext is in this response only and rotated_from names the replaced token. Only an active token can be rotated (409 token_inactive); requests with the old token fail with 401 token_revoked once the grace period has passed.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.auth_api.AuthApi.rotate_api_token()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-apitokenrotate"><code>ApiTokenRotate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;grace_seconds&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-apitokencreated"><code>ApiTokenCreated</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;active&quot;: false,
+  &quot;created_at&quot;: 0,
+  &quot;created_by&quot;: &quot;string&quot;,
+  &quot;expires_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;last_used_at&quot;: 0,
+  &quot;prefix&quot;: &quot;string&quot;,
+  &quot;previous_revoked_at&quot;: 0,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revoked_at&quot;: 0,
+  &quot;roles&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;rotated_from&quot;: &quot;string&quot;,
+  &quot;token&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

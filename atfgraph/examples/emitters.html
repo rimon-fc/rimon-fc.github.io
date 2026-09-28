@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emitters demo — ATFGraph vNext reference</title>
+<meta name="description" content="Emitters demo: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Emitters demo</h1>
+<p class="meta">Directory <code>examples/emitters</code></p>
+<p>One Python node that exercises every built-in graph-server source: <strong>Stripe payments</strong>, <strong>GitHub pull requests and issues</strong>, a <strong>cron schedule</strong>, plus <strong>Slack</strong>, <strong>generic HMAC</strong> and <strong>generic Bearer</strong> inbound webhooks. Every handler is deterministic; the GitHub <code>issues</code> handler asks the configured model for a summary only when one is configured and otherwise records the issue with the reason the summary was skipped.</p>
+<p class="meta">Agent node label <code>emitters-demo-agent</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>handle_inbound</code></td><td>traversal</td><td><code>(trigger: TriggerContext | None = None) -&gt; dict</code></td><td><code>examples/emitters/python/agent.py</code></td><td>Catch-all for UI-managed emitters: record the payload plus its provider context.</td></tr><tr><td><code>handle_payment</code></td><td>traversal</td><td><code>(payment: dict, trigger: TriggerContext | None = None) -&gt; dict</code></td><td><code>examples/emitters/python/agent.py</code></td><td>Record a Stripe payment, deterministically.</td></tr><tr><td><code>handle_pr</code></td><td>traversal</td><td><code>(event: dict, trigger: TriggerContext | None = None) -&gt; dict</code></td><td><code>examples/emitters/python/agent.py</code></td><td>Record a GitHub pull_request action.</td></tr><tr><td><code>handle_tick</code></td><td>traversal</td><td><code>(trigger: TriggerContext | None = None) -&gt; dict</code></td><td><code>examples/emitters/python/agent.py</code></td><td>Increment a cron-fire counter in global memory and record the wall-clock time.</td></tr><tr><td><code>summarize_issue</code></td><td>traversal</td><td><code>(event: dict, trigger: TriggerContext | None = None) -&gt; dict</code></td><td><code>examples/emitters/python/agent.py</code></td><td>Summarise a GitHub issue with the configured model on opened/edited/reopened.</td></tr></tbody></table></div>
+<p class="meta">Non-default capability options: <code>handle_inbound</code>: <code>accepts_manual_emitters=true</code>; <code>summarize_issue</code>: <code>timeout_seconds=120</code></p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">ATFGRAPH_API_KEY=&lt;the same key&gt; python -m examples.emitters.python.fire_events
+ATFGRAPH_SERVER=http://127.0.0.1:18880 python -m examples.emitters.python.fire_events
+docker compose -p atfgraph-emitters-demo -f examples/emitters/compose.yaml down --volumes
+docker compose -p atfgraph-emitters-demo up --build --wait
+python -m atfgraph.worker --module examples.emitters.python.agent:app
+python -m examples.emitters.python.fire_events</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/emitters/README.md</code></li><li><code>examples/emitters/__init__.py</code></li><li><code>examples/emitters/compose.yaml</code></li><li><code>examples/emitters/python/__init__.py</code></li><li><code>examples/emitters/python/agent.py</code></li><li><code>examples/emitters/python/agentnode.yaml</code></li><li><code>examples/emitters/python/fire_events.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/emitters/README.md</code>; the source file is not modified.</p>
+<p>One Python node that exercises every built-in graph-server source: <strong>Stripe payments</strong>, <strong>GitHub pull requests and issues</strong>, a <strong>cron schedule</strong>, plus <strong>Slack</strong>, <strong>generic HMAC</strong> and <strong>generic Bearer</strong> inbound webhooks. Every handler is deterministic; the GitHub <code>issues</code> handler asks the configured model for a summary only when one is configured and otherwise records the issue with the reason the summary was skipped.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Source</th><th scope="col">Fires on</th><th scope="col">Notes</th></tr></thead><tbody><tr><td><code>handle_payment</code></td><td><code>stripe</code></td><td><code>payment_intent.succeeded</code></td><td>code-managed; a Stripe-specific transform runs in the worker before binding</td></tr><tr><td><code>handle_pr</code></td><td><code>github</code></td><td><code>pull_request</code></td><td>code-managed; raw event binds to <code>event</code></td></tr><tr><td><code>summarize_issue</code></td><td><code>github</code></td><td><code>issues</code></td><td>code-managed; model call only with <code>ATFGRAPH_MODEL_URL</code>/<code>ATFGRAPH_MODEL_NAME</code></td></tr><tr><td><code>handle_tick</code></td><td><code>cron</code></td><td>every minute</td><td>code-managed; counts ticks in global memory</td></tr><tr><td><code>handle_inbound</code></td><td><code>slack</code> / <code>generic_hmac</code> / <code>generic_bearer</code></td><td>bound at runtime</td><td>catch-all for the three UI-managed emitters <code>fire_events.py</code> creates</td></tr></tbody></table></div>
+<h2 id="quick-start-local-processes">Quick start (local processes)</h2>
+<p>From this repository&#x27;s root with the SDK installed:</p>
+<pre><code class="language-bash"># 1. Graph server with the demo signing secrets in ITS environment
+STRIPE_DEMO_SECRET=demo-stripe-signing-secret-change-me \
+GITHUB_DEMO_SECRET=demo-github-webhook-secret-change-me \
+SLACK_DEMO_SIGNING_SECRET=demo-slack-signing-secret-change-me \
+GENERIC_HMAC_DEMO_SECRET=demo-generic-hmac-secret-change-me \
+GENERIC_BEARER_DEMO_TOKEN=demo-generic-bearer-token-change-me \
+  target/debug/atfgraphd
+
+# 2. The demo node as an outbound worker (it logs its webhook URLs after syncing)
+python -m atfgraph.worker --module examples.emitters.python.agent:app
+
+# 3. Fire signed Stripe, GitHub, Slack, HMAC and Bearer events (cron fires on its own)
+python -m examples.emitters.python.fire_events
+open http://127.0.0.1:18880/ui/</code></pre>
+<p><code>fire_events.py</code> waits for the server and for the worker&#x27;s emitters, signs each fixture body exactly as the server verifies it, posts to <code>/hooks/{emitter_id}</code>, creates the three UI-managed emitters if they do not exist yet, and prints every admitted traverser&#x27;s output. Re-running it produces fresh events because identifiers and delivery keys are randomized per run.</p>
+<h2 id="quick-start-docker-compose">Quick start (Docker Compose)</h2>
+<pre><code class="language-bash">cd examples/emitters
+cp .env.example .env            # set ATFGRAPH_API_KEY (openssl rand -hex 24)
+docker compose -p atfgraph-emitters-demo up --build --wait
+cd ../..
+ATFGRAPH_API_KEY=&lt;the same key&gt; python -m examples.emitters.python.fire_events
+docker compose -p atfgraph-emitters-demo -f examples/emitters/compose.yaml down --volumes</code></pre>
+<p>Both images are built from this checkout with the shared Dockerfiles in <code>deploy/docker</code>. The server binds a non-loopback listener inside its container, so it requires the API key; the worker and the driver send the same one.</p>
+<h2 id="how-the-pieces-fit-together">How the pieces fit together</h2>
+<pre><code>fire_events.py
+   |   signs the body with STRIPE_DEMO_SECRET / GITHUB_DEMO_SECRET / ...
+   v
+POST /hooks/&lt;emitter_id&gt;            &lt;- public ingest URL owned by the graph server
+   |
+   v
+graph server:
+   1. resolves the emitter, reads the secret named by secret_env from ITS environment
+   2. verifies the source&#x27;s signature over the raw bytes (401 otherwise)
+   3. derives event type and delivery key (Stripe: body.type/body.id; GitHub: headers;
+      Slack: event.type/event_id; generic: configured headers or a body digest)
+   4. stores the inbound event, deduplicates on the delivery key, admits one traverser
+   v
+emitters-demo-agent worker (outbound; claims the task):
+   - code-managed delivery: applies the binding&#x27;s transform, binds and validates arguments
+   - UI-managed delivery: raw body already validated on admission, arrives unchanged
+   - injects TriggerContext (source, event_type, event_id, idempotency_key, managed_by)
+   - handler runs deterministically and writes to global memory
+   v
+Console (/ui/): emitters, their events and the traversers they admitted</code></pre>
+<p>The cron emitter needs no HTTP request: the server fires it once per due time and never twice for the same due time, even across a restart.</p>
+<h2 id="custom-secrets">Custom secrets</h2>
+<p>Export your own values before starting the graph server and again before running the driver, so both sides use the same names:</p>
+<pre><code class="language-bash">export STRIPE_DEMO_SECRET=... GITHUB_DEMO_SECRET=... SLACK_DEMO_SIGNING_SECRET=... \
+       GENERIC_HMAC_DEMO_SECRET=... GENERIC_BEARER_DEMO_TOKEN=...</code></pre>
+<p>The worker never reads these variables; <code>secret_env</code> is a name the server resolves. The demo defaults are placeholders, not provider credentials.</p>
+<h2 id="optional-the-model-backed-issue-summary">Optional: the model-backed issue summary</h2>
+<p><code>summarize_issue</code> is the only handler that can make an external call. Configure an OpenAI-compatible provider for the <strong>worker</strong> (<code>ATFGRAPH_MODEL_URL</code>, <code>ATFGRAPH_MODEL_NAME</code>, <code>ATFGRAPH_MODEL_API_KEY</code>, optionally <code>ISSUE_SUMMARY_MODEL</code>) and the handler summarizes <code>opened</code>/<code>edited</code>/<code>reopened</code> issues. Without a provider it records the issue with <code>summary: null</code> and <code>summary_skipped</code> set; nothing is invented. For OpenRouter the base URL is <code>https://openrouter.ai/api/v1</code>; for a local fixture provider see <code>examples/python/features/resilience/fixture_model.py</code>.</p>
+<h2 id="pointing-real-stripe-github-at-the-demo">Pointing real Stripe / GitHub at the demo</h2>
+<ol><li>Expose the graph server publicly (for example <code>ngrok http 18880</code>).</li><li>Read the Stripe emitter&#x27;s URL from the worker log, <code>GET /api/v2/emitters</code> or the Console, and prepend the public host:
+<code>https://&lt;public-host&gt;/hooks/&lt;stripe_emitter_id&gt;</code>.</li><li>Paste it into the Stripe dashboard&#x27;s webhook settings with the value of <code>STRIPE_DEMO_SECRET</code> (or rotate to Stripe&#x27;s signing secret and set that on
+the server) as the endpoint&#x27;s signing secret.</li><li>Repeat for GitHub: the <code>handle_pr</code> and <code>summarize_issue</code> emitters have separate URLs; set the secret to <code>GITHUB_DEMO_SECRET</code> and pick the
+<code>pull_request</code> and <code>issues</code> event types.</li></ol>
+<p>Real provider events flow through the same pipeline as the driver&#x27;s fixtures.</p>
+<h2 id="differences-from-the-original">Differences from the original</h2>
+<ul><li>The node is an outbound worker; the original inbound agent port (<code>8001</code>), <code>AGENT_CALLBACK_URL</code>, heartbeat thread and startup banner are gone. Webhook
+URLs are <code>/hooks/{emitter_id}</code> and are printed by the worker and the driver.</li><li><code>@app.reasoner(...)</code> became <code>@app.traversal(...)</code>; <code>accepts_webhook=True</code> became <code>accepts_manual_emitters=True</code>; the catch-all takes the raw body as
+<code>**payload</code> because a UI-managed emitter delivers the validated object as is.</li><li>Memory writes use <code>app.memory.global_scope()</code> explicitly; the cron counter is a compare-and-set <code>update</code>, so concurrent ticks never lose a count.</li><li><code>summarize_issue</code> no longer hard-codes an OpenRouter model id; the provider comes from <code>ATFGRAPH_MODEL_*</code> and the handler skips (with a reason) instead of
+failing when none is configured.</li><li>The generic HMAC and Bearer emitters declare an <code>X-Delivery-Id</code> idempotency header; without one the server derives the delivery key from the body, so
+identical bodies would deduplicate to one event.</li><li><code>fire-events.sh</code> became <code>fire_events.py</code> on the SDK client; the demo secret defaults were renamed so they do not resemble real provider secret formats.</li><li>Compose builds the vNext graph-server and python-node images from <code>deploy/docker</code>; DID signing of trigger events is not part of vNext emitters.</li></ul>
+<p>Tests: <code>tests/test_migrated_ops_examples.py</code> runs the worker and the driver against a real daemon with the demo secrets injected into the daemon only.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

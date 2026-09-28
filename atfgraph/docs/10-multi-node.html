@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multi-node systems — ATFGraph vNext reference</title>
+<meta name="description" content="Multi-node systems: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Multi-node systems</h1>
+<p>By the end of this page one agent node calls a capability on another node and the graph server records the edge on the path; you discover capabilities at runtime with <code>app.discovery</code>, pin a call to a node version, run two versions of a label side by side, and host several nodes in one process for tests with <code>OfflineMesh</code>. It requires a running graph server for everything except the <code>OfflineMesh</code> section.</p>
+<h2 id="a-cross-node-edge">A cross-node edge</h2>
+<p>Inside a handler, <code>await app.traverse(&quot;label.capability&quot;, ...)</code> submits a nested child of the current step and waits for it. The graph server records the child as a second step on the same path, so the parent&#x27;s <code>Handle.path()</code> lists both. Adapted from <code>examples/databricks/two_node/intake/agent.py</code> and <code>examples/databricks/two_node/pricing/agent.py</code>:</p>
+<pre><code class="language-python">from pydantic import BaseModel
+
+from atfgraph import Agent
+
+intake = Agent(node_id=&quot;intake&quot;, version=&quot;1.0.0&quot;, description=&quot;Extract a request, then walk the edge to pricing.quote&quot;)
+pricing = Agent(node_id=&quot;pricing&quot;, version=&quot;1.0.0&quot;, description=&quot;Deterministic nightly-rate quote&quot;)
+
+NIGHTLY_RATES = {&quot;lisbon&quot;: 140, &quot;porto&quot;: 120}
+
+
+class TripRequest(BaseModel):
+    destination: str
+    nights: int
+    travellers: int
+    confident: bool
+
+
+@pricing.skill()
+def quote(destination: str, nights: int, travellers: int) -&gt; dict:
+    nightly = NIGHTLY_RATES.get(destination.strip().lower(), 130)
+    return {&quot;destination&quot;: destination, &quot;currency&quot;: &quot;EUR&quot;, &quot;total&quot;: nightly * nights * travellers}
+
+
+@intake.traversal(timeout_seconds=180)
+async def triage(request: str) -&gt; dict:
+    parsed = await intake.ai(system=&quot;Extract destination, nights and travellers.&quot;, user=request, schema=TripRequest)
+    if not parsed.confident:
+        return {&quot;status&quot;: &quot;needs_review&quot;, &quot;request&quot;: request}
+    result = await intake.traverse(&quot;pricing.quote&quot;, destination=parsed.destination, nights=parsed.nights, travellers=parsed.travellers)
+    return {&quot;status&quot;: &quot;quoted&quot;, **result}</code></pre>
+<p>Each node is a separate worker process (the two <code>Agent</code> objects can also live in one process, see below). <code>intake.triage</code> needs a model provider through <code>ATFGRAPH_MODEL_URL</code> / <code>ATFGRAPH_MODEL_NAME</code>; <code>pricing.quote</code> runs with nothing configured. <code>tests/test_migrated_ops_examples.py</code> runs both against the daemon with a fixture provider and asserts the path is <code>[(&quot;intake.triage&quot;, &quot;succeeded&quot;), (&quot;pricing.quote&quot;, &quot;succeeded&quot;)]</code>.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.databricks.two_node.pricing.agent:app
+python -m atfgraph.worker --module examples.databricks.two_node.intake.agent:app
+python -m examples.databricks.two_node.call &quot;Two people, four nights in Lisbon&quot;</code></pre>
+<p>The caller reads the edge from the path (adapted from <code>examples/databricks/two_node/call.py</code>):</p>
+<pre><code class="language-python">import asyncio
+import os
+
+from atfgraph import Client
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        handle = await client.submit(&quot;intake.triage&quot;, {&quot;request&quot;: &quot;Two people, four nights in Lisbon&quot;})
+        print(await handle.result(timeout=180))
+        for step in (await handle.path()).items:
+            print(step.target, step.status, step.parent_step_id, len(step.attempts))
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p>A parent that awaits a child releases its worker permit while it waits (up to <code>max_waiting</code> parents at a time), so a worker with <code>--capacity 1</code> does not deadlock on its own child. See <a href="03-calling-other-nodes.html">./03-calling-other-nodes.md</a> for fan-out and cancellation.</p>
+<h2 id="discover-capabilities-at-runtime">Discover capabilities at runtime</h2>
+<p><code>app.discovery</code> is a <code>Discover</code> bound to the agent&#x27;s client; <code>await app.discover(**filters)</code> is shorthand for <code>app.discovery.capabilities(**filters)</code>. Discovery filters the authorized registry snapshot locally: <code>label</code>, <code>version</code> (needs <code>label</code>), <code>name</code>, <code>kind</code> (<code>&quot;skill&quot;</code> or <code>&quot;traversal&quot;</code>), a case-insensitive <code>query</code> over label, name and description, plus <code>limit</code> and <code>offset</code>. Each <code>DiscoveredCapability</code> carries the exact version it was discovered at and its schemas; <code>.invoke()</code> submits pinned to that version, as a nested child when called inside a handler. Adapted from <code>examples/python/tool_discovery/agent.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent
+
+app = Agent(node_id=&quot;orchestrator&quot;, version=&quot;1.0.0&quot;)
+
+
+async def worker_targets(query: str = &quot;&quot;, limit: int = 8) -&gt; list[str]:
+    capabilities = await app.discovery.capabilities(label=&quot;utility-worker&quot;, kind=&quot;skill&quot;, query=query, limit=limit)
+    return [item.target for item in capabilities]
+
+
+@app.traversal()
+async def inspect_tools(query: str = &quot;&quot;) -&gt; dict:
+    return {&quot;targets&quot;: await worker_targets(query)}
+
+
+@app.traversal()
+async def weather_report(cities: str) -&gt; dict:
+    result = await app.ai(user=f&quot;Report the example weather for {cities}&quot;, tools=await worker_targets(&quot;weather&quot;), max_tool_rounds=3, max_tool_calls=5)
+    return {&quot;report&quot;: str(result)}</code></pre>
+<p><code>inspect_tools</code> runs with nothing configured; <code>weather_report</code> passes the discovered targets to <code>app.ai(tools=...)</code> and needs a provider. <code>app.discovery.resolve(&quot;label.capability&quot;)</code> returns one <code>DiscoveredCapability</code> or raises <code>NotFoundError</code> with code <code>capability_not_found</code>; <code>app.discovery.invoke(target, input, version=...)</code> resolves and calls in one step. Discovery requires the invoke role or admin; a client whose API key belongs to another namespace sees an empty registry (<code>tests/test_discovery_identity.py</code>).</p>
+<h3 id="agentmesh-a-view-restricted-to-labels">AgentMesh: a view restricted to labels</h3>
+<p><code>AgentMesh(client, labels)</code> is a <code>Discover</code> whose <code>agents()</code> and <code>capabilities()</code> only return the named labels; asking for another label raises <code>NotFoundError</code> with code <code>mesh_target_not_found</code>. It invokes durable executions on the graph server; it does not host nodes or start workers. Use it when an orchestrating capability should only ever see a fixed set of nodes.</p>
+<h2 id="several-nodes-in-one-process">Several nodes in one process</h2>
+<p>Two <code>Agent</code> objects can serve from one process against a real graph server: run <code>serve()</code> for each concurrently. This is how <code>tests/test_feature_examples_extended.py</code> runs <code>fares</code> 1.0.0 and 2.0.0 together. Adapted from that test&#x27;s <code>serving</code> helper:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph import Client
+from examples.python.features.version_routing.agent import v1, v2
+
+
+async def main() -&gt; None:
+    stop = asyncio.Event()
+    async with Client(&quot;http://127.0.0.1:18880&quot;) as client:
+        v1.bind_client(client)
+        v2.bind_client(client)
+        workers = [asyncio.create_task(v1.serve(stop=stop)), asyncio.create_task(v2.serve(stop=stop))]
+        try:
+            print(await client.traverse(&quot;fares.quote&quot;, {&quot;route&quot;: &quot;BNE-SYD&quot;, &quot;adults&quot;: 2}, timeout=30))
+        finally:
+            stop.set()
+            await asyncio.gather(*workers, return_exceptions=True)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p>Each <code>serve()</code> registers its own definition and enrols its own worker; nested calls between them still go through the graph server and appear on the path.</p>
+<h2 id="version-routing">Version routing</h2>
+<p>A definition is immutable per <code>(label, version)</code>, and a worker only claims work for the version it enrolled with. Adapted from <code>examples/python/features/version_routing/agent.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent
+
+v1 = Agent(node_id=&quot;fares&quot;, version=&quot;1.0.0&quot;, description=&quot;Fare quotes, bags included&quot;, capacity=2)
+v2 = Agent(node_id=&quot;fares&quot;, version=&quot;2.0.0&quot;, description=&quot;Fare quotes with unbundled baggage&quot;, capacity=2)
+
+
+@v1.traversal()
+async def quote(route: str, adults: int = 1) -&gt; dict:
+    return {&quot;route&quot;: route.upper(), &quot;total&quot;: 149.0 * max(1, adults), &quot;served_by&quot;: &quot;1.0.0&quot;}
+
+
+@v2.traversal(name=&quot;quote&quot;)
+async def quote_v2(route: str, adults: int = 1, bags: int = 0) -&gt; dict:
+    return {&quot;route&quot;: route.upper(), &quot;total&quot;: 149.0 * max(1, adults) + 35.0 * bags, &quot;served_by&quot;: &quot;2.0.0&quot;}
+
+
+@v2.skill()
+async def seat_map(route: str) -&gt; dict:
+    return {&quot;route&quot;: route.upper(), &quot;available&quot;: [&quot;3A&quot;, &quot;3B&quot;]}</code></pre>
+<p>Observed in <code>tests/test_feature_examples_extended.py</code> against the daemon:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Call</th><th scope="col">Result</th></tr></thead><tbody><tr><td><code>client.submit(&quot;fares.quote&quot;, {...})</code> with no <code>version</code></td><td>routed to the highest registered version, <code>2.0.0</code></td></tr><tr><td><code>client.submit(&quot;fares.quote&quot;, {...}, version=&quot;1.0.0&quot;)</code></td><td>pinned to <code>1.0.0</code>, its schema and its workers</td></tr><tr><td>pinned <code>1.0.0</code> with a <code>bags</code> field</td><td>fails at the worker with <code>invalid_input</code>: the pin freezes the input contract</td></tr><tr><td><code>client.submit(&quot;fares.seat_map&quot;, ..., version=&quot;1.0.0&quot;)</code></td><td><code>NotFoundError</code>, code <code>capability_not_found</code></td></tr><tr><td><code>version=&quot;9.9.9&quot;</code></td><td><code>NotFoundError</code>, code <code>agent_not_found</code></td></tr></tbody></table></div>
+<p><code>Client.submit</code>, <code>Client.traverse</code> (through its <code>submit_kwargs</code>), <code>Agent.submit</code>, <code>Discover.invoke</code> and <code>atfg traverse --node-version</code> accept <code>version=</code>. <code>Agent.traverse</code> does not take <code>version=</code>; use <code>await (await app.submit(target, payload, version=&quot;1.0.0&quot;)).result()</code> or <code>app.discovery.invoke(target, payload, version=&quot;1.0.0&quot;)</code> when a nested call must pin. <code>client.capabilities(&quot;fares&quot;)</code> returns the newest definition and <code>client.capabilities(&quot;fares&quot;, &quot;1.0.0&quot;)</code> the pinned one.</p>
+<h2 id="publications">Publications</h2>
+<p><code>app.discovery.publish(label, version=..., protocol=&quot;http&quot; | &quot;mcp&quot; | &quot;a2a&quot;, published=..., display_name=..., description=...)</code> creates or updates a pinned descriptor; <code>publications(query=...)</code> searches them and <code>remove_publication(id)</code> removes only the descriptor, not the registered node. Publishing is an administrator operation and does not start a protocol server. <code>tests/test_discovery_identity.py</code> shows a reader role getting <code>AuthError</code> on publish and a disabled protocol answering <code>APIError</code> with code <code>protocol_disabled</code>; <code>app.discovery.settings()</code> reads that deployment policy, which is changed by editing the server&#x27;s YAML and restarting.</p>
+<h2 id="offlinemesh-for-tests-without-a-server">OfflineMesh for tests without a server</h2>
+<p><code>atfgraph.offline.OfflineMesh</code> (not exported from the package root) mounts several <code>Agent</code> objects as ASGI sub-applications under <code>/{node_id}</code> and answers the <code>/api/v2</code> routes handler code uses from an in-memory graph: submit, traverser state, path, event log, memory, checkpoints, progress and usage. <code>app.traverse</code> between members runs in-process as a nested child; <code>mesh.discovery</code> is an <code>AgentMesh</code> over the offline registry. Adapted from <code>examples/python/features/offline_mesh/run.py</code>:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph.offline import OfflineMesh
+from examples.python.features.offline_mesh.agent import concierge, fares
+
+
+async def main() -&gt; None:
+    async with OfflineMesh([concierge, fares]) as mesh:
+        result = await mesh.invoke(&quot;concierge.plan&quot;, {&quot;origin&quot;: &quot;BNE&quot;, &quot;cities&quot;: [&quot;SYD&quot;, &quot;MEL&quot;], &quot;nights&quot;: 2}, session_id=&quot;trip-1&quot;)
+        recalled = await mesh.invoke(&quot;concierge.recall&quot;, {}, session_id=&quot;trip-1&quot;)
+        handle = await mesh.submit(&quot;concierge.plan&quot;, {&quot;origin&quot;: &quot;PER&quot;, &quot;cities&quot;: [&quot;ADL&quot;]})
+        await handle.result(timeout=10)
+        path = await handle.path()
+        print(result[&quot;total&quot;], recalled, [(s.target, s.status) for s in path.items])
+        print(mesh.usage(handle.id), [c.target for c in await mesh.discovery.capabilities()])
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<pre><code class="language-bash">python -m examples.python.features.offline_mesh.run</code></pre>
+<p>The same <code>concierge</code> and <code>fares</code> objects run unchanged as workers against a real graph server. The mesh never contacts a graph server and does not make anything durable; routes without an offline meaning (worker claim and renew, approvals, knowledge, publications, retention) answer <code>501 offline_unsupported</code>, and <code>mesh.graph.unsupported</code> lists any that a handler touched. <code>mesh.serve(host, port)</code> and <code>serve_async</code> expose the ASGI app over TCP when the optional <code>uvicorn</code> package is installed. <code>OfflineMesh</code> is a convenience for unit tests of multi-node handler logic; the graph server is the product, and <a href="15-testing.html">./15-testing.md</a> shows the real-daemon pattern that the repository itself uses.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="03-calling-other-nodes.html">./03-calling-other-nodes.md</a> for fan-out, progress and cancellation across the edge.</li><li><a href="11-resilience-and-controls.html">./11-resilience-and-controls.md</a> for retries and budgets on the calling side.</li><li><a href="13-identity-credentials-and-access.html">./13-identity-credentials-and-access.md</a> for what one node&#x27;s credential may reach on another.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

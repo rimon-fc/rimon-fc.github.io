@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troubleshooting — ATFGraph vNext reference</title>
+<meta name="description" content="Troubleshooting: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Troubleshooting</h1>
+<p>Messages exactly as the CLI, the server and the Python worker print them, so a search for the text lands here. Each entry says what the message means and what to do. Request ids and pids vary; everything else is verbatim.</p>
+<h2 id="a-memory-write-failed-with-valuetoolarge">A memory write failed with <code>value_too_large</code></h2>
+<pre><code class="language-text">value is 5242881 bytes, over the 4194304 byte limit; split the payload, summarise it, or store it as an artifact</code></pre>
+<p>Memory is where a node is meant to put something too big to return, so its limit is four times the output limit — but it is a limit. Unbounded it made the output cap decorative: park the payload under a key, return the key, and it is in the database anyway, in a table with no size column, read by the change feed and by every scope that can see it.</p>
+<p>Nothing is partially written; the key keeps its previous revision. A payload over this bound is a modelling decision rather than a transport one — split it, keep a summary and page the detail, or attach it to the step as an artifact.</p>
+<p>To hand a large payload between steps of one run, use a reference rather than inventing a key:</p>
+<pre><code class="language-python">handle = await app.references.put(&quot;offers&quot;, offers)   # ref.offers.&lt;digest&gt;
+...
+offers = await app.references.require(handle)</code></pre>
+<p>The handle is the memory key, it is stable across a retried or resumed attempt so a replay does not duplicate the payload, and it is scoped to the run so two runs producing identical payloads do not collide. See <a href="decisions.html">decisions</a> for the replay behaviour this protects.</p>
+<h2 id="a-traverser-failed-with-outputtoolarge">A traverser failed with <code>output_too_large</code></h2>
+<pre><code class="language-text">output is 1310720 bytes, over the 1048576 byte limit; store the payload as an artifact (POST /api/v2/traversers/{id}/artifacts) and return its id instead</code></pre>
+<p>The node returned more than the server will store for one traverser. This is a failure, not a truncation: nothing oversized is kept, <code>status</code> is <code>failed</code> and <code>retryable</code> is false, because returning too much is a property of the handler rather than a transient fault.</p>
+<p>Every other payload in the system is capped too — input reads at 64 KiB, artifacts at 512 KiB, memory changes at 64 KiB, vector metadata at 16 KiB — and the output cap is the most generous at 1 MiB precisely because a result is legitimately larger than the brief that produced it.</p>
+<p>The fix is to stop returning the payload and return a handle to it. Store the large part as an artifact and put its id in the output. There is no <code>Agent</code>-level helper for this yet, so go through the client, which sends the current lease as execution authority on its own:</p>
+<pre><code class="language-python">from atfgraph import current_context
+
+ctx = current_context()
+artifact = await app.client.put_artifact(
+    ctx.traverser_id, &quot;offers.json&quot;, json.dumps(large_payload).encode(), &quot;application/json&quot;
+)
+return {&quot;status&quot;: &quot;ok&quot;, &quot;artifact_id&quot;: artifact[&quot;id&quot;]}</code></pre>
+<p><code>put_artifact</code> takes <strong>bytes</strong>, not a string, and the server owns the 512 KiB cap — it answers 413 rather than the SDK duplicating the limit. A payload too big for one artifact has to be split or summarised; that is a modelling decision, not a transport one.</p>
+<p>To find out which capability is close to the line before it crosses it, every single-traverser read now carries <code>output_bytes</code>, and <code>GET /api/v2/usage/totals?group_by=capability</code> attributes cost to the same capability names — see <a href="decisions.html">decisions</a>.</p>
+<h2 id="the-cli-cannot-reach-the-server">The CLI cannot reach the server</h2>
+<pre><code class="language-text">atfg: cannot reach graph server at http://127.0.0.1:18999: error sending request for url (http://127.0.0.1:18999/api/v2/agents)</code></pre>
+<p>Nothing is listening at that address. Run <code>atfg server status</code>; if it reports no record, <code>atfg server start</code>. If you meant a different server, set <code>ATFGRAPH_SERVER</code> or pass <code>--server</code>. Exit code 1.</p>
+<h2 id="nothing-is-registered">Nothing is registered</h2>
+<pre><code class="language-text">no elements registered</code></pre>
+<pre><code class="language-text">no traversers</code></pre>
+<p>Not errors. The server is up but no worker has registered a node, or nothing has been started yet. Start a worker with <code>atfg dev</code> or <code>atfg run</code>. If a worker is running and its label still does not appear, it is pointed at a different server URL or namespace; check its log for registration or authentication errors.</p>
+<h2 id="the-target-is-wrong">The target is wrong</h2>
+<pre><code class="language-text">atfg: target must be `label.capability`, got `badtarget`</code></pre>
+<p>A target always has two parts joined by one dot. <code>atfg ls</code> prints them in the ELEMENT column.</p>
+<pre><code class="language-text">atfg: agent_not_found (404): agent nope is not registered [request 327e6229-a7eb-48d0-ac6a-6c66a726256c]</code></pre>
+<p>No node with that label is registered on this server. Exit code 1.</p>
+<h2 id="the-input-is-wrong">The input is wrong</h2>
+<pre><code class="language-text">atfg: --in must be a JSON object (the traversal&#x27;s named inputs)</code></pre>
+<p>You passed a JSON array or scalar. The input is an object whose keys are the capability&#x27;s named inputs, unwrapped: <code>--in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;</code>.</p>
+<pre><code class="language-text">atfg: --in must be a JSON document: expected ident at line 1 column 2</code></pre>
+<p>The text after <code>--in</code> is not JSON at all. Quote it for your shell.</p>
+<pre><code class="language-text">atfg: invalid_input (422): input does not match schema: &quot;name&quot; is a required property [request 26ac5366-9a56-48fb-97ae-c84177b9174e]</code></pre>
+<p>Valid JSON, but it does not match the capability&#x27;s input schema. The message names the field. Exit code 1.</p>
+<h2 id="the-traverser-does-not-exist">The traverser does not exist</h2>
+<pre><code class="language-text">atfg: traverser_not_found (404): unknown traverser [request c9ec0e4b-08a4-44d6-aff0-4f46eb76889f]</code></pre>
+<p>Printed by <code>show</code>, <code>wait</code>, <code>path</code> and <code>cancel</code>. Check the id, and that you are talking to the server that created it. Exit code 1.</p>
+<h2 id="the-traverser-finished-but-did-not-succeed">The traverser finished but did not succeed</h2>
+<pre><code class="language-text">traverser 99e794ae-ec1e-4e06-a38c-daf063fb79ab failed (hello.greet)
+error: {
+  &quot;code&quot;: &quot;ValueError&quot;,
+  &quot;message&quot;: &quot;name must not be empty&quot;,
+  &quot;retryable&quot;: false
+}</code></pre>
+<p>The handler raised. <code>code</code> is the exception class, <code>message</code> its text. Exit code 3, which <code>traverse</code> and <code>wait</code> also use for <code>cancelled</code> and <code>timed_out</code>. Read the path with <code>atfg path &lt;id&gt;</code> to see which step failed.</p>
+<h2 id="waiting-timed-out">Waiting timed out</h2>
+<p><code>traverse</code> without <code>--async</code>, and <code>wait</code>, exit with code 2 when the traverser is still not terminal after <code>--wait-timeout</code> seconds (default 300). The traverser keeps going; <code>atfg wait &lt;id&gt;</code> again, or <code>atfg cancel &lt;id&gt;</code>. A traverser that stays <code>queued</code> has no worker for its label: check <code>GET /api/v2/workers</code> or <code>atfg list</code>.</p>
+<h2 id="the-python-interpreter-cannot-import-atfgraph">The Python interpreter cannot import atfgraph</h2>
+<pre><code class="language-text">atfg: /usr/bin/python3 cannot import the atfgraph package:
+Traceback (most recent call last):
+  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;
+ModuleNotFoundError: No module named &#x27;atfgraph&#x27;
+install it with `/usr/bin/python3 -m pip install ./python` or point --python at an interpreter that has it</code></pre>
+<p><code>atfg dev</code> checks before it starts the worker. Pass <code>--python .venv/bin/python</code> (or whichever interpreter you installed the package into), or install it as the message says.</p>
+<pre><code class="language-text">atfgraph (python)  missing  python3 cannot import atfgraph; pip install ./python or use `atfg install`</code></pre>
+<p>The same condition as reported by <code>atfg doctor</code>.</p>
+<h2 id="the-python-interpreter-is-too-old">The Python interpreter is too old</h2>
+<pre><code class="language-text">atfg: checking Python version (requires &gt;=3.10) failed (exit status: 1):
+ATFGraph requires Python 3.10 or newer; use --python python3.12 or your virtual environment interpreter</code></pre>
+<p><code>atfg install</code> refuses an interpreter below 3.10. The system <code>python3</code> on macOS is 3.9. Pass <code>--python python3.12</code> or a virtual environment interpreter.</p>
+<h2 id="the-package-is-not-installed">The package is not installed</h2>
+<pre><code class="language-text">atfg: not-installed is not installed (no /Users/you/.atfgraph-vnext/packages/not-installed/installed.json); `atfg install &lt;source&gt;` first</code></pre>
+<p>Printed by <code>run</code>, <code>stop</code>, <code>logs</code> and <code>uninstall</code> for a name that <code>atfg install</code> has not created. <code>atfg list</code> shows what is installed.</p>
+<h2 id="the-configuration-file-is-invalid">The configuration file is invalid</h2>
+<pre><code class="language-text">error: atfgraph.storage.url: `mysql://x` must start with sqlite: or postgres://
+error: atfgraph.server.listen: 0.0.0.0:18880 is not loopback and no auth tokens are configured; the daemon refuses to start this way (set auth.tokens or ATFGRAPH_API_KEY)
+invalid: 2 error(s), 0 warning(s)</code></pre>
+<p>From <code>atfg config validate</code>. Each <code>error:</code> line names the YAML path. The second one is the development-mode rule: a server that listens off loopback must have at least one token or <code>ATFGRAPH_API_KEY</code>. Exit code 1; with <code>--strict</code>, warnings also fail.</p>
+<h2 id="scaffold-refuses-to-overwrite">Scaffold refuses to overwrite</h2>
+<pre><code class="language-text">atfg: my-node/.dockerignore exists; pass --force to overwrite</code></pre>
+<p><code>atfg deploy scaffold</code> never overwrites an existing file without <code>--force</code>.</p>
+<h2 id="http-error-envelopes">HTTP error envelopes</h2>
+<p>Every non-success response from <code>/api/v2</code> has this shape:</p>
+<pre><code class="language-json">{&quot;error&quot;:{&quot;code&quot;:&quot;not_found&quot;,&quot;message&quot;:&quot;No such API operation&quot;},&quot;request_id&quot;:&quot;1c40f9bb-f720-4bb2-8e46-a58af50d595b&quot;}</code></pre>
+<div class="table-wrap"><table><thead><tr><th scope="col"><code>code</code></th><th scope="col">Status</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>not_found</code> / <code>No such API operation</code></td><td>404</td><td>The path is not an operation on this server. Often an older daemon than the binary you built: <code>atfg server status</code> shows the running version; restart it.</td></tr><tr><td><code>agent_not_found</code></td><td>404</td><td>No node with that label is registered.</td></tr><tr><td><code>traverser_not_found</code></td><td>404</td><td>Unknown traverser id.</td></tr><tr><td><code>invalid_json</code> / <code>Request body must be valid JSON</code></td><td>400</td><td>The body did not parse.</td></tr><tr><td><code>invalid_input</code></td><td>400 or 422</td><td>The body or a query value is well-formed but wrong: <code>cursor is malformed</code>, <code>since must be a non-negative integer</code>, <code>input does not match schema: …</code>.</td></tr><tr><td><code>invalid_query</code> / <code>roots_only must be true or false</code></td><td>400</td><td>A query flag has a value outside its enum.</td></tr><tr><td><code>unauthorized</code></td><td>401</td><td>No key, or a key this server does not know. Send the ATFGraph key as <code>X-API-Key: &lt;key&gt;</code> (behind a platform proxy, <code>Authorization</code> carries the proxy&#x27;s token, never the key).</td></tr><tr><td><code>payload_too_large</code></td><td>413</td><td>The body exceeds the server&#x27;s limit.</td></tr><tr><td><code>storage_unavailable</code></td><td>503</td><td>The database is not reachable. Check the daemon log named by <code>atfg server status</code>.</td></tr></tbody></table></div>
+<h2 id="the-daemon-serves-an-old-api">The daemon serves an old API</h2>
+<p>If <code>GET /api/v2/workers</code>, <code>/api/v2/stats</code>, <code>/api/v2/model-health</code> or <code>/api/v2/runtime/settings</code> return <code>No such API operation</code> while the contract lists them, the running <code>atfgraphd</code> predates the binary you built. <code>atfg server status</code> prints the pid record with its start time; <code>atfg server stop</code> then <code>atfg server start</code> picks up the new binary.</p>
+<h2 id="the-worker-registered-but-tasks-never-run">The worker registered but tasks never run</h2>
+<p>The worker log (<code>atfg logs &lt;name&gt;</code> or the <code>atfg dev</code> terminal) should show a steady <code>POST …/api/v2/worker/claim &quot;HTTP/1.1 200 OK&quot;</code> line every couple of seconds. That is the worker asking for work. If those lines are present and traversers still sit <code>queued</code>, the worker is enrolled on a different server than the one you are submitting to; compare the <code>--server</code> values on both sides. If the lines show a status other than 200, the worker&#x27;s credentials are being refused; the status and the daemon log say why.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio: build an agent node from a brief — ATFGraph vNext reference</title>
+<meta name="description" content="Studio: build an agent node from a brief: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Studio: build an agent node from a brief</h1>
+<p>Studio is a product node, <code>studio</code>, that turns a written brief into an ATFGraph agent node through a remote ATF Harness running the ATFGraph builder skills. One build is one ATFGraph session: the plan, every harness event, each approval, the reviewed tree&#x27;s digest and the deployment are on one path. The Console page for it (Build → Studio) is in progress; everything below already works from <code>atfg</code> and the Python client.</p>
+<h2 id="what-a-build-is">What a build is</h2>
+<pre><code>brief ──► studio.build ──► plan (Opus 5.5 or Fable 5.1 through the harness)
+                              │  approval  studio:plan:&lt;label&gt;            ← you decide, optionally answering the plan&#x27;s questions
+                              ▼
+                           build turn: scaffold, verify against an isolated daemon, write studio/verification.json
+                              │  approvals harness:&lt;session&gt;:&lt;request&gt;    ← each shell command the builder wants to run
+                              ▼
+                           review: file list, per-file diffs and tree digest from the harness workspace
+                              │  approval  studio:accept:&lt;label&gt;:&lt;digest&gt; ← accept the tree, by digest
+                              ▼
+          studio.deploy ──► plan (read-only) ──► approval studio:deploy:&lt;label&gt;:&lt;digest&gt; ──► the node App is deployed</code></pre>
+<p>The harness workspace is ephemeral. The accepted tree&#x27;s digest is recorded; <code>studio.deploy</code> fetches the tree again, recomputes the digest and refuses if it differs from what was reviewed. What runs is what you read.</p>
+<h2 id="running-the-studio-node">Running the studio node</h2>
+<p>The node needs a harness and a Databricks profile, all from the environment; nothing travels on the wire.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">variable</th><th scope="col">meaning</th></tr></thead><tbody><tr><td><code>ATFGRAPH_HARNESS_URL</code></td><td>the ATF Harness service, e.g. the <code>atf-harness-pilot</code> App URL</td></tr><tr><td><code>ATFGRAPH_HARNESS_PROFILE</code></td><td>harness profile, default <code>atfgraph-builder</code></td></tr><tr><td><code>ATFGRAPH_HARNESS_WORKSPACE</code></td><td>one existing directory under the harness&#x27;s workspace root, shared by every build</td></tr><tr><td><code>ATFGRAPH_HARNESS_WORKSPACE_ROOT</code></td><td>instead: a root under which each build gets its own <code>studio/&lt;label&gt;</code> directory, created on the harness</td></tr><tr><td><code>ATFGRAPH_HARNESS_EDGE_AUTH</code></td><td><code>databricks</code> behind the Apps proxy (with <code>ATFGRAPH_DATABRICKS_PROFILE</code> on a laptop), else <code>none</code></td></tr><tr><td><code>ATFGRAPH_HARNESS_TOKEN</code></td><td>optional harness application token, sent as <code>X-Atfhar-Token</code></td></tr><tr><td><code>ATFGRAPH_HARNESS_MODEL</code></td><td>default model when the brief names none, e.g. <code>databricks-claude-opus-5-5/databricks-claude-opus-5-5:high</code></td></tr><tr><td><code>ATFGRAPH_STUDIO_TURN_TIMEOUT</code></td><td>seconds per harness turn, default 1800</td></tr><tr><td><code>ATFGRAPH_DEPLOY_PROFILE</code></td><td>Databricks CLI profile <code>studio.deploy</code> deploys under on a laptop (bundle engine); never chosen for you</td></tr><tr><td><code>ATFGRAPH_DEPLOY_API_KEY</code></td><td>graph-server identity that mints node tokens for deployed nodes (an admin identity bound from the studio node&#x27;s scope, e.g. <code>--bind-secret ATFGRAPH_DEPLOY_API_KEY=deploy-api-key</code>); default: the node&#x27;s own key</td></tr><tr><td><code>ATFGRAPH_STUDIO_WHEEL</code></td><td>the atfgraph wheel the deployed node bundles; optional when <code>atfg</code> is installed beside its wheel (<code>&lt;prefix&gt;/share/atfgraph</code>)</td></tr></tbody></table></div>
+<pre><code class="language-bash">python -m atfgraph.worker --module atfgraph.studio.node:app
+atfg ls studio          # build, continue, deploy, discard, doctor, schemas
+atfg traverse studio.doctor --in &#x27;{}&#x27;</code></pre>
+<p><code>studio.doctor</code> reports whether the harness is reachable and ready, its protocol version, and whether the profile is served, without starting a turn.</p>
+<h2 id="a-build-from-the-cli">A build from the CLI</h2>
+<pre><code class="language-bash">atfg traverse studio.build --new-session --in &#x27;{&quot;brief&quot;: {
+  &quot;brief&quot;: &quot;A node with one skill reverse(text) that returns the reversed string and its length, and a traversal run(text) that validates the input and calls it.&quot;,
+  &quot;label&quot;: &quot;reverser&quot;,
+  &quot;model&quot;: &quot;databricks-claude-opus-5-5/databricks-claude-opus-5-5:high&quot;
+}}&#x27;</code></pre>
+<p>The traverser pauses at each approval. Decide them from the Console&#x27;s Runs page or from a program:</p>
+<pre><code class="language-python">async with Client(server) as client:
+    for approval in await client.list_approvals():
+        if approval[&quot;operation_key&quot;] == &quot;studio:plan:reverser&quot;:
+            await client.decide_approval(approval[&quot;id&quot;], &quot;approved&quot;, {&quot;answers&quot;: {&quot;q1&quot;: &quot;yes&quot;}})</code></pre>
+<p>Answers to the plan&#x27;s questions travel in the approval&#x27;s response; unanswered questions take the plan&#x27;s defaults. Shell commands the builder wants to run arrive as <code>harness:&lt;session&gt;:&lt;request&gt;</code> approvals with references only; the command text never reaches the path. The final result carries <code>plan</code>, <code>verification</code>, <code>review</code> (files and diff), <code>reviewed_digest</code>, the harness session id and the usage of both turns.</p>
+<h2 id="deploy-continue-discard">Deploy, continue, discard</h2>
+<pre><code class="language-bash">atfg traverse studio.deploy  --session &lt;build session&gt; --in &#x27;{&quot;label&quot;: &quot;reverser&quot;}&#x27;
+atfg traverse studio.continue --session &lt;build session&gt; --in &#x27;{&quot;message&quot;: &quot;Rename run to reverse_text&quot;}&#x27;
+atfg traverse studio.discard  --session &lt;build session&gt; --in &#x27;{}&#x27;</code></pre>
+<p><code>deploy</code> shows the deploy engine&#x27;s read-only plan in the <code>studio:deploy:&lt;label&gt;:&lt;digest&gt;</code> approval and runs the real deploy on approval, with the studio node&#x27;s own Databricks identity. Inside the studio node&#x27;s App there is no CLI profile: the engine&#x27;s Apps API path deploys as the App&#x27;s own service principal (<code>--engine api</code>), uploads the bundle under that principal&#x27;s workspace home and bundles the wheel the studio App itself runs. <code>continue</code> adds a turn to the same harness session (a new turn once the previous one completed) and, because the turn may change the tree, ends with a fresh review and a new <code>studio:accept:&lt;label&gt;:&lt;digest&gt;</code> approval; <code>deploy</code> then ships that digest. <code>discard</code> deletes the harness session and its pairing; the run records stay.</p>
+<h2 id="the-brief">The brief</h2>
+<p><code>StudioBrief</code> (<code>atfgraph.studio.schemas</code>, JSON Schema from <code>studio.schemas</code>): <code>brief</code>, <code>label</code>, optional <code>model</code>, <code>attachments</code> (references to files staged under <code>brief/</code>: OpenAPI specs, documents, screenshots, sample payloads), <code>mcp_servers</code> (name, transport, URL or command, the environment variable <strong>names</strong> its auth needs, tool names) and <code>secrets</code> (variable names with a status: present, provide now, create empty). Credential values never appear in a brief; the builder writes <code>.env.example</code> and the deploy engine fills the node&#x27;s secret scope from names.</p>
+<h2 id="what-gets-recorded">What gets recorded</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">where</th><th scope="col">what</th></tr></thead><tbody><tr><td>path of the build run</td><td>plan turn, build turn, every harness event as a progress event, three approvals</td></tr><tr><td>review</td><td>the file list, a bounded unified diff per file (<code>entries[].diff</code>, against the empty tree a build starts from) and the tree digest</td></tr><tr><td>checkpoints</td><td><code>studio:plan</code>, <code>studio:built</code>, <code>studio:review</code> (per run)</td></tr><tr><td>session memory</td><td>the harness pairing and the accepted build (<code>studio.review</code>: label, digest, files)</td></tr><tr><td>run metadata</td><td><code>studio.label</code>, <code>studio.stage</code> (planning, review, accepted, deploying, deployed, …)</td></tr><tr><td>usage</td><td>both turns&#x27; tokens (cache reads and writes count as input, reported separately too) and provider-reported cost; the harness&#x27;s <code>0</code> for an unpriced route is recorded as unknown so the server&#x27;s price table applies</td></tr></tbody></table></div>
+<h2 id="governing-who-may-deploy">Governing who may deploy</h2>
+<p>Building and deploying are separate capabilities, so a policy can allow one and deny the other. An access policy that lets a principal build but not deploy:</p>
+<pre><code class="language-json">{&quot;name&quot;: &quot;studio-no-deploy&quot;, &quot;label&quot;: &quot;studio&quot;, &quot;capability&quot;: &quot;deploy&quot;, &quot;principal&quot;: &quot;builders&quot;, &quot;effect&quot;: &quot;deny&quot;}</code></pre>
+<p>installed through <code>POST /api/v2/access/policies</code> as in the access-boundaries example. The deploy itself runs under the studio node&#x27;s service principal, which needs Apps create/deploy, secret scope create/put and <code>admin</code> on the graph server namespace in the target workspace; grant those to the node App before the first <code>studio.deploy</code>.</p>
+<h2 id="limits-and-known-gaps">Limits and known gaps</h2>
+<ul><li>Remote mode fixes tools and model by harness profile; a per-call dollar cap is not available remotely. The profile&#x27;s turn limits and the node&#x27;s budget policy bound a build.</li><li>Durability (what survives what). Harness sessions are stored on disk and survive a harness restart, an App redeploy and an idle stop; a turn that was running when the harness stopped ends as <code>turn_aborted</code> and <code>continue</code> starts the next turn in the
+same session; the harness event journal is in memory, so a client resuming with a cursor gets <code>reset_required</code> and replays;
+workspace files are lost on an App redeploy or idle stop. Because the accepted tree is identified by its digest and fetched
+again at deploy time, a workspace lost between accept and deploy makes <code>studio.deploy</code> refuse (&quot;changed since review&quot;)
+instead of shipping something else: run <code>continue</code> to rebuild and re-accept. Databricks Apps stop an idle harness App; a
+stopped harness shows in <code>studio.doctor</code> as unreachable until it is started again.</li><li>The verification table is the builder&#x27;s own report and can be honest about what it could not run: on a harness without the ATFGraph runtime the daemon-backed checks come back <code>skipped</code> and the build is <code>accepted_with_failures</code>.
+The deployed node still runs (live proof 2026-09-27: a brief became App <code>atfgraph-node-reverser-b4</code> and answered
+<code>run(text)</code> on the graph server), but a <code>skipped</code> check is not a passed one; read the table before you deploy.</li><li>The Console page is the next slice; everything above runs from <code>atfg</code> and the Python client today.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

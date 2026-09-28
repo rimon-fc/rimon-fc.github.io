@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Events operations — ATFGraph vNext reference</title>
+<meta name="description" content="Events operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Events operations</h1>
+<p>The durable event log of a traverser, as a snapshot or as a stream.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-streamNodeLogs"><code>streamNodeLogs</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/logs/events</code></td></tr><tr><td><a href="#op-getEventLog"><code>getEventLog</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/traversers/{id}/event-log</code></td></tr><tr><td><a href="#op-streamExecutionEvents"><code>streamExecutionEvents</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/traversers/{id}/events</code></td></tr></tbody></table></div>
+<section class="operation" id="op-streamNodeLogs">
+<h3><code>streamNodeLogs</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/logs/events</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Live node-log SSE for one root (root_id) or one step (traverser_id). id is the log sequence cursor; send Last-Event-ID to resume after the last consumed line. Each log event carries one LogRecord; levels, stream, contains, since and until filter exactly as GET /api/v2/logs. Comments are keep-alives. The stream ends with an end event once the subject is terminal and no further lines arrived during a short grace window; an error event reports a refused query. Requires node log ingestion to be enabled for the namespace, otherwise the log table is simply empty.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.events_api.EventsApi.stream_node_logs()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>contains</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>levels</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>root_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>since</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>stream</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>traverser_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>until</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>Last-Event-ID</code></td><td>header</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td>string</td><td>Node log lines; each data field is a LogRecord JSON object</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Authentication failed</td></tr></tbody></table></div>
+</section>
+<section class="operation" id="op-getEventLog">
+<h3><code>getEventLog</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/traversers/{id}/event-log</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.events_api.EventsApi.get_event_log()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>after</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>lease_token</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>limit</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>step_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>task_id</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-eventlog"><code>EventLog</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;items&quot;: [
+    {
+      &quot;created_at&quot;: 0,
+      &quot;data&quot;: {},
+      &quot;root_id&quot;: &quot;string&quot;,
+      &quot;sequence&quot;: 0,
+      &quot;traverser_id&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;root_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-streamExecutionEvents">
+<h3><code>streamExecutionEvents</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/traversers/{id}/events</code></p>
+<p class="meta">Requires: not declared in the contract</p>
+<p>Durable ordered execution SSE. id is a monotonically increasing sequence cursor. Send Last-Event-ID to resume after the last consumed event. Comments are keep-alives. Clients must deduplicate on reconnect and stop after the subject&#x27;s terminal event; child terminal events do not terminate the root stream. Buffers must be bounded. This is not an LLM token stream.</p>
+<p class="meta">Python SDK: <code>Client.events(traverser_id)</code> is the maintained async SSE iterator with cursor reconnection, separate from generated JSON request/response routes.</p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>Last-Event-ID</code></td><td>header</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td>string</td><td>Execution events; each data field is an ExecutionEvent JSON object</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Authentication failed</td></tr></tbody></table></div>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

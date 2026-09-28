@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document knowledge — ATFGraph vNext reference</title>
+<meta name="description" content="Document knowledge: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Document knowledge</h1>
+<p>By the end of this page you will be able to store text documents in a memory scope, search them with BM25 and return passages that carry stable citations, page through a corpus, delete with compare-and-set, and decide when vector memory or the semantic layer is the better tool. It requires only the SDK and a running graph server; the <code>features/knowledge</code> example needs no model provider because every answer is built from stored text.</p>
+<h2 id="what-the-knowledge-store-is">What the knowledge store is</h2>
+<p><code>app.knowledge</code> is a <code>Knowledge</code> facade (<code>python/atfgraph/knowledge.py</code>) bound to the <code>global</code> scope of the caller&#x27;s namespace. It talks to the seven <code>POST /api/v2/knowledge/{put,put-batch,get,list,delete,search,stats}</code> operations on the graph server. The server chunks the text, indexes the chunks and ranks them with BM25; the SDK validates every request against the server bounds before any I/O, so a bad <code>doc_id</code> or an oversize text fails locally with <code>ValueError</code>.</p>
+<p>Ownership follows the memory model exactly: the server derives the namespace from authentication, and inside a traversal every request carries the task&#x27;s lease so <code>session</code> and <code>workflow</code> resolve to the running traverser. Read <a href="04-sessions-and-memory.html">04-sessions-and-memory.md</a> for the scopes themselves.</p>
+<p>Two facts shape everything below:</p>
+<ul><li>Retrieval is lexical. BM25 ranks chunks by the query terms they contain. A query for &quot;luggage&quot; does not find a chunk that only says &quot;baggage&quot;.</li><li>Every hit has a citation <code>doc_id#ordinal</code> that stays valid until the document is rewritten. That is what makes an answer checkable.</li></ul>
+<h2 id="ingest-documents">Ingest documents</h2>
+<p><code>put</code> writes one document; <code>put_many</code> writes up to 100 atomically. Pass <code>text</code> and let the server chunk it, or pass <code>chunks</code> you split yourself. The node in <code>examples/python/features/knowledge/agent.py</code> exposes the batch write as a traversal:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import Any, Dict, List
+
+from atfgraph import Agent
+from atfgraph.knowledge import Knowledge
+
+app = Agent(node_id=&quot;knowledge_desk&quot;, version=&quot;1.0.0&quot;, description=&quot;Document knowledge with cited BM25 retrieval&quot;)
+
+knowledge = Knowledge(lambda: app.client)
+
+
+@app.traversal()
+async def ingest(documents: List[Dict[str, Any]]) -&gt; dict:
+    &quot;&quot;&quot;Write documents atomically. Each item: ``doc_id``, ``title``, ``metadata`` and
+    ``text`` or ``chunks``.&quot;&quot;&quot;
+    result = await knowledge.put_many(documents)
+    return {
+        &quot;documents&quot;: result.documents,
+        &quot;chunks&quot;: result.chunks,
+        &quot;items&quot;: [{&quot;doc_id&quot;: item.doc_id, &quot;revision&quot;: item.revision, &quot;chunks&quot;: item.chunks, &quot;created&quot;: item.created} for item in result.items],
+    }</code></pre>
+<p><code>Knowledge(lambda: app.client)</code> is the same object as <code>app.knowledge</code>; the example constructs it explicitly so the module reads on its own. The documents it ingests come from <code>examples/python/features/knowledge/fixtures.py</code>. One uses server chunking, the other supplies chunks with page numbers and chunk metadata:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import Any, Dict, List
+
+DOCUMENTS: List[Dict[str, Any]] = [
+    {
+        &quot;doc_id&quot;: &quot;policy:refunds&quot;,
+        &quot;title&quot;: &quot;Refund policy&quot;,
+        &quot;metadata&quot;: {&quot;kind&quot;: &quot;policy&quot;, &quot;owner&quot;: &quot;finance&quot;},
+        &quot;text&quot;: (
+            &quot;Refunds are issued to the original form of payment within 14 days of approval. &quot;
+            &quot;Refund fees apply to non-flexible fares; flexible fares are refunded in full.&quot;
+        ),
+    },
+    {
+        &quot;doc_id&quot;: &quot;policy:baggage&quot;,
+        &quot;title&quot;: &quot;Baggage allowance&quot;,
+        &quot;metadata&quot;: {&quot;kind&quot;: &quot;policy&quot;, &quot;owner&quot;: &quot;operations&quot;},
+        &quot;chunks&quot;: [
+            {&quot;text&quot;: &quot;Checked baggage allowance is 23 kg per passenger on domestic sectors and 30 kg on international sectors.&quot;, &quot;page&quot;: 1},
+            {&quot;text&quot;: &quot;Excess baggage fees apply above the allowance and are charged per kilogram at the airport.&quot;, &quot;page&quot;: 2, &quot;metadata&quot;: {&quot;section&quot;: &quot;fees&quot;}},
+        ],
+    },
+]</code></pre>
+<p>The keys <code>put_many</code> accepts per item are exactly <code>doc_id</code>, <code>text</code> or <code>chunks</code>, <code>title</code>, <code>metadata</code>, <code>chunk_size</code>, <code>chunk_overlap</code> and <code>expected_revision</code>; anything else raises <code>ValueError</code> before the request is sent. Duplicate <code>doc_id</code> values in one batch are rejected the same way.</p>
+<h3 id="limits-and-chunking">Limits and chunking</h3>
+<div class="table-wrap"><table><thead><tr><th scope="col">Bound</th><th scope="col">Value</th><th scope="col">Where it fails</th></tr></thead><tbody><tr><td><code>doc_id</code></td><td>1–256 printable characters, no control characters</td><td>client</td></tr><tr><td><code>title</code></td><td>up to 512 characters</td><td>client</td></tr><tr><td>text per document</td><td>1 MiB</td><td>client</td></tr><tr><td>chunk text</td><td>32 KiB each, at most 2000 per document</td><td>client</td></tr><tr><td>batch</td><td>1–100 documents, unique <code>doc_id</code></td><td>client</td></tr><tr><td><code>chunk_size</code></td><td>64–8000 characters, default 1200</td><td>client</td></tr><tr><td><code>chunk_overlap</code></td><td>0 to half of <code>chunk_size</code>, default 100</td><td>client</td></tr><tr><td>query</td><td>1–2048 characters</td><td>client</td></tr><tr><td><code>top_k</code></td><td>1–100</td><td>client</td></tr><tr><td><code>offset</code></td><td>0–10000</td><td>client</td></tr></tbody></table></div>
+<p><code>chunk_size</code> and <code>chunk_overlap</code> apply to <code>text</code> ingestion only; passing them with <code>chunks</code> raises. <code>chunk_text(text, size, overlap)</code> (exported from <code>atfgraph</code>) runs the same algorithm as the server so you can preview where citations will fall before ingesting; the server split remains authoritative (<code>tests/test_knowledge.py::test_chunk_text_mirrors_the_server_rules</code>).</p>
+<p>Text and queries are normalised to Unicode NFC before they are sent (<code>normalize=True</code>), so composed and decomposed spellings index and match identically. Pass <code>Knowledge(lambda: app.client, normalize=False)</code> to send text verbatim.</p>
+<h3 id="replace-and-compare-and-set">Replace and compare-and-set</h3>
+<p><code>put</code> on an existing <code>doc_id</code> replaces the document and bumps its <code>revision</code>. Pass <code>expected_revision=</code> to make the write conditional: <code>0</code> means &quot;create only&quot;, any other value must equal the live revision or the server answers <code>ConflictError</code>. <code>delete(doc_id, expected_revision=...)</code> behaves the same way and returns <code>False</code> when the document was already gone (<code>tests/test_knowledge.py::test_real_daemon_knowledge_routes</code>).</p>
+<h2 id="search-with-citations">Search with citations</h2>
+<p><code>search(query, top_k=, offset=, filters=, doc_id=, min_score=)</code> returns a <code>KnowledgeSearchResult</code>. <code>items</code> are <code>KnowledgeHit</code> objects ordered by score descending, then <code>doc_id</code>, then <code>ordinal</code>, so the ranking is deterministic. <code>filters</code> match document metadata exactly; <code>doc_id</code> restricts the search to one document. Adapted from the <code>ask</code> traversal in <code>examples/python/features/knowledge/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
+
+from atfgraph import Agent
+from atfgraph.knowledge import Knowledge
+
+app = Agent(node_id=&quot;knowledge_desk&quot;, version=&quot;1.0.0&quot;)
+knowledge = Knowledge(lambda: app.client)
+
+
+class Passage(BaseModel):
+    citation: str
+    title: str
+    text: str
+    score: float
+    page: Optional[int] = None
+    matched_terms: List[str] = Field(default_factory=list)
+
+
+class Answer(BaseModel):
+    question: str
+    terms: List[str]
+    passages: List[Passage]
+    total: int
+    scanned: int
+
+
+@app.traversal()
+async def ask(question: str, top_k: int = 5, kind: Optional[str] = None) -&gt; Answer:
+    result = await knowledge.search(question, top_k=top_k, filters={&quot;kind&quot;: kind} if kind else None)
+    return Answer(
+        question=question,
+        terms=result.terms,
+        passages=[
+            Passage(citation=hit.citation, title=hit.title, text=hit.text, score=hit.score, page=hit.page, matched_terms=hit.matched_terms)
+            for hit in result.items
+        ],
+        total=result.total,
+        scanned=result.scanned,
+    )</code></pre>
+<p>Against the real daemon, <code>search(&quot;refund fees&quot;, top_k=3)</code> on the fixture documents reports <code>terms == [&quot;refund&quot;, &quot;fees&quot;]</code>, the first hit is <code>policy:refunds#0</code> and its <code>matched_terms</code> are <code>[&quot;fees&quot;, &quot;refund&quot;]</code> (<code>test_real_daemon_knowledge_routes</code>). <code>total</code> is the number of matching chunks after filters, <code>scanned</code> the number before, <code>corpus_chunks</code> the size of the scope, and <code>next_offset</code> is set while more pages exist.</p>
+<p>Three helpers on the result save prompt-building code:</p>
+<ul><li><code>result.citations()</code> is the list of <code>doc_id#ordinal</code> strings.</li><li><code>hit.reference()</code> renders <code>Refund policy (policy:refunds#0)</code> or <code>(b#2, p. 4)</code> when a page is known.</li><li><code>result.context(max_chars=6000)</code> renders numbered <code>[n] reference</code> passages and cuts on passage boundaries, so a citation never points at truncated text.</li></ul>
+<p>The example&#x27;s <code>extractive_answer</code> shows what a cited answer looks like without a model: it picks the sentences covering the most query terms and tags each with the <code>[n]</code> of its passage. When a model does write the answer, the pattern in <code>examples/python/docs_assistant/main.py</code> applies: reject any <code>citation_ids</code> the model returns that were not in the retrieved set.</p>
+<h3 id="paging-through-a-ranking">Paging through a ranking</h3>
+<p><code>search_all(query, page_size=100, max_results=10000)</code> is an async iterator that walks the ranking through <code>offset</code> pages in the same deterministic order, so iterating it yields the same citations as one <code>search(..., top_k=100)</code> (<code>test_example_node_runs_end_to_end_through_the_contract_double</code>).</p>
+<h2 id="scopes-and-layered-knowledge">Scopes and layered knowledge</h2>
+<p><code>app.knowledge.scope(&quot;session&quot;)</code>, <code>.scope(&quot;actor&quot;)</code> and <code>.scope(&quot;workflow&quot;)</code> return siblings bound to another scope. Inside a traversal, <code>session</code> and <code>workflow</code> without ids resolve to the running traverser&#x27;s session and root on the server; outside one, pass <code>session_id=</code> or <code>root_id=</code>. <code>Knowledge.search_across([session_kb, kb], query, top_k=5)</code> queries several scopes and merges by score, then scope order, <code>doc_id</code> and <code>ordinal</code>. The scores come from separate corpora and are comparable only approximately; each merged hit carries its <code>scope</code> label so you can tell them apart. From the same test:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+import os
+
+from atfgraph import Client
+from atfgraph.knowledge import Knowledge
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        kb = Knowledge.for_client(client)
+        session_kb = kb.scope(&quot;session&quot;, session_id=&quot;se_demo&quot;)
+        await session_kb.put(&quot;note&quot;, &quot;Traveller prefers refund to voucher.&quot;, title=&quot;Session note&quot;)
+        merged = await Knowledge.search_across([session_kb, kb], &quot;refund voucher lounge&quot;, top_k=5)
+        for hit in merged.items:
+            print(hit.scope, hit.reference(), round(hit.score, 3))
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p><code>Knowledge.for_client(client)</code> is the constructor to use from a script or test that has a bare <code>Client</code>; inside a node use <code>app.knowledge</code>.</p>
+<h2 id="catalog-statistics-and-deletion">Catalog, statistics and deletion</h2>
+<p><code>stats()</code> returns a <code>KnowledgeStats</code> for one scope: <code>documents</code>, <code>chunks</code>, <code>tokens</code>, <code>terms</code>, <code>postings</code>, <code>average_chunk_tokens</code>, <code>strategy == &quot;bm25&quot;</code> and the server&#x27;s <code>limits</code>. <code>list(prefix=, cursor=, limit=)</code> returns one page of <code>KnowledgeDocumentSummary</code> rows in <code>doc_id</code> order with a <code>next_cursor</code>; <code>documents(prefix=, page_size=)</code> follows the cursors for you. <code>get(doc_id, include_chunks=True)</code> returns the stored document with its chunks and citations, or <code>found == False</code>. The <code>catalog</code> and <code>forget</code> traversals in <code>examples/python/features/knowledge/agent.py</code> combine them:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from atfgraph import Agent
+from atfgraph.knowledge import Knowledge
+
+app = Agent(node_id=&quot;knowledge_desk&quot;, version=&quot;1.0.0&quot;)
+knowledge = Knowledge(lambda: app.client)
+
+
+@app.traversal()
+async def catalog() -&gt; dict:
+    stats = await knowledge.stats()
+    documents = [
+        {&quot;doc_id&quot;: item.doc_id, &quot;title&quot;: item.title, &quot;chunks&quot;: item.chunks, &quot;revision&quot;: item.revision, &quot;metadata&quot;: item.metadata}
+        async for item in knowledge.documents(page_size=100)
+    ]
+    return {&quot;documents&quot;: stats.documents, &quot;chunks&quot;: stats.chunks, &quot;terms&quot;: stats.terms, &quot;strategy&quot;: stats.strategy, &quot;items&quot;: documents}
+
+
+@app.traversal()
+async def forget(doc_id: str) -&gt; dict:
+    return {&quot;doc_id&quot;: doc_id, &quot;deleted&quot;: await knowledge.delete(doc_id)}</code></pre>
+<p><code>examples/python/docs_assistant/main.py</code> uses the same <code>documents(prefix=&quot;docs:&lt;namespace&gt;:&quot;)</code> listing to find and delete every document of one namespace, which is the pattern for bulk deletion: there is no delete-by-prefix operation.</p>
+<h2 id="run-the-example">Run the example</h2>
+<p>Start a worker and the driver from this repository&#x27;s root, with <code>ATFGRAPH_SERVER</code> pointing at your graph server. Nothing else needs to be configured.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.knowledge.agent:app
+python -m examples.python.features.knowledge.call</code></pre>
+<p><code>tests/test_knowledge.py::test_real_daemon_knowledge_routes</code> runs the same helpers against <code>atfgraphd</code> with the fixture from <a href="15-testing.html">15-testing.md</a>. The same file also defines <code>KnowledgeFakeServer</code>, an in-memory BM25 double built on <code>atfgraph.testing.FakeGraphServer</code>; it exists for fast SDK unit tests only, and the real-daemon test is the check that a node works.</p>
+<h2 id="when-to-use-vector-memory-instead">When to use vector memory instead</h2>
+<p>The knowledge store is the right place for text you want to quote back with a citation. Vector memory (<code>app.memory.set_vector</code>, <code>get_vector</code>, <code>delete_vector</code>, <code>similarity_search</code> and <code>search</code> on <code>Memory</code> and <code>MemoryScope</code>, described in <a href="04-sessions-and-memory.html">04-sessions-and-memory.md</a>) stores one embedding per key with metadata and ranks by cosine similarity; it holds no text and produces no citation, and you bring the embeddings.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Need</th><th scope="col">Use</th></tr></thead><tbody><tr><td>Quote a passage with a checkable locator</td><td><code>app.knowledge</code></td></tr><tr><td>Exact-term or identifier lookup (booking codes, error strings)</td><td><code>app.knowledge</code></td></tr><tr><td>Match meaning across different wording</td><td>vector memory, or the semantic layer below</td></tr><tr><td>Rank arbitrary embedded items (not text chunks)</td><td>vector memory</td></tr></tbody></table></div>
+<p>When you want both, <code>kb.semantic(EmbeddingConfig(provider=..., model=...))</code> returns a <code>SemanticKnowledge</code> that writes the document to the knowledge store first, then embeds the server&#x27;s chunks into the same scope&#x27;s vector memory under keys <code>kb:&lt;index&gt;:&lt;doc_id&gt;#&lt;ordinal&gt;</code>. Its <code>search(query, mode=&quot;hybrid&quot; | &quot;semantic&quot; | &quot;lexical&quot;)</code> fuses BM25 and cosine rankings by reciprocal rank and re-reads every semantic hit against the live document revision, dropping stale vectors. Embeddings come only from the provider you configure: <code>http_embedding_provider(url, model, api_key=...)</code> for an OpenAI-compatible endpoint, or any callable that maps a list of texts to a list of vectors. <code>examples/python/features/retrieval/agent.py</code> selects the provider from <code>ATFGRAPH_EMBEDDING_URL</code> and <code>ATFGRAPH_EMBEDDING_MODEL</code> and otherwise falls back to a deterministic local lexicon embedder so it runs offline; <code>examples/python/retrieval_basics</code> and <code>examples/python/docs_assistant</code> are built on the same layer. The semantic layer is covered by <code>tests/test_semantic_knowledge.py</code>.</p>
+<p>Not verified: search behaviour in the <code>actor</code> scope against the real daemon. <code>tests/test_knowledge.py</code> exercises <code>global</code> and <code>session</code> end to end and pins the <code>actor</code> request body only over a mock transport; confirming it needs a run of <code>kb.scope(&quot;actor&quot;).put(...)</code> and <code>.search(...)</code> against <code>atfgraphd</code>.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="04-sessions-and-memory.html">04-sessions-and-memory.md</a>: the scopes knowledge is bound to, and the vector memory API.</li><li><a href="06-model-calls.html">06-model-calls.md</a>: turning retrieved passages into a model-written, cited answer with <code>app.ai</code>.</li><li><a href="15-testing.html">15-testing.md</a>: the real-daemon fixture that <code>test_knowledge.py</code> uses.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

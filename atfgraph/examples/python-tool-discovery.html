@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tool discovery and bounded model calls — ATFGraph vNext reference</title>
+<meta name="description" content="Tool discovery and bounded model calls: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Tool discovery and bounded model calls</h1>
+<p class="meta">Directory <code>examples/python/tool_discovery</code></p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<p class="meta">Agent node label <code>utility-worker</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>ask_with_tools</code></td><td>traversal</td><td><code>(question: str) -&gt; dict</code></td><td><code>examples/python/tool_discovery/agent.py</code></td><td></td></tr><tr><td><code>guarded_query</code></td><td>traversal</td><td><code>(question: str) -&gt; dict</code></td><td><code>examples/python/tool_discovery/agent.py</code></td><td></td></tr><tr><td><code>inspect_tools</code></td><td>traversal</td><td><code>(query: str = &#x27;&#x27;) -&gt; dict</code></td><td><code>examples/python/tool_discovery/agent.py</code></td><td></td></tr><tr><td><code>smart_query</code></td><td>traversal</td><td><code>(question: str) -&gt; dict</code></td><td><code>examples/python/tool_discovery/agent.py</code></td><td>Two-stage selection: ask for tool names first, then supply selected schemas.</td></tr><tr><td><code>weather_report</code></td><td>traversal</td><td><code>(cities: str) -&gt; dict</code></td><td><code>examples/python/tool_discovery/agent.py</code></td><td></td></tr><tr><td><code>calculate</code></td><td>skill</td><td><code>(operation: str, a: float, b: float) -&gt; dict</code></td><td><code>examples/python/tool_discovery/worker.py</code></td><td>Add, subtract, multiply or divide two numbers.</td></tr><tr><td><code>get_weather</code></td><td>skill</td><td><code>(city: str) -&gt; dict</code></td><td><code>examples/python/tool_discovery/worker.py</code></td><td>Weather fixture for a city; never a live forecast.</td></tr><tr><td><code>summarize</code></td><td>traversal</td><td><code>(text: str) -&gt; dict</code></td><td><code>examples/python/tool_discovery/worker.py</code></td><td></td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">atfg server start
+atfg traverse orchestrator.ask_with_tools --in &#x27;{&quot;question&quot;:&quot;Use the calculator to add 2 and 3.&quot;}&#x27;
+atfg traverse orchestrator.guarded_query --in &#x27;{&quot;question&quot;:&quot;Divide 20 by 4.&quot;}&#x27;
+atfg traverse orchestrator.smart_query --in &#x27;{&quot;question&quot;:&quot;Multiply 42 by 17.&quot;}&#x27;
+atfg traverse orchestrator.weather_report --in &#x27;{&quot;cities&quot;:&quot;Tokyo and Sydney&quot;}&#x27;
+atfg traverse utility-worker.calculate --in &#x27;{&quot;operation&quot;:&quot;add&quot;,&quot;a&quot;:2,&quot;b&quot;:3}&#x27;
+atfg traverse utility-worker.summarize --in &#x27;{&quot;text&quot;:&quot;Our itinerary has three days in Bali and a beach afternoon.&quot;}&#x27;
+cargo build --bin atfgraphd --bin atfg
+python -m atfgraph.worker --module examples.python.tool_discovery.agent:app
+python -m atfgraph.worker --module examples.python.tool_discovery.worker:app
+python -m examples.python.tool_discovery.call inspect_tools &#x27;{}&#x27;
+python -m pip install -e ./python</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/tool_discovery/README.md</code></li><li><code>examples/python/tool_discovery/__init__.py</code></li><li><code>examples/python/tool_discovery/agent.py</code></li><li><code>examples/python/tool_discovery/agentnode.yaml</code></li><li><code>examples/python/tool_discovery/call.py</code></li><li><code>examples/python/tool_discovery/requirements.txt</code></li><li><code>examples/python/tool_discovery/worker.agentnode.yaml</code></li><li><code>examples/python/tool_discovery/worker.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/tool_discovery/README.md</code>; the source file is not modified.</p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<pre><code class="language-bash">python -m pip install -e ./python
+cargo build --bin atfgraphd --bin atfg
+export PATH=&quot;$PWD/target/debug:$PATH&quot;
+atfg server start</code></pre>
+<p>The server defaults to <code>http://127.0.0.1:18880</code>; its browser UI is <code>/ui/</code>. Set <code>ATFGRAPH_SERVER</code> and <code>ATFGRAPH_API_KEY</code> for a different server.</p>
+<p>Start the utility worker and orchestrator in separate terminals:</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.tool_discovery.worker:app
+python -m atfgraph.worker --module examples.python.tool_discovery.agent:app
+atfg traverse utility-worker.calculate --in &#x27;{&quot;operation&quot;:&quot;add&quot;,&quot;a&quot;:2,&quot;b&quot;:3}&#x27;
+python -m examples.python.tool_discovery.call inspect_tools &#x27;{}&#x27;</code></pre>
+<p>These calls need no provider credentials. <code>get_weather</code> always returns labelled fixture data. Division by zero and unknown calculator operations fail explicitly.</p>
+<p>Configure a model on the worker that needs it before startup: <code>ATFGRAPH_MODEL_URL</code> (an OpenAI-compatible chat-completions endpoint), <code>ATFGRAPH_MODEL_NAME</code>, and <code>ATFGRAPH_MODEL_API_KEY</code> where required. Then:</p>
+<pre><code class="language-bash">atfg traverse orchestrator.ask_with_tools --in &#x27;{&quot;question&quot;:&quot;Use the calculator to add 2 and 3.&quot;}&#x27;
+atfg traverse orchestrator.weather_report --in &#x27;{&quot;cities&quot;:&quot;Tokyo and Sydney&quot;}&#x27;
+atfg traverse orchestrator.smart_query --in &#x27;{&quot;question&quot;:&quot;Multiply 42 by 17.&quot;}&#x27;
+atfg traverse orchestrator.guarded_query --in &#x27;{&quot;question&quot;:&quot;Divide 20 by 4.&quot;}&#x27;
+atfg traverse utility-worker.summarize --in &#x27;{&quot;text&quot;:&quot;Our itinerary has three days in Bali and a beach afternoon.&quot;}&#x27;</code></pre>
+<p>The orchestrator discovers only <code>utility-worker</code> skills. Weather selection filters capability name/description. <code>smart_query</code> first asks the model to select from candidate target names, checks its answer against the allowlist, then supplies only the selected schemas. This is application-level two-stage selection; registry schemas are still fetched eagerly. <code>guarded_query</code> allows three tool rounds and five calls. All actual tool executions are recorded child traversals. Provider requests may incur charges; without model configuration the model-backed handlers fail.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

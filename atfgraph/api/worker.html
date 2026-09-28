@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worker operations — ATFGraph vNext reference</title>
+<meta name="description" content="Worker operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Worker operations</h1>
+<p>The outbound worker protocol: enrol, claim, renew, report, complete, drain; and the fleet view of every enrolled worker.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-bindSession"><code>bindSession</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/sessions/bind</code></td></tr><tr><td><a href="#op-claimTask"><code>claimTask</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/claim</code></td></tr><tr><td><a href="#op-completeTask"><code>completeTask</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/complete</code></td></tr><tr><td><a href="#op-drainWorker"><code>drainWorker</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/drain</code></td></tr><tr><td><a href="#op-enrollWorker"><code>enrollWorker</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/enroll</code></td></tr><tr><td><a href="#op-reportProgress"><code>reportProgress</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/progress</code></td></tr><tr><td><a href="#op-renewLease"><code>renewLease</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/renew</code></td></tr><tr><td><a href="#op-resumeTask"><code>resumeTask</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/resume</code></td></tr><tr><td><a href="#op-suspendTask"><code>suspendTask</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/worker/suspend</code></td></tr><tr><td><a href="#op-listWorkers"><code>listWorkers</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/workers</code></td></tr></tbody></table></div>
+<section class="operation" id="op-bindSession">
+<h3><code>bindSession</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/sessions/bind</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.bind_session()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-bindsession"><code>BindSession</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;session_id&quot;: &quot;string&quot;,
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-sessionbinding"><code>SessionBinding</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>410</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Session was deleted (session_deleted)</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;bound&quot;: false,
+  &quot;session_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-claimTask">
+<h3><code>claimTask</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/claim</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.claim_task()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-workerid"><code>WorkerId</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-claim"><code>Claim</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;capacity&quot;: 0,
+  &quot;draining&quot;: false,
+  &quot;task&quot;: {
+    &quot;attempt&quot;: 0,
+    &quot;capability&quot;: &quot;string&quot;,
+    &quot;deadline_at&quot;: 0,
+    &quot;emitter&quot;: {
+      &quot;emitter_id&quot;: &quot;string&quot;,
+      &quot;event_id&quot;: &quot;string&quot;,
+      &quot;event_type&quot;: &quot;string&quot;,
+      &quot;idempotency_key&quot;: &quot;string&quot;,
+      &quot;managed_by&quot;: &quot;string&quot;,
+      &quot;received_at&quot;: &quot;string&quot;,
+      &quot;source&quot;: &quot;string&quot;
+    },
+    &quot;id&quot;: &quot;string&quot;,
+    &quot;input&quot;: {},
+    &quot;kind&quot;: &quot;string&quot;,
+    &quot;label&quot;: &quot;string&quot;,
+    &quot;lease_expires_at&quot;: 0,
+    &quot;lease_token&quot;: &quot;string&quot;,
+    &quot;max_attempts&quot;: 0,
+    &quot;namespace&quot;: &quot;string&quot;,
+    &quot;parent_id&quot;: &quot;string&quot;,
+    &quot;parent_step_id&quot;: &quot;string&quot;,
+    &quot;principal&quot;: &quot;string&quot;,
+    &quot;root_id&quot;: &quot;string&quot;,
+    &quot;session_id&quot;: &quot;string&quot;,
+    &quot;step_id&quot;: &quot;string&quot;,
+    &quot;target&quot;: &quot;string&quot;,
+    &quot;timeout_seconds&quot;: 0,
+    &quot;version&quot;: &quot;string&quot;
+  }
+}</code></pre>
+</section>
+<section class="operation" id="op-completeTask">
+<h3><code>completeTask</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/complete</code></p>
+<p class="meta">Requires: worker role</p>
+<p>Provide exactly one of output or error. Stale, expired or cancelled leases conflict. Retryable errors are retried only within the registered max_attempts policy.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.complete_task()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-completetask"><code>CompleteTask</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accepted"><code>Accepted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;accepted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-drainWorker">
+<h3><code>drainWorker</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/drain</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.drain_worker()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-workerid"><code>WorkerId</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-draining"><code>Draining</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;draining&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-enrollWorker">
+<h3><code>enrollWorker</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/enroll</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.enroll_worker()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-enrollworker"><code>EnrollWorker</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>201</code></td><td><a href="../schemas/index.html#schema-worker"><code>Worker</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>201</code></h4>
+<pre><code class="language-json">{
+  &quot;capacity&quot;: 0,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;lease_seconds&quot;: 0,
+  &quot;version&quot;: &quot;string&quot;,
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-reportProgress">
+<h3><code>reportProgress</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/progress</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.report_progress()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-progresstask"><code>ProgressTask</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {},
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-accepted"><code>Accepted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;accepted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-renewLease">
+<h3><code>renewLease</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/renew</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.renew_lease()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-lease"><code>Lease</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-leaserenewal"><code>LeaseRenewal</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;cancel_requested&quot;: false,
+  &quot;lease_expires_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-resumeTask">
+<h3><code>resumeTask</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/resume</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.resume_task()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-lease"><code>Lease</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-resumed"><code>Resumed</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;resumed&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-suspendTask">
+<h3><code>suspendTask</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/worker/suspend</code></p>
+<p class="meta">Requires: worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.suspend_task()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-lease"><code>Lease</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;worker_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-suspended"><code>Suspended</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;suspended&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-listWorkers">
+<h3><code>listWorkers</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/workers</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.worker_api.WorkerApi.list_workers()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>label</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>limit</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-workerlist"><code>WorkerList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;capacity&quot;: 0,
+      &quot;draining&quot;: false,
+      &quot;enrolled_at&quot;: 0,
+      &quot;expired_leases&quot;: 0,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;last_seen_age_ms&quot;: 0,
+      &quot;last_seen_at&quot;: 0,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;state&quot;: &quot;string&quot;,
+      &quot;tasks_in_flight&quot;: 0,
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;truncated&quot;: false
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

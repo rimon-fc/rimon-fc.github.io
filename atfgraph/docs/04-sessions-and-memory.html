@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sessions and memory — ATFGraph vNext reference</title>
+<meta name="description" content="Sessions and memory: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Sessions and memory</h1>
+<p>By the end of this page you will be able to attach traversers to a server-created session, read and write memory in the four scopes with compare-and-set revisions and TTLs, store and search vectors, and react to memory changes from a worker. It requires only the SDK and a running graph server; the <code>sessions</code> and <code>memory_lab</code> examples run with no provider configured, and the vector snippets use hand-written embeddings.</p>
+<h2 id="sessions-are-created-by-the-server">Sessions are created by the server</h2>
+<p>A session is one conversation across many traversers. The server creates it (<code>POST /api/v2/sessions</code>); the SDK exposes that as <code>await client.create_session()</code>, which returns the id. Attach traversers to it with <code>session_id=</code> on <code>submit</code> or <code>traverse</code>, or with <code>atfg traverse --new-session</code> / <code>--session ID</code> from the CLI. Adapted from <code>examples/python/sessions/call.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+import os
+
+from atfgraph import Client
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        session = await client.create_session()
+        for text in (&quot;pack passports&quot;, &quot;book airport transfer&quot;, &quot;check visa rules&quot;):
+            result = await client.traverse(&quot;notebook.note&quot;, {&quot;text&quot;: text}, session_id=session, timeout=60)
+            print(result)
+        stored = await client.memory_read(&quot;session&quot;, &quot;notes&quot;, session_id=session)
+        print(&quot;memory revision&quot;, stored.revision, &quot;notes&quot;, stored.value)
+        print(await client.traverse(&quot;notebook.forget&quot;, {}, session_id=session, timeout=60))
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p>Inside a handler the session is <code>current_context().session_id</code>; children submitted with <code>app.traverse</code> inherit it. The server serializes root turns per session, so two concurrent notes to one session never race, while their children still run concurrently (<code>tests/python_test_worker.py::test_root_session_turns_are_serialized_children_bypass</code>).</p>
+<p><code>Client.create_session()</code> takes no arguments. The server also accepts a caller-chosen id in the request body and returns the existing session for a repeated id (<code>tests/test_integration.py::test_named_protocol_session_is_reused_without_losing_memory</code>); <code>examples/python/memory_lab/call.py</code> reaches that with <code>client.transport.request(&quot;POST&quot;, &quot;/api/v2/sessions&quot;, json_body={&quot;id&quot;: name})</code> because the typed method does not expose it.</p>
+<p>Two helpers cover a root that starts without a session. <code>await app.bind_session(session_id)</code> binds the running root traverser to a session before it submits any children; <code>with session_scope(session_id):</code> directs default memory and child submissions at a session for the duration of the block. <code>examples/python/co_consult/main.py</code> uses both in <code>_ensure_session</code> and <code>chat</code>.</p>
+<h2 id="the-four-scopes">The four scopes</h2>
+<p><code>app.memory</code> (<code>python/atfgraph/memory.py</code>) hands out <code>MemoryScope</code> objects. The server derives the namespace from authentication and the actor from the principal.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Scope</th><th scope="col">Factory</th><th scope="col">Identified by</th><th scope="col">Notes</th></tr></thead><tbody><tr><td>session</td><td><code>app.memory.session(session_id=None)</code></td><td><code>session_id</code></td><td>Without an argument it uses the running traverser&#x27;s session; outside a session-bound traverser it raises <code>NoExecutionContext</code>.</td></tr><tr><td>actor</td><td><code>app.memory.actor()</code></td><td>the caller&#x27;s principal</td><td><code>actor_id</code> is a hint only; naming someone else&#x27;s actor is refused with <code>AuthError</code>.</td></tr><tr><td>workflow</td><td><code>app.memory.workflow(root_id=None)</code></td><td><code>root_id</code></td><td>Defaults to the running traverser&#x27;s root; the root must exist and be owned by the caller, else <code>AuthError</code>.</td></tr><tr><td>global</td><td><code>app.memory.global_scope()</code></td><td>nothing</td><td>Shared by the namespace. <code>global_()</code> is a retained spelling.</td></tr></tbody></table></div>
+<p><code>app.memory.default()</code> picks a scope for you: session when the running traverser has one, otherwise workflow inside a handler, otherwise global. The convenience methods <code>app.memory.get/set/update/delete(..., scope=&quot;session&quot;)</code> route through <code>default()</code> unless you name a scope.</p>
+<p>The handler from <code>examples/python/sessions/agent.py</code> touches all four:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from atfgraph import Agent, current_context
+
+app = Agent(node_id=&quot;notebook&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal()
+async def note(text: str) -&gt; dict:
+    &quot;&quot;&quot;Append ``text`` to this session&#x27;s notes; return everything remembered so far.&quot;&quot;&quot;
+    ctx = current_context()
+    if not ctx.session_id:
+        raise ValueError(&quot;submit this traversal with a session_id&quot;)
+    session = app.memory.session()
+    notes = await session.update(&quot;notes&quot;, lambda current: (current or []) + [text])
+    turns = await app.memory.actor().update(&quot;turns&quot;, lambda c: (c or 0) + 1)
+    total = await app.memory.global_scope().update(&quot;all_notes&quot;, lambda c: (c or 0) + 1)
+    await app.memory.workflow().set(&quot;last_note&quot;, text)
+    return {&quot;session_id&quot;: ctx.session_id, &quot;notes&quot;: notes, &quot;actor_turns&quot;: turns, &quot;global_notes&quot;: total}
+
+
+@app.traversal()
+async def forget() -&gt; dict:
+    deleted = await app.memory.session().delete(&quot;notes&quot;)
+    return {&quot;deleted&quot;: deleted}</code></pre>
+<p><code>tests/python_test_examples.py</code> submits three notes to one session and one to another and asserts the sessions do not mix, that the stored <code>notes</code> value is at revision 3, and that a submission without a session fails with the <code>session_id</code> message.</p>
+<h2 id="read-write-delete-with-revisions">Read, write, delete with revisions</h2>
+<p>Every write returns a revision; every read returns a <code>MemoryValue</code> with <code>value</code>, <code>revision</code> and <code>found</code> (revision 0 when not found).</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Call</th><th scope="col">Returns</th><th scope="col">Behaviour</th></tr></thead><tbody><tr><td><code>await scope.read(key)</code></td><td><code>MemoryValue</code></td><td>Raw read.</td></tr><tr><td><code>await scope.get(key, default=None)</code></td><td>value</td><td><code>default</code> when not found.</td></tr><tr><td><code>await scope.exists(key)</code></td><td><code>bool</code></td><td></td></tr><tr><td><code>await scope.set(key, value, expected_revision=None, ttl_seconds=None)</code></td><td>new revision</td><td><code>data=</code> is a retained keyword for the value.</td></tr><tr><td><code>await scope.delete(key, expected_revision=None)</code></td><td><code>bool</code></td><td><code>False</code> when nothing was there.</td></tr><tr><td><code>await scope.update(key, updater, default=None, attempts=8)</code></td><td>new value</td><td>Read, apply <code>updater</code> (sync or async), compare-and-set; retries on conflict.</td></tr></tbody></table></div>
+<p>Compare-and-set: pass the revision you read as <code>expected_revision</code>; <code>0</code> means &quot;only if absent&quot;. A stale revision makes the server answer 409 and the SDK raise <code>ConflictError</code> with code <code>revision_conflict</code>. <code>tests/test_integration.py::test_memory_survives_daemon_restart_and_checks_revision</code> writes with <code>expected_revision=0</code>, gets revision 1, sees the second <code>expected_revision=0</code> write rejected, restarts the daemon and reads the value back at revision 1. <code>update</code> is the read-modify-write loop most handlers want; it raises <code>ConflictError</code> only after <code>attempts</code> conflicts in a row.</p>
+<p>TTL: <code>ttl_seconds</code> makes the key expire. An expired key reads as not found and disappears from listings, and its expiry produces no change-feed event (<code>tests/test_retrieval_contract.py::test_change_feed_cursor_retention_and_ttl_expiry_semantics</code>).</p>
+<p>Listing: <code>await scope.keys(prefix=None, cursor=None, limit=None, kind=&quot;value&quot;)</code> returns one ascending page (<code>KeyPage.keys</code>, <code>next_cursor</code>); <code>await scope.list_keys(prefix=None, kind=&quot;value&quot;)</code> follows the cursors and raises <code>ValueError</code> rather than truncating past <code>max_keys</code> (default 100000). <code>kind=&quot;vector&quot;</code> lists vector keys.</p>
+<h2 id="vector-memory">Vector memory</h2>
+<p>Vectors live beside values under the same scopes, with their own revision per key. There is no <code>app.memory.vector</code> attribute; the methods are on <code>MemoryScope</code> and forwarded by <code>Memory</code>. The SDK ships no embedding provider in this module: you pass the embedding. Adapted from <code>examples/python/memory_lab/agent.py</code>, which uses fixture vectors:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from dataclasses import asdict
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;memory-lab&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal()
+async def vector_lookup(session_id: str) -&gt; dict:
+    scoped = app.memory.session(session_id)
+    await scoped.set_vector(&quot;blue&quot;, [1.0, 0.0, 0.0], {&quot;colour&quot;: &quot;blue&quot;})
+    await scoped.set_vector(&quot;red&quot;, [0.0, 1.0, 0.0], {&quot;colour&quot;: &quot;red&quot;})
+    matches = await scoped.similarity_search([1.0, 0.0, 0.0], top_k=1)
+    return {&quot;matches&quot;: [asdict(match) for match in matches]}</code></pre>
+<p>Rules enforced client-side before any request (<code>python/atfgraph/retrieval.py</code>) and by the server:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Method</th><th scope="col">Constraints</th></tr></thead><tbody><tr><td><code>set_vector(key, embedding, metadata=None, expected_revision=None)</code></td><td>1 to 4096 finite numbers, not the zero vector, numpy arrays accepted via <code>tolist()</code>; <code>metadata</code> must be a dict. Returns the vector revision.</td></tr><tr><td><code>get_vector(key)</code></td><td><code>VectorValue</code> with <code>found</code>, <code>embedding</code>, <code>metadata</code>, <code>dimension</code>, <code>revision</code>.</td></tr><tr><td><code>delete_vector(key, expected_revision=None)</code></td><td><code>bool</code>; the tombstone keeps the revision counting upward.</td></tr><tr><td><code>similarity_search(query, top_k=10, filters=None, min_score=None)</code></td><td>Cosine similarity over this scope&#x27;s vectors of the query&#x27;s dimension; <code>top_k</code> 1 to 100; <code>filters</code> are exact matches on top-level metadata keys; <code>min_score</code> in -1 to 1. Returns <code>List[VectorMatch]</code> (<code>key</code>, <code>score</code>, <code>metadata</code>, <code>revision</code>).</td></tr><tr><td><code>search(query, ...)</code></td><td>Same, as a <code>SearchResult</code> with <code>scanned</code>, <code>dimension</code> and <code>strategy</code>: <code>linear</code> (exact scan; always on SQLite and on PostgreSQL without a vector index for that dimension) or <code>hnsw</code> (a migrated PostgreSQL vector index, approximate).</td></tr></tbody></table></div>
+<p><code>tests/test_memory_retrieval.py::test_real_daemon_vectors_listing_and_changes</code> runs these against <code>atfgraphd</code>: two vectors, a ranked search, a metadata filter, a rejected zero vector (<code>invalid_vector</code>), a stale <code>expected_revision</code> (<code>ConflictError</code>), and vector listing. For text retrieval with server-side chunking and BM25 use <code>app.knowledge</code> instead (<a href="05-knowledge.html">05-knowledge.md</a>); vector memory is for embeddings you already have.</p>
+<h2 id="change-feeds">Change feeds</h2>
+<p>Every set and delete, of values and vectors, appends to a durable per-namespace feed with gap-free sequences. Three ways to consume it:</p>
+<ul><li><code>await scope.changes(after=0, limit=None, prefix=None)</code> returns a <code>ChangePage</code> (<code>items</code>, <code>next_cursor</code>, <code>oldest_sequence</code>).</li><li><code>scope.watch(&quot;user:*&quot;, after=0, interval=0.25, stop=None)</code> is an async iterator that polls the feed and yields <code>MemoryChangeEvent</code>s matching shell-style patterns.</li><li><code>@app.on_change(patterns, scope=None, after=0, interval=0.25)</code> registers a handler that <code>serve</code> drives for the worker&#x27;s lifetime. It is the same as <code>@app.memory.on_change</code>.</li></ul>
+<p>From <code>examples/python/memory_lab/agent.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from collections import deque
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;memory-lab&quot;, version=&quot;1.0.0&quot;)
+events = deque(maxlen=100)
+
+
+@app.memory.on_change(&quot;memory-lab.*&quot;, scope=&quot;global&quot;)
+async def changed(event):
+    events.append({&quot;key&quot;: event.key, &quot;action&quot;: event.action})
+
+
+@app.traversal()
+async def emit_change(value: str) -&gt; dict:
+    await app.memory.global_scope().set(&quot;memory-lab.signal&quot;, value)
+    return {&quot;accepted&quot;: True, &quot;note&quot;: &quot;Poll recent_changes for asynchronous delivery.&quot;}
+
+
+@app.skill()
+def recent_changes() -&gt; dict:
+    return {&quot;events&quot;: list(events)}</code></pre>
+<p>A <code>MemoryChangeEvent</code> has <code>sequence</code>, <code>scope</code>, <code>scope_id</code>, <code>key</code>, <code>kind</code> (<code>value</code> or <code>vector</code>), <code>action</code> (<code>set</code> or <code>delete</code>), <code>revision</code>, <code>principal</code>, <code>created_at</code> and <code>value</code>. <code>value</code> is carried only for value sets whose canonical JSON is at most 65536 bytes; otherwise <code>value_omitted</code> is <code>True</code> and you re-read the key. Vector events never carry a value. Retention is 30 days; <code>oldest_sequence</code> is the floor to compare a saved cursor against. Handlers may be sync or async; a handler exception stops the listener group and propagates out of <code>serve</code> (<code>test_change_feed_watch_and_subscriptions</code>). The handler function is returned unchanged, so <code>changed(event)</code> is still callable in tests.</p>
+<h2 id="memory-from-outside-a-worker">Memory from outside a worker</h2>
+<p><code>Client.memory_read/memory_write/memory_delete(scope, key, ..., session_id=, actor_id=, root_id=)</code> are the typed calls the scopes are built on, for scripts and tests. <code>Memory(lambda: client)</code> and <code>MemoryScope(lambda: client, &quot;session&quot;, session_id=&quot;...&quot;)</code> give the same facade over a bare <code>Client</code>, which is how <code>tests/test_memory_retrieval.py</code> drives the real daemon.</p>
+<h2 id="what-a-worker-credential-may-reach">What a worker credential may reach</h2>
+<p>Inside a handler every memory request carries the task&#x27;s <code>task_id</code> and <code>lease_token</code> (<code>Client._execution_authority</code>), so the server resolves the inherited session and root for the running traversal. Outside a traversal the same call carries no lease and is judged on the caller&#x27;s own credential. <code>python/atfgraph/agent.py</code> states the rule for listeners: &quot;a listener outside a traversal needs standalone memory permission; worker-only credentials cannot monitor unrelated traversals.&quot;</p>
+<p>Not verified: the exact server responses a worker-only credential receives when it reads another traversal&#x27;s session or workflow memory, or runs <code>on_change</code> outside a traversal. The tests cited on this page run in loopback development mode, where the principal holds <code>admin</code>, <code>invoke</code> and <code>worker</code> roles; verifying the boundary needs a graph server with API keys and access policies configured as in <a href="13-identity-credentials-and-access.html">13-identity-credentials-and-access.md</a>.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="05-knowledge.html">05-knowledge.md</a>: text documents with server-side chunking and BM25 search.</li><li><a href="08-approvals-pauses-and-checkpoints.html">08-approvals-pauses-and-checkpoints.md</a>: checkpoints, the other per-traverser state store.</li><li><a href="13-identity-credentials-and-access.html">13-identity-credentials-and-access.md</a>: the credential and policy model behind the memory rules.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

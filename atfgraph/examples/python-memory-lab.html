@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory lab — ATFGraph vNext reference</title>
+<meta name="description" content="Memory lab: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Memory lab</h1>
+<p class="meta">Directory <code>examples/python/memory_lab</code></p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<p class="meta">Agent node label <code>memory-lab</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>emit_change</code></td><td>traversal</td><td><code>(value: str) -&gt; dict</code></td><td><code>examples/python/memory_lab/agent.py</code></td><td></td></tr><tr><td><code>recent_changes</code></td><td>skill</td><td><code>() -&gt; dict</code></td><td><code>examples/python/memory_lab/agent.py</code></td><td></td></tr><tr><td><code>remember</code></td><td>traversal</td><td><code>(session_id: str, value: str) -&gt; dict</code></td><td><code>examples/python/memory_lab/agent.py</code></td><td></td></tr><tr><td><code>vector_lookup</code></td><td>traversal</td><td><code>(session_id: str) -&gt; dict</code></td><td><code>examples/python/memory_lab/agent.py</code></td><td></td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">atfg server start
+atfg traverse memory-lab.emit_change --in &#x27;{&quot;value&quot;:&quot;changed&quot;}&#x27;
+atfg traverse memory-lab.recent_changes --in &#x27;{}&#x27;
+cargo build --bin atfgraphd --bin atfg
+python -m atfgraph.worker --module examples.python.memory_lab.agent:app
+python -m examples.python.memory_lab.call remember &#x27;{&quot;session_id&quot;:&quot;demo-a&quot;,&quot;value&quot;:&quot;first&quot;}&#x27; --session demo-a
+python -m examples.python.memory_lab.call remember &#x27;{&quot;session_id&quot;:&quot;demo-a&quot;,&quot;value&quot;:&quot;second&quot;}&#x27; --session demo-a
+python -m examples.python.memory_lab.call vector_lookup &#x27;{&quot;session_id&quot;:&quot;demo-a&quot;}&#x27; --session demo-a
+python -m pip install -e ./python</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/memory_lab/README.md</code></li><li><code>examples/python/memory_lab/__init__.py</code></li><li><code>examples/python/memory_lab/agent.py</code></li><li><code>examples/python/memory_lab/agentnode.yaml</code></li><li><code>examples/python/memory_lab/call.py</code></li><li><code>examples/python/memory_lab/requirements.txt</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/memory_lab/README.md</code>; the source file is not modified.</p>
+<p>Run these commands from the <code>atfgraph-vnext</code> checkout. Install the authoring SDK and build the CLI once:</p>
+<pre><code class="language-bash">python -m pip install -e ./python
+cargo build --bin atfgraphd --bin atfg
+export PATH=&quot;$PWD/target/debug:$PATH&quot;
+atfg server start</code></pre>
+<p>The server defaults to <code>http://127.0.0.1:18880</code>; its browser UI is <code>/ui/</code>. Set <code>ATFGRAPH_SERVER</code> and <code>ATFGRAPH_API_KEY</code> for a different server.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.memory_lab.agent:app
+# Another terminal:
+python -m examples.python.memory_lab.call remember &#x27;{&quot;session_id&quot;:&quot;demo-a&quot;,&quot;value&quot;:&quot;first&quot;}&#x27; --session demo-a
+python -m examples.python.memory_lab.call remember &#x27;{&quot;session_id&quot;:&quot;demo-a&quot;,&quot;value&quot;:&quot;second&quot;}&#x27; --session demo-a
+python -m examples.python.memory_lab.call vector_lookup &#x27;{&quot;session_id&quot;:&quot;demo-a&quot;}&#x27; --session demo-a
+atfg traverse memory-lab.emit_change --in &#x27;{&quot;value&quot;:&quot;changed&quot;}&#x27;
+atfg traverse memory-lab.recent_changes --in &#x27;{}&#x27;</code></pre>
+<p>The second call returns <code>previous: first</code>; use <code>demo-b</code> in both places for an isolated session. Values and vectors persist on the graph server after the worker restarts. The fixed three-dimensional embeddings rank blue first without any model. The change subscription starts with the worker and polls the durable change feed. Its last 100 diagnostic events are process-local; poll <code>recent_changes</code> after a write. No provider credentials are needed.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploy with Docker Compose — ATFGraph vNext reference</title>
+<meta name="description" content="Deploy with Docker Compose: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Deploy with Docker Compose</h1>
+<p><strong>Problem:</strong> you want the graph server and a worker running in containers on one machine, with the CLI tracking what it applied so you can observe, roll back and tear down.</p>
+<p>The Compose target is managed by the CLI with persisted desired and observed state. It needs Docker with the Compose plugin. Because the daemon listens on <code>0.0.0.0</code> inside a container, an API key is required.</p>
+<h2 id="commands">Commands</h2>
+<pre><code class="language-bash">export ATFGRAPH_API_KEY=&quot;$(openssl rand -hex 24)&quot;     # handed to the containers; only the variable name is recorded
+atfg deploy compose up --name demo --build            # project atfgv-demo on a free loopback port; waits for /health and node registration
+atfg deploy compose status --name demo                # containers, health, registered labels, image drift; exit 3 when not converged
+atfg deploy compose up --name demo --image-tag v2     # re-apply with another image tag (ATFGRAPH_IMAGE_TAG in compose.yaml)
+atfg deploy compose rollback --name demo [--build]    # previous successfully applied tag from the record&#x27;s history
+atfg deploy compose logs --name demo --tail 100 --service co-consult
+atfg deploy compose down --name demo --volumes --forget
+atfg deploy list</code></pre>
+<p><code>up</code> writes <code>&lt;state&gt;/deployments/demo.json</code> (desired <code>running</code>, project, port, image tag, expected labels from the Compose file&#x27;s <code>dev.atfgraph.vnext.label</code> service labels, the key variable&#x27;s name) before starting anything, so an interrupted apply can still be observed and torn down. A failed <code>up</code> records the failure with the container log tail and leaves resources for inspection; removal is always the explicit <code>down</code>, scoped to that project&#x27;s containers, network and (with <code>--volumes</code>) data volume.</p>
+<p>Options on <code>up</code>: <code>--file F</code> for a different Compose file, <code>--port P</code>, <code>--api-key-env VAR</code> to name a different key variable, <code>--expect-label L</code> to wait for a specific label, <code>--wait S</code>.</p>
+<h2 id="validate-the-files-without-a-cluster">Validate the files without a cluster</h2>
+<pre><code class="language-bash">atfg deploy validate --path deploy</code></pre>
+<pre><code class="language-text">passed   compose config
+         $ docker compose -f deploy/docker/compose.yaml config --quiet
+passed   kubernetes kustomize render
+         $ kubectl kustomize deploy/kubernetes/base
+skipped  helm lint
+         $ helm lint deploy/helm/atfgraph-vnext
+         `helm` not on PATH
+ok: 2 passed, 0 failed, 2 skipped</code></pre>
+<p>Missing tools are skipped unless you pass <code>--require-tools</code>.</p>
+<h2 id="container-files-for-your-own-node">Container files for your own node</h2>
+<pre><code class="language-bash">atfg deploy scaffold ./my-node --label my-node --module my_node:app</code></pre>
+<pre><code class="language-text">wrote my-node/.dockerignore
+wrote my-node/Dockerfile
+wrote my-node/compose.yaml
+next: add the atfgraph Python package to requirements.txt, then `docker compose up --build` with ATFGRAPH_SERVER and ATFGRAPH_API_KEY set.</code></pre>
+<p>The Dockerfile installs <code>requirements.txt</code>, copies the project and runs <code>python -m atfgraph.worker</code> with <code>$ATFGRAPH_SERVER</code>. The Compose file requires <code>ATFGRAPH_API_KEY</code> in the environment. Existing files are never overwritten without <code>--force</code>:</p>
+<pre><code class="language-text">atfg: my-node/.dockerignore exists; pass --force to overwrite</code></pre>
+<h2 id="readiness">Readiness</h2>
+<p>Every target uses <code>GET /health</code> for server readiness and <code>node-healthcheck.py</code> (the server lists the label) for worker readiness.</p>
+<h2 id="related">Related</h2>
+<ul><li>Clusters and Databricks: <a href="howto-deploy-kubernetes.html">Deploy to Kubernetes, Helm or Databricks</a>.</li><li>Run a node without containers: <a href="howto-install-a-node.html">Package, install and run an agent node</a>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testing against the graph server — ATFGraph vNext reference</title>
+<meta name="description" content="Testing against the graph server: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Testing against the graph server</h1>
+<p>At the end of this page you can write a pytest that starts a real <code>atfgraphd</code> on a random loopback port with its own temporary SQLite file, serves your agent node in the same process, submits traversers and asserts on results, paths and the event log, and tears everything down. This is how the repository tests itself (<code>tests/test_integration.py</code>), and it is the way to test a node. A short final section covers <code>atfgraph.testing.FakeGraphServer</code>, an in-memory double for pure SDK logic.</p>
+<p>Prerequisites: a built graph server (<code>cargo build --bins</code> at the root of the checkout; the tests find <code>target/debug/atfgraphd</code>, or set <code>ATFGRAPH_TEST_BINARY</code> / <code>ATFGRAPH_TEST_CLI</code>), <code>pytest</code> and <code>pytest-asyncio</code> (<code>python -m pip install &#x27;./python[test]&#x27;</code>), and <code>httpx</code>, which the SDK already depends on.</p>
+<h2 id="the-daemon-fixture">The daemon fixture</h2>
+<p>The fixture spawns the binary, waits for its readiness line on stderr, probes <code>/health</code>, yields the base URL and terminates the process. Adapted from <code>tests/test_integration.py</code>:</p>
+<pre><code class="language-python">import contextlib
+import os
+import re
+import select
+import subprocess
+import time
+from pathlib import Path
+
+import httpx
+
+ROOT = Path(__file__).resolve().parents[1]
+BINARY = ROOT / &quot;target/debug/atfgraphd&quot;
+
+
+@contextlib.contextmanager
+def daemon(tmp_path: Path, *, lease_seconds: int = 2, extra_env=None):
+    assert BINARY.exists(), &quot;Build the actual daemon with cargo build --bins first&quot;
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    env = {k: v for k, v in os.environ.items() if not k.startswith(&quot;ATFGRAPH_&quot;)}
+    env.update(ATFGRAPH_LEASE_SECONDS=str(lease_seconds))
+    env.update(extra_env or {})
+    process = subprocess.Popen(
+        [str(BINARY), &quot;--listen&quot;, &quot;127.0.0.1:0&quot;, &quot;--database-url&quot;, f&quot;sqlite://{tmp_path / &#x27;graph.db&#x27;}?mode=rwc&quot;],
+        cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
+    )
+    try:
+        deadline = time.monotonic() + 15
+        url = None
+        lines = []
+        while time.monotonic() &lt; deadline:
+            if process.poll() is not None:
+                raise AssertionError(&quot;Daemon exited: &quot; + &quot;&quot;.join(lines) + process.stderr.read())
+            ready, _, _ = select.select([process.stderr], [], [], 0.2)
+            if ready:
+                line = process.stderr.readline()
+                lines.append(line)
+                found = re.search(r&quot;API (http://[^/]+)/api/v2&quot;, line)
+                if found:
+                    url = found.group(1)
+                    break
+        assert url, &quot;Daemon did not announce readiness: &quot; + &quot;&quot;.join(lines)
+        with httpx.Client(base_url=url, timeout=5) as client:
+            assert client.get(&quot;/health&quot;).json()[&quot;product&quot;] == &quot;ATFGraph vNext&quot;
+        yield url
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=8)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)
+        process.stderr.close()</code></pre>
+<p>Points that matter:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Choice</th><th scope="col">Why</th></tr></thead><tbody><tr><td><code>--listen 127.0.0.1:0</code></td><td>The kernel picks a free port; the base URL is read from the <code>API &lt;base&gt;/api/v2</code> readiness line on stderr</td></tr><tr><td><code>--database-url sqlite://&lt;tmp&gt;/graph.db?mode=rwc</code></td><td>One fresh database per test; nothing shared, nothing to clean</td></tr><tr><td><code>ATFGRAPH_*</code> stripped from the environment</td><td>Your shell&#x27;s server, key and model settings cannot leak into the test</td></tr><tr><td><code>ATFGRAPH_LEASE_SECONDS</code></td><td>Short leases make lease-expiry and retry tests fast; raise it (<code>lease_seconds=30</code>) for slow handlers</td></tr><tr><td><code>extra_env</code></td><td>Pass <code>{&quot;ATFGRAPH_CONFIG_FILE&quot;: ...}</code> for an authenticated daemon (see below)</td></tr></tbody></table></div>
+<p>The same database directory can be reused across two <code>daemon(...)</code> blocks to test that memory survives a restart, which <code>tests/test_integration.py</code> does.</p>
+<h2 id="serve-the-node-in-process">Serve the node in-process</h2>
+<p>Bind the agent to a <code>Client</code> for the daemon, start <code>app.serve</code> as a task, wait until the worker has enrolled, then submit through the client. Adapted from <code>tests/test_integration.py</code>:</p>
+<pre><code class="language-python">import asyncio
+
+import pytest
+
+from atfgraph import Agent, Client
+from test_integration import daemon
+
+
+@pytest.mark.asyncio
+async def test_python_worker_nested_call_at_capacity_one(tmp_path):
+    with daemon(tmp_path, lease_seconds=5) as url:
+        async with Client(url) as client:
+            agent = Agent(node_id=&quot;nested&quot;, client=client, capacity=1)
+
+            @agent.skill()
+            async def leaf(value: int) -&gt; dict:
+                await agent.memory.set(&quot;last&quot;, value, scope=&quot;session&quot;)
+                return {&quot;value&quot;: value + 1}
+
+            @agent.traversal()
+            async def parent(value: int) -&gt; dict:
+                return await agent.traverse(&quot;nested.leaf&quot;, value=value)
+
+            stop = asyncio.Event()
+            serving = asyncio.create_task(agent.serve(stop=stop))
+            try:
+                for _ in range(100):
+                    if agent.worker and agent.worker.worker_id:
+                        break
+                    if serving.done():
+                        await serving
+                    await asyncio.sleep(0.02)
+                session = await client.create_session()
+                handle = await client.submit(&quot;nested.parent&quot;, {&quot;value&quot;: 4}, session_id=session)
+                assert await handle.result(timeout=12) == {&quot;value&quot;: 5}
+                path = await handle.path()
+                assert len(path.items) == 2
+                assert await agent.memory.session(session).get(&quot;last&quot;) == 4
+            finally:
+                stop.set()
+                try:
+                    await asyncio.wait_for(serving, 5)
+                except asyncio.TimeoutError:
+                    serving.cancel()
+                    await asyncio.gather(serving, return_exceptions=True)</code></pre>
+<p>The <code>pytest.ini</code> at the checkout root sets <code>asyncio_mode = auto</code> and <code>pythonpath = python</code>, so <code>from test_integration import daemon</code> works from any file under <code>tests/</code> and <code>async def</code> tests need no extra marker. The enrolment loop is the only synchronisation you need: <code>agent.worker.worker_id</code> is set once the worker has registered and enrolled, and awaiting <code>serving</code> early surfaces registration errors instead of a timeout. For an example module, <code>app.bind_client(client)</code> binds the already-constructed agent, as <code>tests/test_migrated_retrieval_examples.py</code> does. The <code>serving()</code> helper in <code>tests/test_feature_examples_extended.py</code> wraps this loop in an <code>asynccontextmanager</code>.</p>
+<h2 id="assert-on-traversers-paths-and-the-event-log">Assert on traversers, paths and the event log</h2>
+<p>Everything the graph server recorded is reachable through the client:</p>
+<ul><li><code>await handle.result(timeout=...)</code> returns the output or raises <code>TraversalFailed</code>, <code>TraversalCancelled</code> or <code>TraversalTimedOut</code>.</li><li><code>await client.get(traverser_id)</code> returns a <code>TraverserResult</code> with <code>status</code>, <code>output</code> and <code>error</code>; poll it for a status such as <code>waiting</code> (the <code>until()</code> helper in <code>tests/test_runtime_journeys.py</code>).</li><li><code>await handle.path()</code> returns the <code>Path</code>; <code>len(path.items)</code> counts steps, and <code>step.target</code> / <code>step.raw[&quot;version&quot;]</code> show which version served each step (<code>tests/test_discovery_identity.py</code>).</li><li><code>await client.event_log(traverser_id)</code> returns the persistent events; progress events carry <code>event.type == &quot;progress&quot;</code> and <code>event.data[&quot;data&quot;]</code>. Adapted from <code>tests/test_sdk_extension_integration.py</code>:</li></ul>
+<pre><code class="language-python">from atfgraph import Client
+
+
+async def usage_models(client: Client, traverser_id: str) -&gt; list:
+    journal = await client.event_log(traverser_id)
+    usage_events = [
+        event.data[&quot;data&quot;] for event in journal
+        if event.type == &quot;progress&quot; and &quot;usage&quot; in (event.data.get(&quot;data&quot;) or {})
+    ]
+    return [event[&quot;usage&quot;][&quot;model&quot;] for event in usage_events]</code></pre>
+<p>Worker-side facts are visible too: the credentials, usage and node-log tests in <code>tests/test_sdk_extension_integration.py</code> and <code>tests/test_credentials_sdk.py</code> follow the same shape and then read back through <code>app.observability</code> and <code>app.credentials</code>.</p>
+<h2 id="example-fixture-modes">Example fixture modes</h2>
+<p>Every shipped example that calls a model or an embedding provider has a fixture mode, so the retrieval and research examples run on a real daemon with nothing configured. Adapted from <code>tests/test_migrated_retrieval_examples.py</code>:</p>
+<pre><code class="language-python">import asyncio
+import importlib
+
+import pytest
+
+from atfgraph import Client
+from test_integration import daemon
+
+
+@pytest.mark.asyncio
+async def test_retrieval_basics_journey(tmp_path, monkeypatch):
+    monkeypatch.setenv(&quot;EXAMPLE_MODE&quot;, &quot;fixture&quot;)
+    module = importlib.import_module(&quot;examples.python.retrieval_basics.main&quot;)
+    app = module.app
+    with daemon(tmp_path / &quot;retrieval_basics&quot;, lease_seconds=30) as url:
+        async with Client(url) as client:
+            app.bind_client(client)
+            stop = asyncio.Event()
+            worker = asyncio.create_task(app.serve(stop=stop, capacity=16))
+            try:
+                for _ in range(500):
+                    if app.worker and app.worker.worker_id:
+                        break
+                    await asyncio.sleep(0.01)
+                result = await client.traverse(&quot;retrieval_basics.ingest_document&quot;, {&quot;document_id&quot;: &quot;desk&quot;, &quot;text&quot;: &quot;The travel desk opens at 9am.&quot;}, timeout=60)
+                assert result[&quot;vectors&quot;] &gt; 0
+                answer = await client.traverse(&quot;retrieval_basics.answer_question&quot;, {&quot;question&quot;: &quot;When does the travel desk open?&quot;}, timeout=60)
+                assert &quot;9am&quot; in answer[&quot;answer&quot;] and answer[&quot;citations&quot;]
+            finally:
+                stop.set()
+                await asyncio.wait_for(worker, 15)</code></pre>
+<p><code>examples/python/retrieval_basics/support.py</code> reads <code>EXAMPLE_MODE</code> (default <code>fixture</code>; anything other than <code>fixture</code> or <code>live</code> raises <code>ValueError</code>). In fixture mode embeddings come from a deterministic token hash and a model call raises <code>ValueError(&quot;model calls require EXAMPLE_MODE=live&quot;)</code>; in live mode a missing <code>ATFGRAPH_EMBEDDING_URL</code>/<code>ATFGRAPH_EMBEDDING_MODEL</code> or <code>ATFGRAPH_MODEL_URL</code>/<code>ATFGRAPH_MODEL_NAME</code> raises instead of falling back. The resilience examples use a local fixture model server (<code>examples/python/features/resilience/fixture_model.py</code>) the same way.</p>
+<h2 id="authenticated-daemons">Authenticated daemons</h2>
+<p>To test roles and namespaces, write a configuration file and hand it to the daemon through <code>extra_env</code>. Adapted from <code>tests/test_discovery_identity.py</code>:</p>
+<pre><code class="language-python">from pathlib import Path
+
+
+def config(path: Path) -&gt; dict:
+    path.write_text(
+        &quot;atfgraph:\n&quot;
+        &quot;  auth:\n&quot;
+        &quot;    tokens:\n&quot;
+        &quot;      - {token: discovery-admin, namespace: travel, principal: alice, roles: [admin]}\n&quot;
+        &quot;      - {token: discovery-worker, namespace: travel, principal: runner, roles: [worker, invoke]}\n&quot;
+        &quot;      - {token: discovery-reader, namespace: travel, principal: alice, roles: [invoke]}\n&quot;
+    )
+    return {&quot;ATFGRAPH_CONFIG_FILE&quot;: str(path)}</code></pre>
+<p>Then <code>with daemon(tmp_path / &quot;db&quot;, extra_env=config(tmp_path / &quot;config.yaml&quot;)) as url:</code> and <code>Client(url, api_key=&quot;discovery-admin&quot;)</code>. Roles seen in the tests are <code>admin</code>, <code>worker</code> and <code>invoke</code>; <code>examples/python/features/access_boundaries/config.example.yaml</code> is a complete file of this kind.</p>
+<h2 id="run-the-suite">Run the suite</h2>
+<pre><code class="language-bash">cargo build --bins
+python -m pytest tests/test_integration.py -q
+python -m pytest tests/test_credentials_sdk.py tests/test_sdk_extension_integration.py -q</code></pre>
+<p>Tests that need a provider or an optional extra skip or fail fast on their own (<code>tests/test_mlflow_tracing.py</code> uses <code>pytest.importorskip(&quot;mlflow&quot;)</code>). Nothing in the daemon fixture needs network access beyond loopback.</p>
+<h2 id="evaluation-sets-cases-assertions-scores-across-versions">Evaluation sets: cases, assertions, scores across versions</h2>
+<p>Unit tests prove a handler; an evaluation set proves a <em>capability version</em> against the inputs that matter to you, and keeps the score. A case set belongs to one target (<code>label.capability</code>). Each case is an input plus assertions on the recorded run; an eval run admits one real traverser per case, and the graph server settles each result from the traverser&#x27;s status, output, error, duration and recorded usage. Scores are grouped by the version each run executed against, so a regression shows up as a pass rate that moved between versions.</p>
+<pre><code class="language-python">from atfgraph import Client, Evals
+from atfgraph.evals import contains, exists, max_duration_ms, status
+
+async def main():
+    async with Client(&quot;http://127.0.0.1:18880&quot;) as client:
+        evals = Evals.for_client(client)          # or app.evals inside a node
+        case_set = await evals.create_set(&quot;intake regressions&quot;, &quot;co-consult.consult&quot;, description=&quot;free-text intake must extract the route&quot;)
+        await evals.add_case(
+            case_set.id, &quot;bne-bali-3-nights&quot;,
+            {&quot;request&quot;: &quot;plan trip BNE to Bali 23 Oct 3 days, 2 adults&quot;},
+            assertions=[status(&quot;succeeded&quot;), exists(&quot;brief.destination&quot;), contains(&quot;brief.destination&quot;, &quot;Bali&quot;), max_duration_ms(60_000)],
+            tags=[&quot;intake&quot;],
+        )
+        await evals.add_case(case_set.id, &quot;refuses nonsense&quot;, {&quot;request&quot;: &quot;&quot;}, assertions=[status(&quot;failed&quot;)])
+
+        run = await evals.run(case_set.id, version=&quot;0.3.0&quot;, label=&quot;pre-release&quot;)
+        detail = await evals.wait(run.id, timeout=300)
+        for result in detail.results:
+            print(result.case_name, result.status, [f.message for f in result.failures])
+        for score in await evals.scores(case_set.id):
+            print(score.version, score.pass_rate, score.duration_ms_p50, score.cost_usd)</code></pre>
+<p>Assertion types: <code>equals</code>, <code>not_equals</code>, <code>contains</code>, <code>not_contains</code>, <code>regex</code>, <code>exists</code>, <code>type</code>, <code>schema</code> (JSON Schema), <code>status</code>, <code>error_code</code>, <code>max_duration_ms</code>, <code>max_cost_usd</code>, <code>max_tokens</code>, <code>min_length</code>, <code>max_length</code>. <code>path</code> addresses the traverser output (<code>brief.destination</code>, <code>items[0].name</code>; empty for the whole output). A case with no assertions asserts <code>status: succeeded</code>. A traverser that fails when no assertion expected a failure is recorded as <code>errored</code>, not <code>failed</code>, so a broken worker is distinguishable from a wrong answer.</p>
+<p>The same data is in the console under Evaluate → Evaluations (case sets, runs with per-assertion results, scores by version), and over HTTP under <code>/api/v2/evals/*</code> (<code>../api.md</code>). Runs, results and scores are owned by the principal that created the set; admins see every set in the namespace.</p>
+<h2 id="fakegraphserver-a-fast-contract-double"><code>FakeGraphServer</code>: a fast contract double</h2>
+<p><code>atfgraph.testing.FakeGraphServer</code> is an in-memory double of the <code>/api/v2</code> contract served through <code>httpx.MockTransport</code>. It exists for fast unit tests of SDK logic; the Rust graph server is the product and the fixture above is how you test a node. Adapted from <code>tests/python_test_examples.py</code>:</p>
+<pre><code class="language-python">import pytest
+
+from atfgraph import TraversalFailed
+from atfgraph.testing import FakeGraphServer, serve_agent
+from examples.python.first_node.agent import app as hello
+
+
+async def test_first_node_greets():
+    server = FakeGraphServer()
+    async with serve_agent(hello, server, capacity=1):
+        client = server.client()
+        result = await client.traverse(&quot;hello.greet&quot;, {&quot;name&quot;: &quot;Ada&quot;}, timeout=10)
+        assert result[&quot;greeting&quot;] == &quot;Hello Ada!&quot;
+        with pytest.raises(TraversalFailed, match=&quot;must not be empty&quot;):
+            await client.traverse(&quot;hello.greet&quot;, {&quot;name&quot;: &quot;  &quot;}, timeout=10)
+        await client.aclose()</code></pre>
+<p>What it covers (<code>python/atfgraph/testing.py</code>): agents, sessions, traversers with nested children, operation and idempotency keys, cancel propagation, retries, lease expiry and timeouts, the event log as an SSE snapshot, scoped memory with revisions and TTL, and the worker protocol. <code>server.advance(seconds)</code> moves its clock, <code>server.fail_next(path_suffix, status=500)</code> injects failures, <code>server.records(target=...)</code> inspects attempts. Its limits: it has no knowledge, usage, log, run-metadata, credential, identity or access routes (<code>tests/test_mlflow_tracing.py</code> relies on the missing metadata route to test graceful failure), its authentication is an optional <code>api_keys</code> map from token to a small <code>atfgraph.testing.Identity</code> of namespace, principal and roles (everything is allowed when the map is empty), and it is not the reference implementation. Anything you prove against it still needs a run against <code>atfgraphd</code>.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="01-install-and-first-node.html">./01-install-and-first-node.md</a> for the node these tests exercise.</li><li><a href="14-observability.html">./14-observability.md</a> for the usage and log records a test can read back.</li><li><a href="13-identity-credentials-and-access.html">./13-identity-credentials-and-access.md</a> for the roles an authenticated test daemon can grant.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

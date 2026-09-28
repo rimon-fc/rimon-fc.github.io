@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Version routing example — ATFGraph vNext reference</title>
+<meta name="description" content="Version routing example: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Version routing example</h1>
+<p class="meta">Directory <code>examples/python/features/version_routing</code></p>
+<p>Two registered versions of the node label <code>fares</code>, served by two workers, and the rule that decides which one a call reaches. Fixture fares, no supplier, no keys.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>quote</code></td><td>traversal</td><td><code>(route: str, adults: int = 1) -&gt; dict</code></td><td><code>examples/python/features/version_routing/agent.py</code></td><td>1.0.0: one price per passenger, bags included.</td></tr><tr><td><code>quote</code></td><td>traversal</td><td><code>(route: str, adults: int = 1, bags: int = 0) -&gt; dict</code></td><td><code>examples/python/features/version_routing/agent.py</code></td><td>2.0.0: same name, new input field and a new ``baggage`` line.</td></tr><tr><td><code>seat_map</code></td><td>skill</td><td><code>(route: str) -&gt; dict</code></td><td><code>examples/python/features/version_routing/agent.py</code></td><td>2.0.0 only: a capability that does not exist on 1.0.0.</td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.version_routing.agent:v1
+python -m atfgraph.worker --module examples.python.features.version_routing.agent:v2
+python -m examples.python.features.version_routing.call
+python -m examples.python.features.version_routing.call --route BNE-SYD --bags 1
+python -m examples.python.features.version_routing.call --route MEL-OOL --bags 2</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/version_routing/README.md</code></li><li><code>examples/python/features/version_routing/__init__.py</code></li><li><code>examples/python/features/version_routing/agent.py</code></li><li><code>examples/python/features/version_routing/agentnode.yaml</code></li><li><code>examples/python/features/version_routing/call.py</code></li></ul>
+<p class="meta">Note: More than one agent node is declared in this directory; capabilities are listed without a single label.</p>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/features/version_routing/README.md</code>; the source file is not modified.</p>
+<p>Two registered versions of the node label <code>fares</code>, served by two workers, and the rule that decides which one a call reaches. Fixture fares, no supplier, no keys.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Version</th><th scope="col">Capabilities</th><th scope="col">Difference</th></tr></thead><tbody><tr><td><code>1.0.0</code> (<code>agent:v1</code>)</td><td><code>quote(route, adults)</code></td><td>bags are bundled into the fare</td></tr><tr><td><code>2.0.0</code> (<code>agent:v2</code>)</td><td><code>quote(route, adults, bags)</code>, <code>seat_map(route)</code></td><td>baggage is a separate line; new capability</td></tr></tbody></table></div>
+<pre><code class="language-bash">target/debug/atfgraphd
+python -m atfgraph.worker --module examples.python.features.version_routing.agent:v1
+python -m atfgraph.worker --module examples.python.features.version_routing.agent:v2
+python -m examples.python.features.version_routing.call --route BNE-SYD --bags 1</code></pre>
+<p>Both worker commands are needed: a worker enrols for one <code>(label, version)</code> and claims only work admitted for that exact version, so 1.0.0 work queues until its own worker runs.</p>
+<h2 id="the-rule">The rule</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Call</th><th scope="col">Resolves to</th></tr></thead><tbody><tr><td><code>submit(&quot;fares.quote&quot;, ...)</code></td><td>the highest registered version — 2.0.0 once it exists</td></tr><tr><td><code>submit(&quot;fares.quote&quot;, ..., version=&quot;1.0.0&quot;)</code></td><td>exactly 1.0.0, its schemas and its workers</td></tr><tr><td><code>submit(&quot;fares.seat_map&quot;, ..., version=&quot;1.0.0&quot;)</code></td><td><code>404 capability_not_found</code></td></tr><tr><td><code>submit(&quot;fares.quote&quot;, ..., version=&quot;9.9.9&quot;)</code></td><td><code>404 agent_not_found</code></td></tr></tbody></table></div>
+<p><code>client.capabilities(&quot;fares&quot;)</code> and <code>client.capabilities(&quot;fares&quot;, &quot;1.0.0&quot;)</code> return the two definitions, and every run records the version it resolved to (<code>TraverserResult.version</code>), so a path shows which definition served each step.</p>
+<p>Pinning freezes the whole contract, not just the routing: <code>call.py</code> also sends 2.0.0&#x27;s <code>bags</code> field to the pinned 1.0.0 call, and the run fails at the worker with <code>invalid_input</code> because that handler has no such parameter. Registering a changed definition under a version that already exists is rejected — bump the version instead.</p>
+<p>Installing this directory with <code>atfg install</code> installs 2.0.0 (<code>entrypoint.module: agent:v2</code>); 1.0.0 stays a second worker command against the same source.</p>
+<p>Tests: <code>tests/test_feature_examples_extended.py</code> serves both versions against a real daemon and asserts each routing outcome above.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

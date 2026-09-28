@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Budgets operations — ATFGraph vNext reference</title>
+<meta name="description" content="Budgets operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Budgets operations</h1>
+<p>Operations grouped under this contract tag.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-listBudgets"><code>listBudgets</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/budgets</code></td></tr><tr><td><a href="#op-createBudget"><code>createBudget</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/budgets</code></td></tr><tr><td><a href="#op-budgetStatus"><code>budgetStatus</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/budgets/status</code></td></tr><tr><td><a href="#op-getBudget"><code>getBudget</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/budgets/{id}</code></td></tr><tr><td><a href="#op-updateBudget"><code>updateBudget</code></a></td><td><span class="method">PATCH</span></td><td><code>/api/v2/budgets/{id}</code></td></tr><tr><td><a href="#op-deleteBudget"><code>deleteBudget</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/budgets/{id}</code></td></tr><tr><td><a href="#op-budgetUsage"><code>budgetUsage</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/budgets/{id}/usage</code></td></tr></tbody></table></div>
+<section class="operation" id="op-listBudgets">
+<h3><code>listBudgets</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/budgets</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Budgets visible to the caller (every budget of the namespace for admins, otherwise the caller&#x27;s own), newest first, optionally filtered by scope. Definitions only; read budgetUsage or budgetStatus for consumption.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.budgets_api.BudgetsApi.list_budgets()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>scope</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-budgetlist"><code>BudgetList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;created_at&quot;: 0,
+      &quot;enabled&quot;: false,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;limit&quot;: 0.0,
+      &quot;metric&quot;: &quot;tokens&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;revision&quot;: 0,
+      &quot;scope&quot;: &quot;string&quot;,
+      &quot;subject&quot;: &quot;string&quot;,
+      &quot;updated_at&quot;: 0,
+      &quot;window&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-createBudget">
+<h3><code>createBudget</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/budgets</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Create an admission-time budget: one metric (tokens or cost_usd from usage receipts, or runs = admitted root executions) over a rolling window (1h, 24h, 7d, 30d) for one scope. subject is the principal, agent label or label.capability the scope binds and is absent for namespace. A deny budget (the default) refuses traversers.submit with 429 budget_exceeded once consumption in the window has reached the limit; a warn budget never blocks and only adds warnings to access decisions. Namespace budgets and budgets over another principal require admin; label and target budgets require owning the label. The creating principal owns the budget; admins see every budget in the namespace, other callers only their own. Namespaces hold at most 256 budgets (422 budgets_full).</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.budgets_api.BudgetsApi.create_budget()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-budgetcreate"><code>BudgetCreate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;limit&quot;: 0.0,
+  &quot;metric&quot;: &quot;tokens&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;scope&quot;: &quot;string&quot;,
+  &quot;window&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>201</code></td><td><a href="../schemas/index.html#schema-budget"><code>Budget</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>201</code></h4>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;string&quot;,
+  &quot;created_at&quot;: 0,
+  &quot;enabled&quot;: false,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;limit&quot;: 0.0,
+  &quot;metric&quot;: &quot;tokens&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;scope&quot;: &quot;string&quot;,
+  &quot;subject&quot;: &quot;string&quot;,
+  &quot;updated_at&quot;: 0,
+  &quot;window&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-budgetStatus">
+<h3><code>budgetStatus</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/budgets/status</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Every enabled budget that would apply to an admission by principal (the caller unless an admin names another; 403 otherwise) of target (label.capability; without it only principal and namespace budgets apply), each with its headroom. allowed is false when a deny budget is exceeded, exactly as traversers.submit would refuse. Warn budgets are listed but never affect allowed.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.budgets_api.BudgetsApi.budget_status()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>principal</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>target</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-budgetstatus"><code>BudgetStatus</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;allowed&quot;: false,
+  &quot;items&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;as_of&quot;: 0,
+      &quot;budget_id&quot;: &quot;string&quot;,
+      &quot;consumed&quot;: 0.0,
+      &quot;enabled&quot;: false,
+      &quot;exceeded&quot;: false,
+      &quot;limit&quot;: 0.0,
+      &quot;metric&quot;: &quot;tokens&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;remaining&quot;: 0.0,
+      &quot;scope&quot;: &quot;string&quot;,
+      &quot;subject&quot;: &quot;string&quot;,
+      &quot;window&quot;: &quot;string&quot;,
+      &quot;window_start&quot;: 0
+    }
+  ],
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;target&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-getBudget">
+<h3><code>getBudget</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/budgets/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>One budget definition. A budget owned by another principal is 404 budget_not_found rather than 403, the same answer as an unknown id.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.budgets_api.BudgetsApi.get_budget()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-budget"><code>Budget</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;string&quot;,
+  &quot;created_at&quot;: 0,
+  &quot;enabled&quot;: false,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;limit&quot;: 0.0,
+  &quot;metric&quot;: &quot;tokens&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;scope&quot;: &quot;string&quot;,
+  &quot;subject&quot;: &quot;string&quot;,
+  &quot;updated_at&quot;: 0,
+  &quot;window&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-updateBudget">
+<h3><code>updateBudget</code></h3>
+<p class="meta"><span class="method">PATCH</span> <code>/api/v2/budgets/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Compare-and-set edit of name, window, limit, action and enabled. expected_revision must equal the current revision or the request fails with 409 revision_mismatch; scope, subject and metric are immutable and any other field is rejected (400 invalid_budget). Disabling a budget suspends enforcement without losing it.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.budgets_api.BudgetsApi.update_budget()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-budgetupdate"><code>BudgetUpdate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;expected_revision&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-budget"><code>Budget</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;string&quot;,
+  &quot;created_at&quot;: 0,
+  &quot;enabled&quot;: false,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;limit&quot;: 0.0,
+  &quot;metric&quot;: &quot;tokens&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;scope&quot;: &quot;string&quot;,
+  &quot;subject&quot;: &quot;string&quot;,
+  &quot;updated_at&quot;: 0,
+  &quot;window&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-deleteBudget">
+<h3><code>deleteBudget</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/budgets/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Delete one budget. expected_revision travels as a query parameter and, when given, must match (409 revision_mismatch). Consumption records are the runtime&#x27;s own and are untouched.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.budgets_api.BudgetsApi.delete_budget()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>expected_revision</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-deleted"><code>Deleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-budgetUsage">
+<h3><code>budgetUsage</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/budgets/{id}/usage</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Consumption of one budget in its current rolling window, read from usage receipts (tokens, cost_usd) or admitted root traversers (runs), with the derived remaining headroom and whether the limit is reached. This is the same reading the admission path takes; nothing is cached.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.budgets_api.BudgetsApi.budget_usage()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-budgetusage"><code>BudgetUsage</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;string&quot;,
+  &quot;as_of&quot;: 0,
+  &quot;budget_id&quot;: &quot;string&quot;,
+  &quot;consumed&quot;: 0.0,
+  &quot;enabled&quot;: false,
+  &quot;exceeded&quot;: false,
+  &quot;limit&quot;: 0.0,
+  &quot;metric&quot;: &quot;tokens&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;remaining&quot;: 0.0,
+  &quot;scope&quot;: &quot;string&quot;,
+  &quot;subject&quot;: &quot;string&quot;,
+  &quot;window&quot;: &quot;string&quot;,
+  &quot;window_start&quot;: 0
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

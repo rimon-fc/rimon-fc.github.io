@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observability operations — ATFGraph vNext reference</title>
+<meta name="description" content="Observability operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Observability operations</h1>
+<p>What the server knows about running work: usage accounting, node logs, traverser metadata, the observability webhook, server-wide stats and model-endpoint health.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-queryLogs"><code>queryLogs</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/logs</code></td></tr><tr><td><a href="#op-appendLogs"><code>appendLogs</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/logs</code></td></tr><tr><td><a href="#op-modelHealth"><code>modelHealth</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/model-health</code></td></tr><tr><td><a href="#op-getObservabilitySettings"><code>getObservabilitySettings</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/observability/settings</code></td></tr><tr><td><a href="#op-updateObservabilitySettings"><code>updateObservabilitySettings</code></a></td><td><span class="method">PATCH</span></td><td><code>/api/v2/observability/settings</code></td></tr><tr><td><a href="#op-getObservabilityWebhook"><code>getObservabilityWebhook</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/observability/webhook</code></td></tr><tr><td><a href="#op-putObservabilityWebhook"><code>putObservabilityWebhook</code></a></td><td><span class="method">PUT</span></td><td><code>/api/v2/observability/webhook</code></td></tr><tr><td><a href="#op-deleteObservabilityWebhook"><code>deleteObservabilityWebhook</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/observability/webhook</code></td></tr><tr><td><a href="#op-redriveObservabilityWebhook"><code>redriveObservabilityWebhook</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/observability/webhook/redrive</code></td></tr><tr><td><a href="#op-observabilityWebhookStatus"><code>observabilityWebhookStatus</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/observability/webhook/status</code></td></tr><tr><td><a href="#op-testObservabilityWebhook"><code>testObservabilityWebhook</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/observability/webhook/test</code></td></tr><tr><td><a href="#op-recordRetrievalFeedback"><code>recordRetrievalFeedback</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/retrieval/feedback</code></td></tr><tr><td><a href="#op-retrievalFeedbackTotals"><code>retrievalFeedbackTotals</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/retrieval/feedback/totals</code></td></tr><tr><td><a href="#op-stats"><code>stats</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/stats</code></td></tr><tr><td><a href="#op-getRunMetadata"><code>getRunMetadata</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/traversers/{id}/metadata</code></td></tr><tr><td><a href="#op-updateRunMetadata"><code>updateRunMetadata</code></a></td><td><span class="method">PATCH</span></td><td><code>/api/v2/traversers/{id}/metadata</code></td></tr><tr><td><a href="#op-listUsage"><code>listUsage</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/usage</code></td></tr><tr><td><a href="#op-recordUsage"><code>recordUsage</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/usage</code></td></tr><tr><td><a href="#op-usageTotals"><code>usageTotals</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/usage/totals</code></td></tr></tbody></table></div>
+<section class="operation" id="op-queryLogs">
+<h3><code>queryLogs</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/logs</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Read log lines of one execution (traverser_id) or run (root_id) after a sequence cursor, filtered by levels (comma-separated), stream, since/until (logged_at) and a literal contains substring (at most 256 characters). Same read authority as usage. next_cursor is the last sequence returned, or after when the page is empty.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.query_logs()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>after</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>contains</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>lease_token</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>levels</code></td><td>query</td><td>no</td><td>array of <a href="../schemas/index.html#schema-loglevel"><code>LogLevel</code></a></td></tr><tr><td><code>limit</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>root_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>since</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>step_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>stream</code></td><td>query</td><td>no</td><td><a href="../schemas/index.html#schema-logstream"><code>LogStream</code></a></td></tr><tr><td><code>task_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>traverser_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>until</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-logpage"><code>LogPage</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;attempt&quot;: 0,
+      &quot;created_at&quot;: 0,
+      &quot;fields&quot;: {
+        &quot;key&quot;: {}
+      },
+      &quot;level&quot;: &quot;trace&quot;,
+      &quot;logged_at&quot;: 0,
+      &quot;message&quot;: &quot;string&quot;,
+      &quot;root_id&quot;: &quot;string&quot;,
+      &quot;sequence&quot;: 0,
+      &quot;source&quot;: &quot;string&quot;,
+      &quot;stream&quot;: &quot;stdout&quot;,
+      &quot;traverser_id&quot;: &quot;string&quot;,
+      &quot;truncated&quot;: false
+    }
+  ],
+  &quot;next_cursor&quot;: 0,
+  &quot;root_id&quot;: &quot;string&quot;,
+  &quot;traverser_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-appendLogs">
+<h3><code>appendLogs</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/logs</code></p>
+<p class="meta">Requires: worker role</p>
+<p>Ship bounded node log lines for the executing attempt (worker lease or admin traverser_id, as for usage). Ingestion is opt-in per namespace: 409 node_logs_disabled until an admin enables it through observability settings. Messages are cut to the namespace byte bound on a character boundary and counted in truncated; sequences are gap-free per namespace. Lines older than the retention period are pruned opportunistically.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.append_logs()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-logappendrequest"><code>LogAppendRequest</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;entries&quot;: [
+    {
+      &quot;message&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;entry&quot;: {
+    &quot;message&quot;: &quot;string&quot;
+  },
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;step_id&quot;: &quot;string&quot;,
+  &quot;task_id&quot;: &quot;string&quot;,
+  &quot;traverser_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-logreceipt"><code>LogReceipt</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;accepted&quot;: 0,
+  &quot;attempt&quot;: 0,
+  &quot;first_sequence&quot;: 0,
+  &quot;last_sequence&quot;: 0,
+  &quot;max_message_bytes&quot;: 0,
+  &quot;root_id&quot;: &quot;string&quot;,
+  &quot;traverser_id&quot;: &quot;string&quot;,
+  &quot;truncated&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-modelHealth">
+<h3><code>modelHealth</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/model-health</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.model_health()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-modelhealth"><code>ModelHealth</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;enabled&quot;: false,
+  &quot;endpoint_count&quot;: 0,
+  &quot;endpoints&quot;: [
+    {}
+  ],
+  &quot;evaluated_at&quot;: 0,
+  &quot;next_check_at&quot;: 0,
+  &quot;policy&quot;: {},
+  &quot;running&quot;: false,
+  &quot;status&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-getObservabilitySettings">
+<h3><code>getObservabilitySettings</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/observability/settings</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Effective namespace node-log policy after applying the process configuration and clamps, the namespace&#x27;s explicit overrides, and the process limits.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.get_observability_settings()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-observabilitysettings"><code>ObservabilitySettings</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;limits&quot;: {
+    &quot;node_logs_max_entries_per_call&quot;: 0,
+    &quot;node_logs_max_message_bytes&quot;: 0,
+    &quot;node_logs_retention_days&quot;: 0,
+    &quot;usage_max_entries_per_call&quot;: 0,
+    &quot;webhook_max_attempts&quot;: 0
+  },
+  &quot;namespace&quot;: &quot;string&quot;,
+  &quot;node_logs&quot;: {
+    &quot;configured&quot;: {
+      &quot;enabled&quot;: false,
+      &quot;max_message_bytes&quot;: 0
+    },
+    &quot;enabled&quot;: false,
+    &quot;max_message_bytes&quot;: 0
+  }
+}</code></pre>
+</section>
+<section class="operation" id="op-updateObservabilitySettings">
+<h3><code>updateObservabilitySettings</code></h3>
+<p class="meta"><span class="method">PATCH</span> <code>/api/v2/observability/settings</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Set the namespace node-log opt-in and message byte bound (256 up to the process limit). Unknown node_logs keys are rejected with 400 invalid_settings.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.update_observability_settings()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-observabilitysettingsupdate"><code>ObservabilitySettingsUpdate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;node_logs&quot;: {
+    &quot;enabled&quot;: false,
+    &quot;max_message_bytes&quot;: 0
+  }
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-observabilitysettings"><code>ObservabilitySettings</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;limits&quot;: {
+    &quot;node_logs_max_entries_per_call&quot;: 0,
+    &quot;node_logs_max_message_bytes&quot;: 0,
+    &quot;node_logs_retention_days&quot;: 0,
+    &quot;usage_max_entries_per_call&quot;: 0,
+    &quot;webhook_max_attempts&quot;: 0
+  },
+  &quot;namespace&quot;: &quot;string&quot;,
+  &quot;node_logs&quot;: {
+    &quot;configured&quot;: {
+      &quot;enabled&quot;: false,
+      &quot;max_message_bytes&quot;: 0
+    },
+    &quot;enabled&quot;: false,
+    &quot;max_message_bytes&quot;: 0
+  }
+}</code></pre>
+</section>
+<section class="operation" id="op-getObservabilityWebhook">
+<h3><code>getObservabilityWebhook</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/observability/webhook</code></p>
+<p class="meta">Requires: admin role</p>
+<p>The namespace webhook configuration, or {configured:false}. The secret is never returned; secret_present reports whether the named environment variable is set on the daemon.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.get_observability_webhook()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-observabilitywebhook"><code>ObservabilityWebhook</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;configured&quot;: false,
+  &quot;created_at&quot;: 0,
+  &quot;enabled&quot;: false,
+  &quot;event_types&quot;: [
+    &quot;usage.recorded&quot;
+  ],
+  &quot;headers&quot;: {
+    &quot;key&quot;: &quot;string&quot;
+  },
+  &quot;secret_env&quot;: &quot;string&quot;,
+  &quot;secret_present&quot;: false,
+  &quot;updated_at&quot;: 0,
+  &quot;updated_by&quot;: &quot;string&quot;,
+  &quot;url&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-putObservabilityWebhook">
+<h3><code>putObservabilityWebhook</code></h3>
+<p class="meta"><span class="method">PUT</span> <code>/api/v2/observability/webhook</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Create or replace the single namespace webhook. url must be absolute http(s) without credentials or fragment; loopback and private-network targets are refused with 400 webhook_target_forbidden unless the daemon policy allows them. secret_env names the environment variable holding the HMAC-SHA256 secret (a plain secret field is rejected). Deliveries carry x-atfgraph-event, x-atfgraph-delivery, x-atfgraph-attempt, x-atfgraph-timestamp and, when a secret is present, x-atfgraph-signature `sha256=&lt;hex&gt;` over the body.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.put_observability_webhook()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-observabilitywebhookput"><code>ObservabilityWebhookPut</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;url&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-observabilitywebhook"><code>ObservabilityWebhook</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;configured&quot;: false,
+  &quot;created_at&quot;: 0,
+  &quot;enabled&quot;: false,
+  &quot;event_types&quot;: [
+    &quot;usage.recorded&quot;
+  ],
+  &quot;headers&quot;: {
+    &quot;key&quot;: &quot;string&quot;
+  },
+  &quot;secret_env&quot;: &quot;string&quot;,
+  &quot;secret_present&quot;: false,
+  &quot;updated_at&quot;: 0,
+  &quot;updated_by&quot;: &quot;string&quot;,
+  &quot;url&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-deleteObservabilityWebhook">
+<h3><code>deleteObservabilityWebhook</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/observability/webhook</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Remove the namespace webhook. deleted is false when none was configured.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.delete_observability_webhook()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-deleted"><code>Deleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-redriveObservabilityWebhook">
+<h3><code>redriveObservabilityWebhook</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/observability/webhook/redrive</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Requeue up to limit deliveries (default 100) that failed or have been pending for longer than the process abandonment window, for the current webhook configuration; the response counts each source. 409 webhook_not_configured without a webhook.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.redrive_observability_webhook()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-observabilitywebhookredrive"><code>ObservabilityWebhookRedrive</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;limit&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>202</code></td><td><a href="../schemas/index.html#schema-webhookredriven"><code>WebhookRedriven</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>202</code></h4>
+<pre><code class="language-json">{
+  &quot;abandoned_after_ms&quot;: 0,
+  &quot;from_abandoned_pending&quot;: 0,
+  &quot;from_failed&quot;: 0,
+  &quot;redriven&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-observabilityWebhookStatus">
+<h3><code>observabilityWebhookStatus</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/observability/webhook/status</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Delivery ledger counts by status and the 20 most recent deliveries with their last HTTP status and error.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.observability_webhook_status()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-observabilitywebhookstatus"><code>ObservabilityWebhookStatus</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;configured&quot;: false,
+  &quot;delivered&quot;: 0,
+  &quot;enabled&quot;: false,
+  &quot;failed&quot;: 0,
+  &quot;pending&quot;: 0,
+  &quot;recent&quot;: [
+    {
+      &quot;attempts&quot;: 0,
+      &quot;created_at&quot;: 0,
+      &quot;delivered_at&quot;: 0,
+      &quot;event_type&quot;: &quot;usage.recorded&quot;,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;last_error&quot;: &quot;string&quot;,
+      &quot;last_status&quot;: 0,
+      &quot;status&quot;: &quot;string&quot;,
+      &quot;updated_at&quot;: 0
+    }
+  ],
+  &quot;secret_present&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-testObservabilityWebhook">
+<h3><code>testObservabilityWebhook</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/observability/webhook/test</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Queue a webhook.test event and return its delivery id; delivery happens on a background task with bounded retries. 409 webhook_not_configured when no enabled webhook accepts webhook.test.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.test_observability_webhook()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-observabilitywebhooktest"><code>ObservabilityWebhookTest</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;message&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>202</code></td><td><a href="../schemas/index.html#schema-webhooktestqueued"><code>WebhookTestQueued</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>202</code></h4>
+<pre><code class="language-json">{
+  &quot;delivery_id&quot;: &quot;string&quot;,
+  &quot;queued&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-recordRetrievalFeedback">
+<h3><code>recordRetrievalFeedback</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/retrieval/feedback</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.record_retrieval_feedback()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-retrievalfeedback"><code>RetrievalFeedback</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;item_key&quot;: &quot;string&quot;,
+  &quot;scope&quot;: &quot;session&quot;,
+  &quot;verdict&quot;: &quot;useful&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-retrievalfeedbackreceipt"><code>RetrievalFeedbackReceipt</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;capability&quot;: &quot;string&quot;,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;item_key&quot;: &quot;string&quot;,
+  &quot;recorded_at&quot;: 0,
+  &quot;source&quot;: &quot;string&quot;,
+  &quot;verdict&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-retrievalFeedbackTotals">
+<h3><code>retrievalFeedbackTotals</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/retrieval/feedback/totals</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.retrieval_feedback_totals()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-retrievalfeedbackquery"><code>RetrievalFeedbackQuery</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;group_by&quot;: &quot;string&quot;,
+  &quot;since&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-retrievalfeedbackreport"><code>RetrievalFeedbackReport</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;group_by&quot;: &quot;string&quot;,
+  &quot;groups&quot;: [
+    {
+      &quot;irrelevant&quot;: 0,
+      &quot;key&quot;: &quot;string&quot;,
+      &quot;outdated&quot;: 0,
+      &quot;total&quot;: 0,
+      &quot;useful&quot;: 0,
+      &quot;wrong&quot;: 0
+    }
+  ],
+  &quot;scanned&quot;: 0,
+  &quot;since&quot;: 0,
+  &quot;totals&quot;: {
+    &quot;irrelevant&quot;: 0,
+    &quot;key&quot;: &quot;string&quot;,
+    &quot;outdated&quot;: 0,
+    &quot;total&quot;: 0,
+    &quot;useful&quot;: 0,
+    &quot;wrong&quot;: 0
+  }
+}</code></pre>
+</section>
+<section class="operation" id="op-stats">
+<h3><code>stats</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/stats</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.stats()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>since</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>until</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-stats"><code>Stats</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;complete&quot;: false,
+  &quot;namespace&quot;: &quot;string&quot;,
+  &quot;oldest_retained_at&quot;: 0,
+  &quot;traversers&quot;: {},
+  &quot;window&quot;: {},
+  &quot;workers&quot;: {}
+}</code></pre>
+</section>
+<section class="operation" id="op-getRunMetadata">
+<h3><code>getRunMetadata</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/traversers/{id}/metadata</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>The key/value metadata document of a root traverser (display names, MLflow trace ids, links). The path id must be a root (400 invalid_input otherwise). Readable by the owner, an admin, or the leased worker.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.get_run_metadata()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>lease_token</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>step_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>task_id</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-runmetadata"><code>RunMetadata</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;entries&quot;: [
+    {
+      &quot;key&quot;: &quot;string&quot;,
+      &quot;set_by&quot;: &quot;string&quot;,
+      &quot;updated_at&quot;: 0,
+      &quot;value&quot;: {}
+    }
+  ],
+  &quot;metadata&quot;: {
+    &quot;key&quot;: {}
+  },
+  &quot;root_id&quot;: &quot;string&quot;,
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-updateRunMetadata">
+<h3><code>updateRunMetadata</code></h3>
+<p class="meta"><span class="method">PATCH</span> <code>/api/v2/traversers/{id}/metadata</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Merge set and remove unset on a root traverser&#x27;s metadata. Keys are 1-128 characters of [A-Za-z0-9_.:/-], values at most 4096 bytes, at most 64 keys and 65536 bytes per run (400 invalid_metadata). Owners and admins write directly; a worker&#x27;s lease must belong to this run (403 workflow_forbidden). Emits run_metadata.updated.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.update_run_metadata()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-runmetadataupdate"><code>RunMetadataUpdate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;set&quot;: {
+    &quot;key&quot;: {}
+  },
+  &quot;step_id&quot;: &quot;string&quot;,
+  &quot;task_id&quot;: &quot;string&quot;,
+  &quot;unset&quot;: [
+    &quot;string&quot;
+  ]
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-runmetadatachange"><code>RunMetadataChange</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;entries&quot;: [
+    {
+      &quot;key&quot;: &quot;string&quot;,
+      &quot;set_by&quot;: &quot;string&quot;,
+      &quot;updated_at&quot;: 0,
+      &quot;value&quot;: {}
+    }
+  ],
+  &quot;metadata&quot;: {
+    &quot;key&quot;: {}
+  },
+  &quot;removed&quot;: 0,
+  &quot;root_id&quot;: &quot;string&quot;,
+  &quot;set&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;unset&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-listUsage">
+<h3><code>listUsage</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/usage</code></p>
+<p class="meta">Requires: invoke role, worker role</p>
+<p>Usage rows of one execution (traverser_id) or one whole run (root_id must name a root). Readable by the owning principal, an admin, or a worker whose active lease covers the traverser (task_id + lease_token in the query). Ordered by created_at then id; pass next_cursor back as cursor. attempt_status joins the attempt table and is null for unknown attempts.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.list_usage()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>cursor</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>lease_token</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>limit</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>root_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>step_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>task_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>traverser_id</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-usagepage"><code>UsagePage</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;attempt&quot;: 0,
+      &quot;attempt_status&quot;: &quot;string&quot;,
+      &quot;cache_creation_tokens&quot;: 0,
+      &quot;cache_read_tokens&quot;: 0,
+      &quot;call_id&quot;: &quot;string&quot;,
+      &quot;capability&quot;: &quot;string&quot;,
+      &quot;confident&quot;: false,
+      &quot;cost_known&quot;: false,
+      &quot;cost_source&quot;: &quot;string&quot;,
+      &quot;cost_usd&quot;: 0.0,
+      &quot;created_at&quot;: 0,
+      &quot;extra&quot;: {
+        &quot;key&quot;: {}
+      },
+      &quot;fallback&quot;: &quot;string&quot;,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;input_tokens&quot;: 0,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;model&quot;: &quot;string&quot;,
+      &quot;operation&quot;: &quot;string&quot;,
+      &quot;output_tokens&quot;: 0,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;provider&quot;: &quot;string&quot;,
+      &quot;recorded_by&quot;: &quot;string&quot;,
+      &quot;root_id&quot;: &quot;string&quot;,
+      &quot;source&quot;: &quot;string&quot;,
+      &quot;total_tokens&quot;: 0,
+      &quot;traverser_id&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;next_cursor&quot;: &quot;string&quot;,
+  &quot;root_id&quot;: &quot;string&quot;,
+  &quot;traverser_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-recordUsage">
+<h3><code>recordUsage</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/usage</code></p>
+<p class="meta">Requires: worker role</p>
+<p>Record model or media calls of the attempt the caller is executing. Workers pass task_id (or step_id) + lease_token; the root tree is locked and the lease re-read before the write (409 parent_lease_invalid on a stale or cancelled lease, 403 lease_required without one). Admins may backfill with traverser_id. Provide entries (1-100) or a single entry. The same (traverser, attempt, call_id) is deduplicated and reported in items; without call_id the server assigns one and never deduplicates. cost_usd is stored only when supplied so unknown prices stay distinct from zero. Rows of failed attempts are retained. Committed writes fan out usage.recorded to the namespace webhook.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.record_usage()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-usagerecordrequest"><code>UsageRecordRequest</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;entries&quot;: [
+    {
+      &quot;model&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;entry&quot;: {
+    &quot;model&quot;: &quot;string&quot;
+  },
+  &quot;lease_token&quot;: &quot;string&quot;,
+  &quot;step_id&quot;: &quot;string&quot;,
+  &quot;task_id&quot;: &quot;string&quot;,
+  &quot;traverser_id&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-usagereceipt"><code>UsageReceipt</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;attempt&quot;: 0,
+  &quot;deduplicated&quot;: 0,
+  &quot;items&quot;: [
+    {
+      &quot;call_id&quot;: &quot;string&quot;,
+      &quot;deduplicated&quot;: false,
+      &quot;id&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;recorded&quot;: 0,
+  &quot;root_id&quot;: &quot;string&quot;,
+  &quot;totals&quot;: {
+    &quot;cache_creation_tokens&quot;: 0,
+    &quot;cache_read_tokens&quot;: 0,
+    &quot;calls&quot;: 0,
+    &quot;cost_complete&quot;: false,
+    &quot;cost_usd&quot;: 0.0,
+    &quot;fallback_calls&quot;: 0,
+    &quot;input_tokens&quot;: 0,
+    &quot;output_tokens&quot;: 0,
+    &quot;priced_calls&quot;: 0,
+    &quot;total_tokens&quot;: 0,
+    &quot;unconfident_calls&quot;: 0,
+    &quot;unpriced_calls&quot;: 0
+  },
+  &quot;traverser_id&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-usageTotals">
+<h3><code>usageTotals</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/usage/totals</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Aggregate usage over the caller&#x27;s own runs in [since, until] (default: the last 30 days). Admins may pass principal or all_principals; other callers get 403 principal_forbidden. group_by buckets by run, model, provider, day, attempt_status, label, principal, capability or none. capability is the traversal or skill that made the call, so it answers per-decision questions across runs. At most 50000 rows are aggregated; truncated is true when more matched. cost_usd is null unless at least one call was priced.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.observability_api.ObservabilityApi.usage_totals()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>all_principals</code></td><td>query</td><td>no</td><td>boolean</td></tr><tr><td><code>group_by</code></td><td>query</td><td>no</td><td><a href="../schemas/index.html#schema-usagegrouping"><code>UsageGrouping</code></a></td></tr><tr><td><code>principal</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>root_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>since</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>until</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-usagereport"><code>UsageReport</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;group_by&quot;: &quot;run&quot;,
+  &quot;groups&quot;: [
+    {
+      &quot;cache_creation_tokens&quot;: 0,
+      &quot;cache_read_tokens&quot;: 0,
+      &quot;calls&quot;: 0,
+      &quot;cost_complete&quot;: false,
+      &quot;cost_usd&quot;: 0.0,
+      &quot;fallback_calls&quot;: 0,
+      &quot;input_tokens&quot;: 0,
+      &quot;key&quot;: &quot;string&quot;,
+      &quot;output_tokens&quot;: 0,
+      &quot;priced_calls&quot;: 0,
+      &quot;total_tokens&quot;: 0,
+      &quot;unconfident_calls&quot;: 0,
+      &quot;unpriced_calls&quot;: 0
+    }
+  ],
+  &quot;scanned&quot;: 0,
+  &quot;scope&quot;: {
+    &quot;namespace&quot;: &quot;string&quot;,
+    &quot;principal&quot;: &quot;string&quot;,
+    &quot;root_id&quot;: &quot;string&quot;,
+    &quot;since&quot;: 0,
+    &quot;until&quot;: 0
+  },
+  &quot;totals&quot;: {
+    &quot;cache_creation_tokens&quot;: 0,
+    &quot;cache_read_tokens&quot;: 0,
+    &quot;calls&quot;: 0,
+    &quot;cost_complete&quot;: false,
+    &quot;cost_usd&quot;: 0.0,
+    &quot;fallback_calls&quot;: 0,
+    &quot;input_tokens&quot;: 0,
+    &quot;output_tokens&quot;: 0,
+    &quot;priced_calls&quot;: 0,
+    &quot;total_tokens&quot;: 0,
+    &quot;unconfident_calls&quot;: 0,
+    &quot;unpriced_calls&quot;: 0
+  },
+  &quot;truncated&quot;: false
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

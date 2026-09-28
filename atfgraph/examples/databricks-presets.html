@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Databricks presets for Python agent nodes — ATFGraph vNext reference</title>
+<meta name="description" content="Databricks presets for Python agent nodes: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Databricks presets for Python agent nodes</h1>
+<p class="meta">Directory <code>examples/databricks/presets</code></p>
+<p>Two complete Databricks App bundle files for an ATFGraph vNext Python node, differing only in where the node&#x27;s model calls go. Both follow <code>deploy/databricks/bundle/databricks.yml</code>: one App running the shared <code>worker_entrypoint.py</code>, which starts the node as an outbound worker and serves the status page on <code>DATABRICKS_APP_PORT</code>.</p>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/databricks/presets/README.md</code></li><li><code>examples/databricks/presets/databricks-model-serving.yml</code></li><li><code>examples/databricks/presets/openrouter.yml</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/databricks/presets/README.md</code>; the source file is not modified.</p>
+<p>Two complete Databricks App bundle files for an ATFGraph vNext Python node, differing only in where the node&#x27;s model calls go. Both follow <code>deploy/databricks/bundle/databricks.yml</code>: one App running the shared <code>worker_entrypoint.py</code>, which starts the node as an outbound worker and serves the status page on <code>DATABRICKS_APP_PORT</code>.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Preset</th><th scope="col">File</th><th scope="col">Model route</th></tr></thead><tbody><tr><td>Databricks Model Serving</td><td><code>databricks-model-serving.yml</code></td><td><code>ATFGRAPH_MODEL_URL=https://&lt;workspace-host&gt;/serving-endpoints</code>, <code>ATFGRAPH_MODEL_NAME=&lt;serving-endpoint&gt;</code></td></tr><tr><td>OpenRouter</td><td><code>openrouter.yml</code></td><td><code>ATFGRAPH_MODEL_URL=https://openrouter.ai/api/v1</code>, <code>ATFGRAPH_MODEL_NAME=&lt;vendor&gt;/&lt;model&gt;</code></td></tr></tbody></table></div>
+<p>Use one: build the node&#x27;s bundle, copy the preset over its <code>databricks.yml</code>, check it, then validate and deploy with an explicit profile.</p>
+<pre><code class="language-bash">scripts/product/build-databricks-bundle.sh --node-dir path/to/node --package my_node --module my_node.agent:app --label my-node
+cp examples/databricks/presets/databricks-model-serving.yml target/dist/databricks/my-node/databricks.yml
+.venv/bin/python scripts/product/check_databricks_bundle.py target/dist/databricks/my-node
+cd target/dist/databricks/my-node
+databricks bundle validate -t dev --profile &lt;PROFILE&gt; --var server_url=https://&lt;graph-server&gt; --var api_key_scope=atfgraph \
+  --var model_url=https://&lt;workspace-host&gt;/serving-endpoints --var model_name=databricks-claude-sonnet-4 --var model_key_scope=atfgraph</code></pre>
+<h2 id="variables-shared-by-both-presets">Variables shared by both presets</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Variable</th><th scope="col">Env it sets</th><th scope="col">Why</th></tr></thead><tbody><tr><td><code>server_url</code> (no default)</td><td><code>ATFGRAPH_SERVER</code></td><td>the graph server the worker connects to, outbound HTTPS</td></tr><tr><td><code>api_key_scope</code> (no default), <code>api_key_key</code></td><td><code>ATFGRAPH_API_KEY</code> via <code>value_from: api-key</code></td><td>the graph server API key, bound from a secret; never a literal</td></tr><tr><td><code>worker_module</code>, <code>node_label</code></td><td><code>WORKER_MODULE</code>, <code>ATFGRAPH_NODE_LABEL</code></td><td>which <code>module:agent</code> to run and the label the status page waits for</td></tr><tr><td><code>worker_capacity</code></td><td><code>ATFGRAPH_WORKER_CAPACITY</code></td><td>concurrent handler permits</td></tr></tbody></table></div>
+<p><code>DATABRICKS_HOST</code>, <code>DATABRICKS_CLIENT_ID</code>, <code>DATABRICKS_CLIENT_SECRET</code> and <code>DATABRICKS_APP_PORT</code> are injected by Databricks Apps; do not set them.</p>
+<h3 id="port">Port</h3>
+<p>Databricks Apps route traffic to exactly one port, given to the process in <code>DATABRICKS_APP_PORT</code>. <code>worker_entrypoint.py</code> binds it for the JSON status page (<code>GET /health</code>: graph-server reachability, registration, worker phase). Agent traffic never goes through it; callers use the graph server API.</p>
+<h2 id="preset-1-databricks-model-serving">Preset 1: Databricks Model Serving</h2>
+<p>The SDK&#x27;s OpenAI-compatible provider posts to <code>&lt;ATFGRAPH_MODEL_URL&gt;/chat/completions</code> with <code>model=&lt;ATFGRAPH_MODEL_NAME&gt;</code>, which is Model Serving&#x27;s OpenAI-compatible route for Foundation Model APIs and custom endpoints (<code>databricks-claude-sonnet-4</code>, <code>databricks-meta-llama-3-3-70b-instruct</code>, ...). <code>ATFGRAPH_MODEL_URL</code> is the <strong>workspace</strong> URL plus <code>/serving-endpoints</code>, not the App URL.</p>
+<p>The credential is <code>ATFGRAPH_MODEL_API_KEY</code>, bound from the secret <code>model_key_scope</code>/<code>model_key_key</code>: a personal access token or a service-principal OAuth token whose principal has <code>CAN_QUERY</code> on the endpoint.</p>
+<h2 id="preset-2-openrouter">Preset 2: OpenRouter</h2>
+<p><code>ATFGRAPH_MODEL_URL=https://openrouter.ai/api/v1</code> and <code>ATFGRAPH_MODEL_NAME=&lt;vendor&gt;/&lt;model&gt;</code> (default <code>google/gemini-2.5-flash</code>). The OpenRouter key is bound from the secret <code>openrouter_key_scope</code> / <code>openrouter_key_key</code> as <code>ATFGRAPH_MODEL_API_KEY</code>; it is never a literal in the file. Outbound access from the App to <code>openrouter.ai</code> must be allowed by the workspace&#x27;s egress policy. The SDK adds OpenRouter&#x27;s attribution headers itself when it recognises the host.</p>
+<h2 id="local-dry-run">Local dry run</h2>
+<p>Both presets are valid without Databricks: export the same <code>ATFGRAPH_MODEL_*</code> values (and a key) in your shell and run the node with <code>python -m atfgraph.worker --module &lt;module:agent&gt;</code> against a local graph server. <code>agentnode.yaml</code> manifests declare the same variables for <code>atfg install</code>.</p>
+<h2 id="differences-from-the-original-presets-and-gaps">Differences from the original presets, and gaps</h2>
+<ul><li>The original presets configured litellm (<code>AI_MODEL=databricks/&lt;endpoint&gt;</code>, <code>openrouter/&lt;model&gt;</code>, <code>DATABRICKS_API_BASE</code>). vNext&#x27;s provider is the SDK&#x27;s
+own OpenAI-compatible client, so the three <code>ATFGRAPH_MODEL_*</code> variables
+replace them; <code>ATFGRAPH_MODEL_PROVIDER=anthropic</code> selects the Anthropic
+Messages client instead.</li><li><strong>No service-principal token minting.</strong> The original node, with <code>ATFGRAPH_AUTH=databricks</code>, minted OAuth tokens from the App&#x27;s injected
+client id and secret for graph-server calls, and litellm did the same for
+Model Serving through <code>databricks-sdk</code>. vNext has neither: the graph-server
+key and the model credential are both secret bindings. Recorded as a gap.</li><li><strong>No inbound principal allowlist</strong> (<code>ATFGRAPH_DATABRICKS_ALLOWED_PRINCIPALS</code>): a vNext node has no inbound agent endpoint. The App&#x27;s status page carries no
+credentials and is the only listener.</li><li>The files are <code>databricks.yml</code> bundle files (App resource, variables, secret resources), not bare <code>app.yaml</code> manifests, so <code>databricks bundle validate</code>
+checks them and no URL or key is ever a literal.</li><li><code>databricks bundle validate/deploy/run</code> were <strong>not</strong> run for these presets; they were checked offline with <code>scripts/product/check_databricks_bundle.py</code>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

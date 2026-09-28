@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hosting a node — ATFGraph vNext reference</title>
+<meta name="description" content="Hosting a node: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Hosting a node</h1>
+<p>By the end of this page you can run an agent node as a long-running worker with a clean shutdown, as one bounded invocation per event through <code>serverless_host</code>, and open a realtime provider session from inside a handler; you also know where the container and Compose guides pick up. It requires a running graph server; the realtime section additionally needs a provider key on the worker host.</p>
+<h2 id="long-running-worker">Long-running worker</h2>
+<p><code>app.run()</code> is the foreground entry: it installs <code>SIGINT</code>/<code>SIGTERM</code> handlers that set a stop event, then awaits <code>app.serve()</code>. <code>app.serve()</code> registers the definition (unless <code>register=False</code>), syncs emitter bindings, enrols an outbound worker, and claims until <code>stop</code> is set; on the way out it drains the worker and stops the node-log flusher. Adapted from <code>examples/python/container_node/agent.py</code>:</p>
+<pre><code class="language-python">import asyncio
+import logging
+import os
+import signal
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;container-node&quot;, version=&quot;1.0.0&quot;)
+log = logging.getLogger(&quot;container-node&quot;)
+if os.getenv(&quot;ATFGRAPH_DEMO_SHIP_LOGS&quot;) == &quot;1&quot;:
+    app.enable_node_logs(log)
+
+
+@app.traversal()
+async def hello(name: str = &quot;ATFGraph&quot;) -&gt; dict:
+    log.info(&quot;Greeting a traveller&quot;)
+    return {&quot;greeting&quot;: f&quot;Hello, {name}!&quot;, &quot;node_id&quot;: app.node_id}
+
+
+async def main() -&gt; None:
+    stop = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop.set)
+    try:
+        await app.serve(stop=stop)
+    finally:
+        await app.client.aclose()
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p>Writing <code>main()</code> yourself, instead of <code>app.run()</code>, lets you run other tasks next to the worker on the same loop, as the example does with a heartbeat printer. This snippet needs no provider.</p>
+<h3 id="startup-behaviour">Startup behaviour</h3>
+<p><code>serve(startup_timeout=30.0)</code> retries registration and enrolment while the graph server is unavailable: <code>TransportError</code> and HTTP <code>429</code>, <code>502</code>, <code>503</code>, <code>504</code> are retried with backoff up to 2 seconds until the deadline, after which <code>TimeoutError(&quot;graph server startup timed out&quot;)</code> is raised. Authorization, validation and immutable-definition conflicts raise immediately; the conflict message tells you to bump <code>Agent(version=...)</code>. <code>startup_timeout=0</code> makes a single attempt. Setting <code>stop</code> during startup cancels the outstanding request and <code>serve</code> returns without serving.</p>
+<h3 id="worker-options">Worker options</h3>
+<p>The same options are available on <code>app.serve()</code> / <code>app.run()</code> and on the module CLI:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">CLI flag</th><th scope="col">Method argument</th><th scope="col">Effect</th></tr></thead><tbody><tr><td><code>--module module:attr</code></td><td></td><td>the <code>Agent</code> to load (<code>app</code>, then <code>agent</code>, when no attribute is given)</td></tr><tr><td><code>--server URL</code></td><td><code>Agent(graph_server=...)</code></td><td>default <code>$ATFGRAPH_SERVER</code> or <code>http://127.0.0.1:18880</code></td></tr><tr><td><code>--api-key KEY</code></td><td><code>Agent(api_key=...)</code></td><td>default <code>$ATFGRAPH_API_KEY</code></td></tr><tr><td><code>--capacity N</code></td><td><code>capacity=</code></td><td>concurrent handler permits (default <code>Agent(capacity=8)</code>)</td></tr><tr><td><code>--max-waiting N</code></td><td><code>Agent(max_waiting=...)</code></td><td>parents allowed to release their permit while awaiting children (default 4 x capacity)</td></tr><tr><td><code>--once</code></td><td><code>once=True</code></td><td>exit when the queue is empty and nothing is running</td></tr><tr><td><code>--no-register</code></td><td><code>register=False</code></td><td>skip registration (the definition must already exist)</td></tr><tr><td></td><td><code>sync_emitters=</code></td><td>override <code>Agent(sync_emitters=True)</code> for this serve</td></tr></tbody></table></div>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.container_node.agent:app --capacity 4
+python -m atfgraph.worker --module examples.python.container_node.agent:app --once
+atfg dev --module examples.python.container_node.agent:app --expect-label container-node</code></pre>
+<p><code>--once</code> is the queue-drain mode: the worker claims what is queued, finishes it and returns, which is how <code>ServerlessHost</code> runs the same <code>Worker</code> under the hood. <code>atfg dev</code> wraps <code>python -m atfgraph.worker</code> against a local graph server and reports when the label is registered; <code>atfg install</code> / <code>atfg run</code> manage a detached worker from an <code>agentnode.yaml</code> package (see <a href="howto-install-a-node.html">../howto-install-a-node.md</a>).</p>
+<h2 id="serverless-host-one-bounded-invocation-per-event">Serverless host: one bounded invocation per event</h2>
+<p><code>atfgraph.serverless.ServerlessHost(agent, max_duration=30.0)</code> (or <code>serverless_host(app)</code> / <code>serverless_host(&quot;module:app&quot;)</code>) maps a function-per-event runtime onto the outbound lease protocol. Nothing calls handlers directly: <code>invoke</code> submits a real traverser to the graph server and then runs the node&#x27;s <code>Worker</code> with <code>once=True</code>, so the handler runs under a real <code>ExecutionContext</code>, every step is on the path, and memory, checkpoints, approvals and progress behave as in a daemon worker. Adapted from <code>examples/python/on_demand_node/agent.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent
+from atfgraph.serverless import ServerlessHost
+
+app = Agent(node_id=&quot;on-demand-node&quot;, version=&quot;1.0.0&quot;, capacity=2)
+
+
+@app.traversal()
+async def hello(name: str = &quot;ATFGraph&quot;) -&gt; dict:
+    ctx = app.ctx
+    return {&quot;greeting&quot;: f&quot;Hello, {name}!&quot;, &quot;traverser_id&quot;: ctx.traverser_id if ctx else None}
+
+
+@app.traversal()
+async def ping_child(target: str, message: str) -&gt; dict:
+    return {&quot;from&quot;: app.node_id, &quot;child&quot;: await app.traverse(target, name=message)}
+
+
+host = ServerlessHost(app, max_duration=20)
+handler = host.entrypoint()</code></pre>
+<p>The event shape is generic: a dict (or a dict with a JSON-string <code>body</code>) with <code>action</code>, and for <code>invoke</code> a <code>capability</code> (bare or <code>label.capability</code>), an <code>input</code> object, optional <code>session_id</code>, <code>idempotency_key</code>, <code>timeout_seconds</code> and <code>include_path</code>. Responses are <code>{&quot;statusCode&quot;, &quot;body&quot;}</code>.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Action</th><th scope="col">What happens</th><th scope="col">Status</th></tr></thead><tbody><tr><td><code>invoke</code></td><td>submit, serve once, return the terminal state with <code>output</code> or <code>error</code>, worker stats, and <code>path</code> when asked</td><td>200 succeeded, 500 failed, 409 cancelled, 504 timed out</td></tr><tr><td><code>serve</code></td><td>claim and finish whatever is queued for this node until idle or the deadline</td><td>200 with <code>completed</code> and <code>claimed</code> counts</td></tr><tr><td><code>drain</code></td><td>mark the enrolled worker draining on the server and forget it</td><td>200</td></tr><tr><td><code>discover</code></td><td>return <code>app.definition()</code></td><td>200</td></tr><tr><td>a bad event, an unknown capability</td><td><code>handle</code> never raises for these</td><td>400, 404</td></tr><tr><td>graph server unreachable</td><td></td><td>503 <code>graph_server_unavailable</code></td></tr></tbody></table></div>
+<p><code>await host.handle(event)</code> is the async entry; <code>host.handle_sync(event)</code> runs a fresh event loop per call and closes the client&#x27;s connections at the end (the worker enrolment survives across calls); <code>host.entrypoint()</code> returns <code>handler(event, context)</code> and, when <code>context.get_remaining_time_in_millis()</code> exists, caps the budget to that minus <code>safety_margin</code>. Wiring to a specific cloud runtime is the deployer&#x27;s step; the module states this is verified only against the local graph server.</p>
+<p>When the deadline passes mid-handler the host abandons the lease instead of inventing a result: the response is <code>202</code> with the traverser id and a <code>note</code>, the server requeues the traverser while <code>max_attempts</code> allows (the first attempt is recorded with error <code>lease_expired</code>) and a later <code>serve</code> finishes it. <code>tests/test_python_controls.py</code> asserts exactly this against the daemon. Sync handlers in worker threads cannot be interrupted by that deadline; their result is discarded.</p>
+<pre><code class="language-bash">python -m examples.python.features.serverless.invoke quote &#x27;{&quot;legs&quot;:[{&quot;origin&quot;:&quot;BNE&quot;,&quot;destination&quot;:&quot;SYD&quot;}]}&#x27;
+python -m examples.python.features.serverless.invoke --action serve
+python -m examples.python.features.serverless.invoke --action drain</code></pre>
+<p><code>examples/python/features/serverless/agent.py</code> combines the host with <code>RateLimiter</code> and <code>ResultCache</code>; see <a href="11-resilience-and-controls.html">./11-resilience-and-controls.md</a>.</p>
+<h2 id="realtime-sessions">Realtime sessions</h2>
+<p><code>await app.realtime_session(model=..., provider=&quot;openai&quot;, transport=&quot;websocket&quot;, **options)</code> opens a live provider session from the worker process; no server change is involved, and the usage from each turn is recorded on the running traverser through <code>app.record_usage</code>. Three provider and transport pairs exist in <code>python/atfgraph/realtime.py</code>:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col"><code>provider</code> / <code>transport</code></th><th scope="col">Mechanism</th><th scope="col">Needs</th></tr></thead><tbody><tr><td><code>openai</code> / <code>websocket</code></td><td>RFC 6455 client over <code>asyncio</code> streams, no third-party package</td><td><code>OPENAI_API_KEY</code></td></tr><tr><td><code>openai</code> / <code>webrtc</code></td><td>SDP offer to <code>/v1/realtime/calls</code>, events on the <code>oai-events</code> data channel, audio on the media track</td><td><code>OPENAI_API_KEY</code> and the optional <code>aiortc</code> package</td></tr><tr><td><code>openrouter</code> / <code>audio_turns</code></td><td>one chat-completions HTTP request per <code>turn()</code> with <code>input_audio</code> parts</td><td><code>OPENROUTER_API_KEY</code></td></tr></tbody></table></div>
+<p>A browser voice call should never see the provider key. The pattern is a node skill that mints a short-lived client secret with the server-side key, a page that asks for it through the graph server and opens WebRTC to the provider with that secret only, and a second skill that records each transcript turn so the conversation lands in the run path and session memory. <code>examples/python/realtime_browser</code> (<code>realtime-browser.session_token</code>, <code>.turn</code>, <code>.transcript</code> plus <code>static/index.html</code>) is that pattern end to end, with a fixture mode that runs without any credential.</p>
+<p><code>validate_session_transport(provider, transport)</code> raises <code>SessionTransportError</code> for any other pair. Without <code>aiortc</code>, <code>openai</code>/<code>webrtc</code> raises <code>RealtimeError</code> naming the optional package; the SDK does not depend on it. The default model comes from <code>model=</code> or <code>ATFGRAPH_REALTIME_MODEL</code>; without either, <code>ValueError</code>. Adapted from <code>examples/python/features/realtime/agent.py</code>:</p>
+<pre><code class="language-python">from typing import Optional
+
+from atfgraph import Agent, HandlerError
+from atfgraph.realtime import RealtimeError, SessionTransportError, validate_session_transport
+
+app = Agent(node_id=&quot;voice&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal()
+async def say(text: str, transport: str = &quot;websocket&quot;, voice: Optional[str] = None, model: Optional[str] = None) -&gt; dict:
+    try:
+        validate_session_transport(&quot;openai&quot;, transport)
+    except SessionTransportError as exc:
+        raise HandlerError(str(exc), code=&quot;unsupported_transport&quot;) from exc
+    try:
+        session = await app.realtime_session(model=model or &quot;gpt-realtime&quot;, transport=transport, instructions=&quot;Answer in one short sentence.&quot;, modalities=[&quot;text&quot;, &quot;audio&quot;], voice=voice)
+        async with session:
+            turn = await session.ask(text, timeout=60)
+    except RealtimeError as exc:
+        raise HandlerError(str(exc), code=&quot;realtime_error&quot;) from exc
+    return {&quot;text&quot;: turn.text, &quot;transcript&quot;: turn.transcript, &quot;usage&quot;: turn.usage, &quot;cost_usd&quot;: turn.cost_usd, &quot;cost&quot;: app.execution_cost()}</code></pre>
+<p><code>session.ask(text)</code> sends one user message and collects deltas until <code>response.done</code>; <code>append_audio(pcm16)</code> plus <code>commit_audio()</code> then <code>turn()</code> is the audio path; <code>send_function_result(call_id, output)</code> answers a tool call the model made. <code>turn()</code> returns only what the provider sent, and a provider error raises <code>RealtimeError</code>. This snippet needs a provider key on the worker host; without one the traversal fails with <code>realtime_error</code>. The wire behaviour is verified against local fixtures in <code>tests/test_realtime_extended.py</code> (a WebSocket server, an <code>aiortc</code> loopback peer, a scripted HTTP endpoint). Not verified: live behaviour against OpenAI or OpenRouter; the endpoints are configurable through <code>ATFGRAPH_REALTIME_URL</code>, <code>ATFGRAPH_REALTIME_CALLS_URL</code> and <code>ATFGRAPH_OPENROUTER_CHAT_URL</code> if a provider&#x27;s paths differ.</p>
+<h2 id="containers-and-compose">Containers and Compose</h2>
+<p>A worker container is the SDK wheel plus your module, started with <code>python -m atfgraph.worker</code> (or your own <code>main()</code>) and pointed at the graph server through <code>ATFGRAPH_SERVER</code> and <code>ATFGRAPH_API_KEY</code>. <code>examples/python/container_node/Dockerfile</code> is the minimal form:</p>
+<pre><code class="language-bash">docker build -f examples/python/container_node/Dockerfile -t container-node .
+ATFGRAPH_CONTAINER_SERVER=http://host.docker.internal:18880 docker compose -f examples/python/container_node/compose.yaml up</code></pre>
+<p>The Compose file in that directory sets <code>init: true</code> so <code>SIGTERM</code> reaches the worker and it drains before exiting. For a graph server and worker together, <code>atfg deploy scaffold ./my-node --label my-node --module my_node:app</code> writes a <code>Dockerfile</code>, <code>compose.yaml</code> and <code>.dockerignore</code>, and <code>atfg deploy compose up --name demo --build</code> waits for <code>/health</code> and for the label to register; see <a href="howto-deploy-compose.html">../howto-deploy-compose.md</a> and <a href="howto-deploy-kubernetes.html">../howto-deploy-kubernetes.md</a>. Readiness for a worker is &quot;the server lists the label&quot;, which <code>atfg dev --expect-label</code> and the scaffolded health check both use.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="01-install-and-first-node.html">./01-install-and-first-node.md</a> for the three ways to run a first worker.</li><li><a href="11-resilience-and-controls.html">./11-resilience-and-controls.md</a> for budgets, retries and the client-side controls a host composes.</li><li><a href="14-observability.html">./14-observability.md</a> for node logs and usage from a hosted worker.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

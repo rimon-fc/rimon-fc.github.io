@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATFGraph vNext user guide — ATFGraph vNext reference</title>
+<meta name="description" content="ATFGraph vNext user guide: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>ATFGraph vNext user guide</h1>
+<p>Use <code>atfg</code> to start a graph server, install agent nodes, start traversers and inspect their paths. Use the <a href="python.html">Python SDK</a> to write your own nodes or call a server from an application. This page is the reading order through the other guides, plus the reference tables that do not belong to any one task.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Component</th><th scope="col">Purpose</th><th scope="col">Command</th></tr></thead><tbody><tr><td>Graph server</td><td>Routes work and stores paths</td><td><code>atfgraphd</code></td></tr><tr><td>CLI</td><td>Starts servers and interacts with agent nodes</td><td><code>atfg</code></td></tr><tr><td>Python worker</td><td>Runs your node and connects to the server</td><td><code>python -m atfgraph.worker</code></td></tr></tbody></table></div>
+<p>Vocabulary: a <strong>graph server</strong> owns the graph; an <strong>agent node</strong> registers under a <strong>label</strong> with a version and a set of <strong>traversals</strong> (LLM-backed functions) and <strong>skills</strong> (deterministic functions); starting one creates a <strong>traverser</strong>; the record it leaves is a <strong>path</strong> made of <strong>steps</strong>; <code>atfg wait</code> blocks at the <strong>barrier</strong> until the traverser is terminal. Definitions: <a href="concepts.html">Core concepts</a>.</p>
+<h2 id="reading-order">Reading order</h2>
+<ol><li><a href="overview.html">Overview</a>: what this is and is not, and how it is installed today.</li><li><a href="quickstart.html">Quickstart</a>: server, node, traverser, path, in five minutes.</li><li><a href="concepts.html">Core concepts</a>: the ten nouns.</li><li><a href="vs-frameworks.html">Why ATFGraph, and how it compares</a>: what production means for an agent, and where frameworks, platform agent services and workflow runtimes stop.</li><li>Then one page per task:</li></ol>
+<div class="table-wrap"><table><thead><tr><th scope="col">Task</th><th scope="col">Guide</th></tr></thead><tbody><tr><td>Start, configure, secure and stop the server</td><td><a href="howto-run-graph-server.html">Run the graph server</a></td></tr><tr><td>Call a capability and read the result</td><td><a href="howto-start-a-traverser.html">Start a traverser and read its path</a></td></tr><tr><td>Write a node</td><td><a href="python.html">Python SDK</a></td></tr><tr><td>Have a coding assistant write the node from a brief</td><td><a href="build-from-brief.html">Describe what you want to build</a></td></tr><tr><td>Build, review and deploy a node from a brief with approvals on one path</td><td><a href="studio.html">Studio</a></td></tr><tr><td>Run a node detached, from a package</td><td><a href="howto-install-a-node.html">Package, install and run an agent node</a></td></tr><tr><td>Watch workers, traversers and stats from a script</td><td><a href="howto-monitor-over-http.html">Monitor over HTTP</a></td></tr><tr><td>Watch them in the browser</td><td><a href="howto-web-console.html">Use the web console</a></td></tr><tr><td>Run everything in containers on one machine</td><td><a href="howto-deploy-compose.html">Deploy with Docker Compose</a></td></tr><tr><td>Run on a cluster or in Databricks</td><td><a href="howto-deploy-kubernetes.html">Deploy to Kubernetes, Helm or Databricks</a></td></tr><tr><td>Publish capabilities over MCP, A2A or HTTP</td><td><a href="catalog.html">Discovery publication</a></td></tr><tr><td>Trace traversals with MLflow</td><td><a href="mlflow.html">MLflow tracing</a></td></tr><tr><td>Move data from an older server, back up, restore</td><td><a href="migration.html">Historical data migration and backup/restore</a></td></tr></tbody></table></div>
+<ol><li>Look things up: <a href="api-reference.html">API reference</a>, <a href="cli-reference.html">CLI reference</a>, <a href="troubleshooting.html">Troubleshooting</a>.</li></ol>
+<h2 id="which-side-are-you-on">Which side are you on?</h2>
+<p><strong>Consumer, SDK only.</strong> You start traversers on nodes that already run somewhere and read their results. You never keep a process of your own alive. You need a graph server URL and, off loopback, an API key. You use the Python client, <code>atfg traverse</code>, <code>atfg wait</code>, <code>atfg path</code>, or the web console. You do not need Docker, a worker or a configuration file.</p>
+<pre><code class="language-bash">export ATFGRAPH_SERVER=http://127.0.0.1:18880   # or a remote server
+export ATFGRAPH_API_KEY=...                      # required off loopback
+atfg ls
+atfg traverse co-consult.consult --in &#x27;{&quot;request&quot;:&quot;A relaxed family trip to Tokyo&quot;}&#x27; --new-session</code></pre>
+<p><strong>Builder.</strong> You write an agent node and run it as an <strong>outbound worker</strong>. The worker enrols with the graph server, claims tasks for its label and version, renews its lease while it works, streams progress and reports the result. It opens no port. It can be a worker you run (<code>python -m atfgraph.worker</code>, or <code>atfg dev</code>), an installed node (<code>atfg install</code> then <code>atfg run</code>), or a managed host started for you by a deployment target. Either way the graph server is the only inbound endpoint; nothing calls a node directly.</p>
+<h2 id="cli-command-table">CLI command table</h2>
+<p>Global flags (every command): <code>--server/-s</code> (env <code>ATFGRAPH_SERVER</code>, default <code>http://127.0.0.1:18880</code>), <code>--api-key/-k</code> (env <code>ATFGRAPH_API_KEY</code>, sent as <code>Authorization: Bearer</code>), <code>--json</code>, <code>--timeout &lt;s&gt;</code> (HTTP timeout, default 30), <code>--state-dir</code> (env <code>ATFGRAPH_VNEXT_HOME</code>). Every flag of every command is in the generated <a href="cli-reference.html">CLI reference</a>.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody><tr><td><code>server start [--listen] [--config] [--database-url] [--daemon] [--foreground] [--wait]</code></td><td>Start the sibling daemon</td></tr><tr><td><code>server status [--listen]</code></td><td>Pid record, process state, <code>/health</code>, build identity from <code>/api/v2/server</code></td></tr><tr><td><code>server stop [--listen] [--grace]</code></td><td>SIGTERM the recorded pid after checking it is still <code>atfgraphd</code></td></tr><tr><td><code>ls [LABEL]</code></td><td>Elements: one row per traversal or skill with kind, timeout and attempts</td></tr><tr><td><code>ps [--status S]</code></td><td>Traversers with target, status, root, created time and elapsed</td></tr><tr><td>`traverse TARGET [--in JSON \</td><td>--in-file PATH] [--node-version V] [--session ID \</td><td>--new-session] [--idempotency-key K] [--async] [--wait-timeout S]`</td><td><code>POST /api/v2/traversers</code>; without <code>--async</code>, wait at the barrier and print the result</td></tr><tr><td><code>wait ID [--wait-timeout S] [--interval-ms N]</code></td><td>Poll until terminal</td></tr><tr><td><code>show ID</code></td><td>One traverser&#x27;s fields, output and error</td></tr><tr><td><code>cancel ID</code></td><td><code>POST …/cancel</code>; children are cancelled by the server</td></tr><tr><td><code>path ID</code></td><td>Steps and attempts from <code>GET …/path</code></td></tr><tr><td><code>share ID [--out PATH]</code></td><td>Export a recorded path as a self-contained offline file</td></tr><tr><td><code>config validate [PATH] [--strict]</code></td><td>Validate a server configuration file</td></tr><tr><td><code>dev --module M:A [--python P] [--start-server] [--expect-label L] [--ready-timeout S] [--grace S] [-- worker args]</code></td><td>Run <code>python -m atfgraph.worker</code> attached to the terminal; checks the interpreter can import <code>atfgraph</code> first; reports registration; Ctrl-C drains, a second Ctrl-C or the grace period kills</td></tr><tr><td><code>doctor [--python P]</code></td><td>Binaries, state dir, Python SDK, docker/kubectl/helm/kind/databricks presence, graph server identity</td></tr><tr><td>`install SOURCE [--path SUB] [--python P] [--sdk DIR\</td><td>WHEEL] [--force]`</td><td>Install an agent node package (directory, <code>.tar.gz</code> from <code>package</code>, or git URL <code>https://host/repo[//sub][@ref]</code>) into <code>&lt;state&gt;/packages/&lt;name&gt;/</code> with its own venv</td></tr><tr><td><code>run NAME [--wait S] [--capacity N] [--start-server]</code></td><td>Start the installed node as a detached worker, log to <code>&lt;pkg&gt;/worker.log</code>, wait until its label is registered (exit 2 if not in time)</td></tr><tr><td><code>stop NAME [--grace S] [--kill]</code></td><td>SIGTERM the recorded pid only if it is still that worker; it drains first</td></tr><tr><td><code>logs NAME [--tail N] [-f]</code></td><td>Show or follow the worker log</td></tr><tr><td><code>list</code></td><td>Installed packages with process state, pid and the version registered on the server</td></tr><tr><td><code>uninstall NAME</code></td><td>Remove the package directory (refuses while running)</td></tr><tr><td><code>package [DIR] [--out target/dist/packages]</code></td><td>Build <code>&lt;name&gt;-&lt;version&gt;.tar.gz</code> + <code>.package.json</code> (per-file SHA-256, module, git commit) and update <code>SHA256SUMS</code></td></tr><tr><td><code>migrate …</code></td><td>Migrate history, back up, verify or restore a store; see <a href="migration.html">migration</a></td></tr><tr><td><code>skill install …</code></td><td>Install a bundled coding skill into Claude Code or Codex; see <a href="build-from-brief.html">build from a brief</a></td></tr><tr><td><code>docs [--port P] [--no-browser] [--python P]</code></td><td>Serve this documentation site on loopback and open it</td></tr><tr><td>`deploy validate [--path deploy] [--target all\</td><td>compose\</td><td>kubernetes\</td><td>helm] [--require-tools]`</td><td>Run the local validation commands; missing tools are skipped unless required</td></tr><tr><td>`deploy scaffold DIR --label L --module M:A [--target docker\</td><td>kubernetes] [--force]`</td><td>Write worker deployment files for an agent node project</td></tr><tr><td><code>deploy compose up --name N [--file F] [--port P] [--api-key-env VAR] [--image-tag T] [--build] [--wait S] [--expect-label L]</code></td><td>Create or re-apply a managed Compose deployment (project <code>atfgv-&lt;N&gt;</code>), then verify <code>/health</code> and registration</td></tr><tr><td>`deploy compose status\</td><td>logs\</td><td>rollback\</td><td>down --name N`</td><td>Observe versus desired state (exit 3 on drift), container logs, re-apply the previous good image tag, remove containers (<code>--volumes</code>, <code>--forget</code>)</td></tr><tr><td><code>deploy list</code></td><td>Deployment records under <code>&lt;state&gt;/deployments/</code></td></tr></tbody></table></div>
+<p><code>--in</code> must be a JSON <strong>object</strong>: the traversal&#x27;s named inputs, unwrapped. <code>--in-file -</code> reads stdin.</p>
+<h2 id="exit-codes">Exit codes</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Code</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td>0</td><td>Success; for <code>traverse</code>/<code>wait</code>, the traverser <strong>succeeded</strong></td></tr><tr><td>1</td><td>Error: unreachable server, API error envelope (<code>code (status): message [request id]</code>), invalid input or config</td></tr><tr><td>2</td><td>Timed out waiting: still not terminal after <code>--wait-timeout</code> (<code>traverse</code>, <code>wait</code>), or <code>/health</code> did not answer in time (<code>server start</code>), or the daemon did not exit within <code>--grace</code> (<code>server stop</code>), or registration took longer than <code>--wait</code> (<code>run</code>)</td></tr><tr><td>3</td><td>The traverser reached a terminal state other than <code>succeeded</code>: <code>failed</code>, <code>cancelled</code>, <code>timed_out</code>; for <code>deploy compose status</code>, the observed state differs from the desired state</td></tr></tbody></table></div>
+<h2 id="typical-session">Typical session</h2>
+<pre><code class="language-bash">atfg ls
+ID=$(atfg traverse hello.greet --in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27; --async)
+atfg ps --status queued
+atfg wait &quot;$ID&quot; --wait-timeout 120 || echo &quot;exit $?&quot;
+atfg path &quot;$ID&quot;
+atfg --json show &quot;$ID&quot; | jq .output</code></pre>
+<h2 id="troubleshoot-a-running-node">Troubleshoot a running node</h2>
+<pre><code class="language-bash">atfg doctor
+atfg server status
+atfg ls
+atfg ps
+atfg show &lt;traverser-id&gt;
+atfg path &lt;traverser-id&gt;
+atfg logs &lt;node-name&gt; --tail 100</code></pre>
+<p>If a label is missing from <code>atfg ls</code>, check that its worker is running and uses the same server URL and namespace as your client. Check its logs for registration or authentication errors. For a failed call, inspect the traverser and its path to identify the step that failed. The messages you may see are listed verbatim in <a href="troubleshooting.html">Troubleshooting</a>.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

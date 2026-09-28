@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python registration benchmark — ATFGraph vNext reference</title>
+<meta name="description" content="Python registration benchmark: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Python registration benchmark</h1>
+<p class="meta">Directory <code>examples/benchmarks/scale_100k</code></p>
+<p>Measure registration overhead and memory for large Python agent nodes. This is a synthetic local benchmark; its counts do not promise production throughput. Migrated from the parent <code>benchmarks/100k-scale</code> (renamed <code>scale_100k</code> so it is importable).</p>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m examples.benchmarks.scale_100k.analyze
+python -m examples.benchmarks.scale_100k.analyze                    # table + results/benchmark_summary.png
+python -m examples.benchmarks.scale_100k.crewai_bench.benchmark --tools 1000 --json
+python -m examples.benchmarks.scale_100k.langchain_bench.benchmark --tools 1000 --json
+python -m examples.benchmarks.scale_100k.python_bench.benchmark --handlers 5000 --iterations 10 --warmup 2 --json
+python -m examples.benchmarks.scale_100k.python_bench.benchmark --handlers 5000 --json &gt; results/ATFGraph_Python.json
+python -m examples.benchmarks.scale_100k.python_bench.benchmark --handlers 5000 --output examples/benchmarks/scale_100k/results/ATFGraph_Python.json</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/benchmarks/scale_100k/README.md</code></li><li><code>examples/benchmarks/scale_100k/__init__.py</code></li><li><code>examples/benchmarks/scale_100k/analyze.py</code></li><li><code>examples/benchmarks/scale_100k/common.py</code></li><li><code>examples/benchmarks/scale_100k/crewai_bench/__init__.py</code></li><li><code>examples/benchmarks/scale_100k/crewai_bench/benchmark.py</code></li><li><code>examples/benchmarks/scale_100k/langchain_bench/__init__.py</code></li><li><code>examples/benchmarks/scale_100k/langchain_bench/benchmark.py</code></li><li><code>examples/benchmarks/scale_100k/python_bench/__init__.py</code></li><li><code>examples/benchmarks/scale_100k/python_bench/benchmark.py</code></li><li><code>examples/benchmarks/scale_100k/requirements.txt</code></li><li><code>examples/benchmarks/scale_100k/run_benchmarks.sh</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/benchmarks/scale_100k/README.md</code>; the source file is not modified.</p>
+<p>Measure registration overhead and memory for large Python agent nodes. This is a synthetic local benchmark; its counts do not promise production throughput. Migrated from the parent <code>benchmarks/100k-scale</code> (renamed <code>scale_100k</code> so it is importable).</p>
+<p>From the <code>atfgraph-vnext</code> directory with the SDK installed:</p>
+<pre><code class="language-bash">examples/benchmarks/scale_100k/run_benchmarks.sh --handlers 5000 --iterations 10 --warmup 2 --json
+# or
+python -m examples.benchmarks.scale_100k.python_bench.benchmark --handlers 5000 --output examples/benchmarks/scale_100k/results/ATFGraph_Python.json
+python -m examples.benchmarks.scale_100k.analyze</code></pre>
+<p>Start with a smaller handler count when checking setup (<code>--handlers 500 --iterations 2 --warmup 1 --requests 2000</code> takes a few seconds). Compare runs on the same machine, toolchain and configuration, and keep the JSON output with your measurement notes. Historical comparison results from the original are not current SDK claims and were not carried over.</p>
+<h2 id="what-is-measured">What is measured</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Metric</th><th scope="col">How</th></tr></thead><tbody><tr><td><code>agent_init_time_*_ms</code></td><td><code>Agent(node_id, graph_server=...)</code> alone; nothing is registered with a server until it serves</td></tr><tr><td><code>registration_time_*_ms</code>, <code>registration_time_per_handler_ms</code></td><td><code>@agent.traversal(name)</code> for N handlers on an already-constructed Agent; the cost is dominated by deriving each handler&#x27;s JSON input/output schema</td></tr><tr><td><code>agent_memory_mean_mb</code>, <code>memory_per_handler_bytes</code></td><td><code>tracemalloc</code> after a forced GC, Agent and handlers measured separately</td></tr><tr><td><code>cold_start_*_ms</code></td><td>Agent plus one handler</td></tr><tr><td><code>request_latency_*_us</code>, <code>theoretical_single_thread_rps</code></td><td>the raw <code>await handler(...)</code> call, as the original measured</td></tr><tr><td><code>local_call_latency_*_us</code></td><td><code>agent.call_local(...)</code>: JSON input coercion, handler, output encoding, still no server</td></tr></tbody></table></div>
+<p><code>analyze.py</code> prints a comparison table for every suite in <code>results/</code> and, with <code>matplotlib</code> installed, saves <code>results/benchmark_summary.png</code>.</p>
+<h2 id="optional-baselines">Optional baselines</h2>
+<p><code>langchain_bench/</code> and <code>crewai_bench/</code> create the equivalent number of tools in LangChain and CrewAI and emit the same JSON shape. They need <code>langchain-core</code> and <code>crewai</code> respectively (<code>requirements.txt</code>), call no model, and exit with a message when the library is missing.</p>
+<h2 id="differences-from-the-original">Differences from the original</h2>
+<ul><li><code>atfgraph_server=</code>/<code>auto_register=False</code> became <code>graph_server=</code>; a vNext Agent never registers implicitly.</li><li><code>@agent.reasoner(f&quot;handler-{j}&quot;)</code> became <code>@agent.traversal(f&quot;handler_{j}&quot;)</code>.</li><li>A second latency metric (<code>agent.call_local</code>) shows the SDK&#x27;s binding cost on top of the raw call.</li><li>The Go and TypeScript SDK benchmarks, the Mastra baseline and the stored historical <code>results/*.json</code> were not migrated: those SDKs are retired and the
+stored numbers measured the previous runtime.</li></ul>
+<p>Tests: <code>tests/test_migrated_ops_examples.py</code> runs the benchmark with small counts and the analyzer on its output.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

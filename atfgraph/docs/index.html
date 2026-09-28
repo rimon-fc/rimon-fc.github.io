@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guides — ATFGraph vNext reference</title>
+<meta name="description" content="Guides: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Guides</h1>
+<p>Read top to bottom the first time: what this is, a working result, the vocabulary, then one page per task. The reference and troubleshooting pages are for looking things up.</p>
+<h2 id="section-overview">Overview</h2>
+<p>What this is, in two sentences, and what it is not.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="overview.html">ATFGraph vNext overview</a></td><td>What ATFGraph vNext is, what it is not, and how it is installed today</td></tr></tbody></table></div>
+<h2 id="section-install">Install</h2>
+<p>One command into a prefix you own. No compiler, no sudo, no service.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="install.html">Install ATFGraph vNext</a></td><td>Developer guide</td></tr></tbody></table></div>
+<h2 id="section-quickstart">Quickstart</h2>
+<p>A working result in five minutes. Every command has been run.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="quickstart.html">Quickstart</a></td><td>Start a graph server, run a node and read a path in five minutes</td></tr></tbody></table></div>
+<h2 id="section-core-concepts">Core concepts</h2>
+<p>The nouns you must understand, one short section each.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="concepts.html">Core concepts</a></td><td>The ten nouns: graph server, agent node, traversal, skill, decision, traverser, path, step, harness, emitter</td></tr><tr><td><a href="vs-frameworks.html">Why ATFGraph, and how it compares</a></td><td>What production means for an agent, and how ATFGraph compares with frameworks, platform agent services and workflow runtimes</td></tr></tbody></table></div>
+<h2 id="section-how-to-guides">How-to guides</h2>
+<p>One problem per page.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="howto-run-graph-server.html">Run the graph server</a></td><td>Start, configure, secure and stop the graph server</td></tr><tr><td><a href="howto-start-a-traverser.html">Start a traverser and read its path</a></td><td>Start a traverser from the CLI, HTTP or Python and read its result and path</td></tr><tr><td><a href="build-from-brief.html">Describe what you want to build</a></td><td>Build an agent node from a brief using coding assistant skills</td></tr><tr><td><a href="studio.html">Studio: build an agent node from a brief</a></td><td>Studio: a brief becomes an agent node through a remote harness, with plan, review and deploy approvals on one path</td></tr><tr><td><a href="howto-install-a-node.html">Package, install and run an agent node</a></td><td>Package an agent node, install it into its own venv and run it detached</td></tr><tr><td><a href="howto-monitor-over-http.html">Monitor workers, traversers and the server over HTTP</a></td><td>Watch workers, traversers, server stats and model health over HTTP</td></tr><tr><td><a href="howto-web-console.html">Use the web console</a></td><td>Test agents, publish them, and see where runs fail and what they cost, in the browser</td></tr><tr><td><a href="path-share.html">Sharing a path offline</a></td><td>Export a recorded path as one self-contained offline file with `atfg share`</td></tr><tr><td><a href="howto-deploy-compose.html">Deploy with Docker Compose</a></td><td>Run a managed Docker Compose deployment from the CLI</td></tr><tr><td><a href="howto-deploy-kubernetes.html">Deploy to Kubernetes, Helm or Databricks</a></td><td>Apply the Kubernetes, Helm and Databricks targets</td></tr><tr><td><a href="howto-deploy-databricks.html">Deploy to Databricks with `atfg databricks`</a></td><td>Developer guide</td></tr><tr><td><a href="catalog.html">Discovery publication</a></td><td>Publish and discover capabilities over HTTP, MCP and A2A</td></tr><tr><td><a href="mlflow.html">MLflow tracing (optional, developer opt-in)</a></td><td>Trace traversals, skills and model calls with MLflow</td></tr><tr><td><a href="migration.html">Historical data migration and backup/restore</a></td><td>Move existing data and back up or restore a graph server</td></tr><tr><td><a href="user-guide.html">ATFGraph vNext user guide</a></td><td>Reading order through every guide, plus the reference tables</td></tr></tbody></table></div>
+<h2 id="section-python-sdk">Python SDK</h2>
+<p>Write, run, test and operate agent nodes in Python, one problem per page.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="python.html">Python SDK guide</a></td><td>The Python SDK guide set: where to start and what each page teaches</td></tr><tr><td><a href="01-install-and-first-node.html">Install and run a first node</a></td><td>Install the wheel, write one traversal and one skill, run the worker three ways, read the first path</td></tr><tr><td><a href="02-traversals-skills-and-routers.html">Traversals, skills, typed input and output, routers</a></td><td>What traversals and skills are on the path, Pydantic schemas, sync and async handlers, AgentRouter</td></tr><tr><td><a href="03-calling-other-nodes.html">Calling other nodes and fanning out</a></td><td>Nested traverse, call and submit, fan-out with gather, capacity, progress, cancellation, retries</td></tr><tr><td><a href="04-sessions-and-memory.html">Sessions and memory</a></td><td>Server-created sessions, the four memory scopes, compare-and-set, TTL, vector memory, change feeds</td></tr><tr><td><a href="05-knowledge.html">Document knowledge</a></td><td>Ingest documents, BM25 search with citations, scopes, and the semantic layer over memory vectors</td></tr><tr><td><a href="06-model-calls.html">Model calls</a></td><td>app.ai with typed output, tools, streaming and media; provider configuration; what each call cost</td></tr><tr><td><a href="07-harness.html">Delegating to a coding harness</a></td><td>Delegate to atf-harness, claude-code, codex or opencode with typed output, a cwd and a deadline</td></tr><tr><td><a href="08-approvals-pauses-and-checkpoints.html">Approvals, pauses and checkpoints</a></td><td>Durable human-in-the-loop pauses, deciding out of band, checkpoints that run pre-pause work once</td></tr><tr><td><a href="09-emitters.html">Emitters: schedules and webhooks</a></td><td>Cron and interval schedules, authenticated webhook sources, transforms, duplicate suppression</td></tr><tr><td><a href="10-multi-node.html">Multi-node systems</a></td><td>Cross-node edges, runtime discovery, version pinning, several nodes in one process, the offline mesh</td></tr><tr><td><a href="11-resilience-and-controls.html">Resilience and client-side controls</a></td><td>RetryableError and budgets, cooperative cancellation, RateLimiter, ResultCache, ModelRouter</td></tr><tr><td><a href="12-hosting.html">Hosting a node</a></td><td>The long-running worker, serverless invocation, realtime sessions, containers and Compose</td></tr><tr><td><a href="13-identity-credentials-and-access.html">Identity, credentials and access boundaries</a></td><td>Node identities and signed paths, verifiable credentials, server-side access policies</td></tr><tr><td><a href="14-observability.html">Usage, logs and tracing</a></td><td>Usage accounting, node logs, run metadata, webhooks and MLflow tracing</td></tr><tr><td><a href="15-testing.html">Testing against the graph server</a></td><td>Test a node against a real atfgraphd with the repository&#x27;s fixture; where the in-memory double stops</td></tr><tr><td><a href="16-api-reference.html">Python API reference</a></td><td>Every public export of the atfgraph package, grouped, with its methods and purpose</td></tr></tbody></table></div>
+<h2 id="section-decisions">Decisions</h2>
+<p>Typed judgements you can query, calibrate and put a human in front of.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="decisions.html">Decisions: confidence you can query, and a human when it matters</a></td><td>Developer guide</td></tr></tbody></table></div>
+<h2 id="section-api-and-cli-reference">API and CLI reference</h2>
+<p>Generated from the contract and the binary; the introductions are written by hand.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="api-reference.html">API reference: what each area is for</a></td><td>What each API area is for, before you open the generated operation tables</td></tr><tr><td><a href="cli-reference.html">`atfg` command reference</a></td><td>Find atfg commands, flags and usage</td></tr></tbody></table></div>
+<h2 id="section-troubleshooting">Troubleshooting</h2>
+<p>Real error strings, verbatim, so search finds them.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Page</th><th scope="col">What you will learn</th></tr></thead><tbody><tr><td><a href="troubleshooting.html">Troubleshooting</a></td><td>Error messages verbatim, what each one means and what to do</td></tr></tbody></table></div>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

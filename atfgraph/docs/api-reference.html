@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference: what each area is for — ATFGraph vNext reference</title>
+<meta name="description" content="API reference: what each area is for: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>API reference: what each area is for</h1>
+<p>The operation tables, schemas and examples are generated from <code>contracts/openapi-v2.json</code> every time the site is built, so they are always the contract as it stands. This page is the hand-written part: what each area is for and when you would reach for it. Each heading links to that area&#x27;s generated page.</p>
+<p>Base URL: <code>http://127.0.0.1:18880/api/v2</code>. Every response that is not a success is an error envelope:</p>
+<pre><code class="language-json">{&quot;error&quot;:{&quot;code&quot;:&quot;traverser_not_found&quot;,&quot;message&quot;:&quot;unknown traverser&quot;},&quot;request_id&quot;:&quot;c9ec0e4b-08a4-44d6-aff0-4f46eb76889f&quot;}</code></pre>
+<p>Authentication is a bearer token in <code>Authorization</code>. Roles are <code>admin</code>, <code>invoke</code> and <code>worker</code>; <code>admin</code> implies the others. On loopback with no tokens configured the server runs in development mode and accepts unauthenticated requests. Quote the <code>request_id</code> when you report a problem.</p>
+<h2 id="starting-and-reading-work">Starting and reading work</h2>
+<h3 id="traversers-reference-api-md-traversers"><a href="../api/traversers.html">Traversers</a></h3>
+<p>Start a traverser on <code>label.capability</code>, read one back, list them with status, session, time-window and cursor paging, read the recorded path, cancel and restart. This is the area a client application uses most. See <a href="howto-start-a-traverser.html">Start a traverser</a>.</p>
+<h3 id="events-reference-api-md-events"><a href="../api/events.html">Events</a></h3>
+<p>The durable event log of one traverser, as a snapshot or a stream. Use it to follow progress while a traverser is live; the console&#x27;s live rail is built on it.</p>
+<h3 id="sessions-reference-api-md-sessions"><a href="../api/sessions.html">Sessions</a></h3>
+<p>Create a session that many traversers share, so a conversation keeps its memory across calls. <code>atfg traverse --new-session</code> calls this for you.</p>
+<h3 id="approvals-reference-api-md-approvals"><a href="../api/approvals.html">Approvals</a></h3>
+<p>A traversal asks for a human decision and the traverser waits in status <code>waiting</code>. List the open requests and decide them.</p>
+<h2 id="what-is-registered">What is registered</h2>
+<h3 id="discovery-reference-api-md-discovery"><a href="../api/discovery.html">Discovery</a></h3>
+<p>The server description (<code>GET /api/v2/server</code>), the registered agent nodes and their capabilities, and the agent-resource-discovery publications and search under <code>/api/v2/ard</code>. <code>atfg ls</code> reads this area.</p>
+<h3 id="admin-reference-api-md-admin"><a href="../api/admin.html">Admin</a></h3>
+<p>Register an agent node definition. The worker does this at startup; registration is immutable per version.</p>
+<h3 id="worker-reference-api-md-worker"><a href="../api/worker.html">Worker</a></h3>
+<p>The outbound worker protocol: enrol, claim, renew a lease, report progress, complete, drain. You call this only if you write a worker in another language. <code>GET /api/v2/workers</code> is the fleet view for operators; see <a href="howto-monitor-over-http.html">Monitor over HTTP</a>.</p>
+<h2 id="state-a-traverser-can-use">State a traverser can use</h2>
+<h3 id="memory-reference-api-md-memory"><a href="../api/memory.html">Memory</a></h3>
+<p>Key-value state in the <code>global</code>, <code>session</code>, <code>actor</code> and <code>workflow</code> scopes, with compare-and-set revisions and a change feed.</p>
+<h3 id="knowledge-reference-api-md-knowledge"><a href="../api/knowledge.html">Knowledge</a></h3>
+<p>Documents per scope with server-side chunking and lexical BM25 search that returns citations. Not an embedding store; use memory vectors for similarity.</p>
+<h3 id="checkpoints-reference-api-md-checkpoints"><a href="../api/checkpoints.html">Checkpoints</a></h3>
+<p>Named, revisioned state a live traverser writes and reads back, so a long traversal can resume after a retry.</p>
+<h3 id="artifacts-reference-api-md-artifacts"><a href="../api/artifacts.html">Artifacts</a></h3>
+<p>Files a traverser produced or consumed: upload, list, download, delete.</p>
+<h2 id="operating-the-server">Operating the server</h2>
+<h3 id="observability-reference-api-md-observability"><a href="../api/observability.html">Observability</a></h3>
+<p>Usage accounting, node logs, traverser metadata, the observability webhook, <code>GET /api/v2/stats</code> for server-wide counts and <code>GET /api/v2/model-health</code> for model endpoint circuit state.</p>
+<h3 id="runtimesettings-reference-api-md-runtimesettings"><a href="../api/runtimesettings.html">RuntimeSettings</a></h3>
+<p>Per-namespace stored documents: list, read, write, delete a key, then apply it to the running process. Saving and applying are separate calls.</p>
+<h3 id="emitters-reference-api-md-emitters"><a href="../api/emitters.html">Emitters</a></h3>
+<p>Scheduled and event-driven sources that start traversers without a caller, plus their delivery log and replay.</p>
+<h3 id="retention-reference-api-md-retention"><a href="../api/retention.html">Retention</a></h3>
+<p>Preview and then apply pruning of old traversers, events and logs. Preview first; the console does.</p>
+<h3 id="health-reference-api-md-health"><a href="../api/health.html">Health</a></h3>
+<p><code>GET /health</code>, unauthenticated liveness. Every deployment target probes it.</p>
+<h2 id="identity-and-access">Identity and access</h2>
+<h3 id="access-reference-api-md-access"><a href="../api/access.html">Access</a></h3>
+<p>Access policies and connector grants: who may start which traversals, and which external connectors a namespace may reach.</p>
+<h3 id="credentials-reference-api-md-credentials"><a href="../api/credentials.html">Credentials</a></h3>
+<p>Node identity enrolment, credential issuance and verification, revocation and the tag ledger. Keys never leave the graph server.</p>
+<h3 id="identity-reference-api-md-identity"><a href="../api/identity.html">Identity</a></h3>
+<p>Node identities, signed paths and offline proof verification.</p>
+<h2 id="also-generated">Also generated</h2>
+<ul><li><a href="../schemas/index.html">Schemas</a>: every component schema with field tables and examples.</li><li><a href="../features.html">Feature areas</a>: what each area covers and which roles it needs.</li><li><a href="../examples/index.html">Examples</a>: the example directories and the capabilities they declare.</li><li><a href="cli-reference.html">CLI reference</a>: every <code>atfg</code> command and flag, generated from the binary.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

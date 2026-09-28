@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor workers, traversers and the server over HTTP — ATFGraph vNext reference</title>
+<meta name="description" content="Monitor workers, traversers and the server over HTTP: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Monitor workers, traversers and the server over HTTP</h1>
+<p><strong>Problem:</strong> you want to know what is running, what finished, which workers are connected and whether model endpoints are healthy, from a script or a dashboard rather than the console.</p>
+<p>All requests below were made against a running server. Off loopback, add the ATFGraph key as <code>X-API-Key: &lt;key&gt;</code> (<code>Authorization</code> is reserved for a platform proxy&#x27;s credential); these operations need the <code>invoke</code> role or higher unless noted.</p>
+<h2 id="the-worker-fleet-get-api-v2-workers">The worker fleet: <code>GET /api/v2/workers</code></h2>
+<p>Every enrolled worker with its label, version, capacity, tasks in flight and how long ago it was last seen.</p>
+<pre><code class="language-json">{&quot;items&quot;:[{&quot;capacity&quot;:8,&quot;draining&quot;:false,&quot;enrolled_at&quot;:1789446252988,&quot;expired_leases&quot;:0,&quot;id&quot;:&quot;e062fdb3-ee04-45fb-9807-4a24a7dcc926&quot;,&quot;label&quot;:&quot;hello&quot;,&quot;last_seen_age_ms&quot;:286,&quot;last_seen_at&quot;:1789446274244,&quot;principal&quot;:&quot;local&quot;,&quot;state&quot;:&quot;claiming&quot;,&quot;tasks_in_flight&quot;:5,&quot;version&quot;:&quot;1.0.0&quot;}],&quot;truncated&quot;:false}</code></pre>
+<p>A label that is missing here has no worker: <code>atfg ls</code> will not list it and traversers targeting it stay <code>queued</code>. <code>truncated: true</code> means the list was cut at the server&#x27;s limit.</p>
+<h2 id="server-wide-counts-get-api-v2-stats">Server-wide counts: <code>GET /api/v2/stats</code></h2>
+<pre><code class="language-json">{&quot;complete&quot;:true,&quot;namespace&quot;:&quot;local&quot;,&quot;oldest_retained_at&quot;:1789446272196,&quot;traversers&quot;:{&quot;by_status&quot;:{&quot;failed&quot;:1,&quot;succeeded&quot;:4},&quot;in_flight&quot;:0,&quot;total&quot;:5},&quot;window&quot;:{&quot;since&quot;:null,&quot;until&quot;:null},&quot;workers&quot;:{&quot;draining&quot;:0,&quot;total&quot;:1}}</code></pre>
+<p><code>traversers.by_status</code> counts every status present; <code>in_flight</code> is the sum of the non-terminal ones. <code>oldest_retained_at</code> tells you how far back the counts reach after retention has pruned older records; <code>complete: false</code> means the window asked for extends past what is retained.</p>
+<h2 id="model-endpoint-health-get-api-v2-model-health">Model endpoint health: <code>GET /api/v2/model-health</code></h2>
+<pre><code class="language-json">{&quot;enabled&quot;:false,&quot;endpoint_count&quot;:0,&quot;endpoints&quot;:[],&quot;evaluated_at&quot;:1789446030968,&quot;next_check_at&quot;:null,&quot;policy&quot;:{&quot;check_interval_ms&quot;:15000,&quot;check_timeout_ms&quot;:5000,&quot;failure_threshold&quot;:3,&quot;half_open_max_probes&quot;:2,&quot;latency_window&quot;:32,&quot;max_concurrent_probes&quot;:4,&quot;max_response_bytes&quot;:16384,&quot;recovery_timeout_ms&quot;:30000,&quot;transition_window&quot;:16},&quot;running&quot;:false,&quot;status&quot;:&quot;disabled&quot;}</code></pre>
+<p>On a server with no model endpoints configured, <code>status</code> is <code>disabled</code> and the policy shows the probe settings that would apply. When endpoints are configured, <code>endpoints</code> lists each with its circuit state and latency window.</p>
+<h2 id="stored-runtime-documents-get-api-v2-runtime-settings">Stored runtime documents: <code>GET /api/v2/runtime/settings</code></h2>
+<pre><code class="language-json">{&quot;items&quot;:[],&quot;limit&quot;:256,&quot;namespace&quot;:&quot;local&quot;,&quot;scope&quot;:&quot;namespace&quot;,&quot;total&quot;:0}</code></pre>
+<p>Runtime settings are per-namespace documents keyed by name: <code>GET</code>/<code>PUT</code>/<code>DELETE /api/v2/runtime/settings/{key}</code> store and remove one, and <code>POST /api/v2/runtime/settings/{key}/apply</code> applies a stored document to the running process. Saving and applying are separate steps, which is what the console&#x27;s Settings page also shows. These are administrator operations.</p>
+<h2 id="listing-traversers-with-paging-get-api-v2-traversers">Listing traversers with paging: <code>GET /api/v2/traversers</code></h2>
+<p>Filters: <code>status</code>, <code>session_id</code>, <code>root_id</code>, <code>principal</code>, <code>roots_only</code> (<code>true</code>/<code>false</code>), <code>limit</code>. Time window: <code>since</code> and <code>until</code>, both milliseconds since the epoch, non-negative integers. Paging: every page returns <code>next_cursor</code>; pass it back as <code>cursor</code> to get the next page, and stop when it is <code>null</code>.</p>
+<pre><code class="language-bash">S=http://127.0.0.1:18880
+curl -s &quot;$S/api/v2/traversers?limit=2&amp;roots_only=true&quot;
+# {&quot;items&quot;:[…two roots…],&quot;next_cursor&quot;:&quot;3&quot;}
+curl -s &quot;$S/api/v2/traversers?limit=2&amp;roots_only=true&amp;cursor=3&quot;
+# {&quot;items&quot;:[…the next two…],&quot;next_cursor&quot;:null}
+curl -s &quot;$S/api/v2/traversers?since=9999999999999&quot;
+# {&quot;items&quot;:[],&quot;next_cursor&quot;:null}</code></pre>
+<p>Malformed paging values are rejected with a <code>400</code> envelope rather than ignored:</p>
+<pre><code class="language-json">{&quot;error&quot;:{&quot;code&quot;:&quot;invalid_input&quot;,&quot;message&quot;:&quot;cursor is malformed&quot;},&quot;request_id&quot;:&quot;…&quot;}
+{&quot;error&quot;:{&quot;code&quot;:&quot;invalid_input&quot;,&quot;message&quot;:&quot;since must be a non-negative integer&quot;},&quot;request_id&quot;:&quot;…&quot;}
+{&quot;error&quot;:{&quot;code&quot;:&quot;invalid_query&quot;,&quot;message&quot;:&quot;roots_only must be true or false&quot;},&quot;request_id&quot;:&quot;…&quot;}</code></pre>
+<p>Treat <code>cursor</code> as opaque: it is whatever the previous page&#x27;s <code>next_cursor</code> was. The operation&#x27;s parameter table in the generated <a href="../api/traversers.html">Traversers reference</a> declares all of these.</p>
+<h2 id="related">Related</h2>
+<ul><li>The same information in the browser: <a href="howto-web-console.html">Use the web console</a>.</li><li>Usage accounting and node logs from Python: <a href="python.html">Python SDK</a>.</li><li>Operation tables: <a href="../api/observability.html">Observability</a>, <a href="../api/worker.html">Worker</a>, <a href="../api/runtimesettings.html">RuntimeSettings</a>, <a href="../api/traversers.html">Traversers</a>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

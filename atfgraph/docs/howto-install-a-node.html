@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Package, install and run an agent node — ATFGraph vNext reference</title>
+<meta name="description" content="Package, install and run an agent node: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Package, install and run an agent node</h1>
+<p><strong>Problem:</strong> you have a node as a directory, archive or git repository and want it running as a detached worker on this machine, restartable, with logs.</p>
+<p><code>atfg dev</code> (see the <a href="quickstart.html">Quickstart</a>) runs a node attached to your terminal. This page is the installed, detached alternative.</p>
+<h2 id="the-manifest-agentnode-yaml">The manifest: <code>agentnode.yaml</code></h2>
+<p>An installable node is a directory (or git repository, or <code>atfg package</code> artifact) with <code>agentnode.yaml</code> at its root. The shape is <code>config_version: v2</code>; vNext reads the same fields and adds one additive key, <code>entrypoint.module</code>. Either of these tells the worker what to load:</p>
+<pre><code class="language-yaml">config_version: v2
+name: hello                       # package name and default label
+version: 1.0.0
+description: Greets travellers
+entrypoint:
+  start: python -m atfgraph.worker --module hello_node.agent:app   # compatible form
+  # module: hello_node.agent:app                                  # or the additive key
+agent_node:
+  node_id: hello                  # label if it differs from name
+dependencies:
+  python: [pydantic&gt;=2]           # pip installed after requirements.txt and `pip install .`
+user_environment:
+  required:
+    - name: HELLO_REGION
+      description: region label used in logs
+  require_one_of:
+    - options: [{name: SOURCE_URL}, {name: SOURCE_FILE}]
+  optional:
+    - name: HELLO_LOG_LEVEL
+      default: INFO</code></pre>
+<p><code>language</code> other than <code>python</code>, a <code>config_version</code> above <code>v2</code>, or an <code>entrypoint.start</code> that is not the worker command are refused with a message. Only one package is installed per command; <code>dependencies.nodes</code> is reported, not resolved. <code>examples/python/first_node/agentnode.yaml</code> is a complete minimal manifest.</p>
+<h2 id="install-run-stop">Install, run, stop</h2>
+<pre><code class="language-bash">atfg install ./hello --python python3.12          # or https://github.com/org/repo//subdir@v1.2.3, or hello-1.0.0.tar.gz
+atfg run hello                                    # detached worker; waits until `hello` is registered
+atfg list                                         # NAME VERSION LABEL PROCESS PID ON SERVER MODULE
+atfg traverse hello.greet --in &#x27;{&quot;name&quot;:&quot;Ada&quot;}&#x27;
+atfg logs hello --tail 50
+atfg stop hello                                   # SIGTERM -&gt; drain -&gt; exit
+atfg uninstall hello</code></pre>
+<p><code>install</code> copies the package (git clones are shallow; <code>.git</code>, virtual environments, caches and <code>.env</code> files are excluded), creates <code>&lt;state&gt;/packages/&lt;name&gt;/venv</code> with <code>--python</code>, installs the <code>atfgraph</code> package from <code>--sdk</code>, <code>ATFGRAPH_SDK</code>, an <code>atfgraph-*.whl</code> next to the binary or the source checkout, then <code>requirements.txt</code>, <code>pip install .</code> when a <code>pyproject.toml</code> or <code>setup.py</code> exists, and <code>dependencies.python</code>. It records source, resolved commit, manifest digest and interpreter in <code>installed.json</code>. <code>--python</code> must be 3.10 or newer; the default <code>python3</code> on macOS is 3.9 and is refused (see <a href="troubleshooting.html">Troubleshooting</a>).</p>
+<p><code>run</code> resolves <code>user_environment</code> from your shell and from <code>&lt;pkg&gt;/.env</code> or the package&#x27;s own <code>.env</code>; a missing required variable or an unsatisfied <code>require_one_of</code> group stops the start and names the variables. SDK platform settings in those <code>.env</code> files reach the worker without a declaration: every <code>ATFGRAPH_*</code> variable (model provider, MLflow tracing), MLflow&#x27;s own <code>MLFLOW_*</code>, and <code>DATABRICKS_HOST</code>, <code>DATABRICKS_TOKEN</code>, <code>DATABRICKS_CONFIG_PROFILE</code>. The worker is spawned detached in its own process group with its log in <code>&lt;pkg&gt;/worker.log</code> and its pid in <code>run.json</code>; <code>run</code> waits until the label is registered and prints the version and element count, exits 1 with the log tail if the worker dies first, and exits 2 (worker left running) if registration takes longer than <code>--wait</code>. <code>stop</code> signals only the recorded pid, only if its command line is still this package&#x27;s worker; a reused pid is reported and left alone. The state directory defaults to <code>~/.atfgraph-vnext</code> (<code>--state-dir</code>, <code>ATFGRAPH_VNEXT_HOME</code>).</p>
+<h2 id="package-an-artifact">Package an artifact</h2>
+<pre><code class="language-bash">atfg package ./hello --out target/dist/packages
+# packaged hello 1.0.0 (4 files) -&gt; target/dist/packages/hello-1.0.0.tar.gz
+# sha256 ...   metadata hello-1.0.0.package.json   checksums SHA256SUMS
+atfg install target/dist/packages/hello-1.0.0.tar.gz</code></pre>
+<p>The archive holds the package files (same exclusions as <code>install</code>); the metadata file lists every file with its SHA-256, the worker module, the manifest digest and the git commit when the directory is a checkout; <code>SHA256SUMS</code> in the output directory is verifiable with <code>shasum -a 256 -c</code>. Digests identify an artifact; byte-identical archives across <code>tar</code> implementations are not claimed.</p>
+<h2 id="related">Related</h2>
+<ul><li>Write the node itself: <a href="python.html">Python SDK</a>.</li><li>Put it in a container: <a href="howto-deploy-compose.html">Deploy with Docker Compose</a>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

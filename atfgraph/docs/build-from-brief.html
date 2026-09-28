@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Describe what you want to build — ATFGraph vNext reference</title>
+<meta name="description" content="Describe what you want to build: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Describe what you want to build</h1>
+<p>ATFGraph vNext supports Python authoring and two distinct skill concepts. Builder skills guide Claude Code or Codex to create an application. Runtime skills are deterministic Python functions exposed by that application; traversals can coordinate those functions and other agent nodes.</p>
+<p>The bundled skills target the vNext runtime only: <code>atfgraph-vnext</code> (build a project from a brief), <code>atfgraph-vnext-use</code> (offload work to registered nodes), <code>atfgraph-vnext-personal</code> (install a node on this machine) and <code>atfgraph-vnext-topology</code> (design the graph without building). The installer adds all four and refuses to overwrite existing directories unless <code>--replace</code> is explicit. It does not replace the installed <code>atfgraph</code> skill used with the current server.</p>
+<h2 id="install-for-claude-code">Install for Claude Code</h2>
+<p>From this repository&#x27;s root (or from an installed client, whose <code>share/atfgraph/resources/skills</code> holds the same files), install into a new name:</p>
+<pre><code class="language-bash">python3 scripts/install-skills.py --harness claude
+export SDK_ROOT=&quot;$PWD&quot;                              # this checkout
+export SERVER_ROOT=&quot;$PWD&quot;                           # the same checkout holds the server, if you run one locally</code></pre>
+<p>Start Claude Code in the intended project directory, then request the <code>atfgraph-vnext</code> skill by name. If that destination already exists, review it before replacing it; the commands above are intended for a first installation.</p>
+<h2 id="install-for-codex">Install for Codex</h2>
+<p>From the same directory:</p>
+<pre><code class="language-bash">python3 scripts/install-skills.py --harness codex
+export SDK_ROOT=&quot;$PWD&quot;
+export SERVER_ROOT=&quot;$PWD&quot;</code></pre>
+<p>Start a new Codex session and invoke <code>$atfgraph-vnext</code>. The skill guides the coding assistant through authoring, testing and deployment.</p>
+<h2 id="give-it-a-brief">Give it a brief</h2>
+<blockquote><p>Build an AI travel consultant that understands a brief, clarifies missing details, and creates a travel plan with flights, accommodation and activities. Keep the traveller&#x27;s brief, saved offers and latest proposal in session memory. Explain the recommendations and answer follow-ups about fares and alternative hotels from saved evidence. Refresh searches only when needed or explicitly requested. Include offline tests, Python client and CLI examples, and prepare Docker Compose deployment.</p></blockquote>
+<p>The coding assistant should produce a real project, run its tests and demonstrate a traverser and its recorded path. Configuring providers for live results is separate from the fixture demonstration. A package is not a hosted service until a deployment starts healthy workers.</p>
+<p>Continue with <a href="python.html">Python authoring</a> to extend the generated node, or <a href="user-guide.html">CLI and deployment usage</a> to install, invoke and host it.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

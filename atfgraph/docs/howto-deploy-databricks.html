@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploy to Databricks with `atfg databricks` — ATFGraph vNext reference</title>
+<meta name="description" content="Deploy to Databricks with `atfg databricks`: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Deploy to Databricks with `atfg databricks`</h1>
+<p><code>atfg databricks</code> deploys ATFGraph vNext to a Databricks workspace from one manifest: the graph server (daemon + Console) as an App on Lakebase, each agent node as its own App, and optionally the documentation site as a static App. The documentation is published on GitHub Pages (the SDK&#x27;s <code>site_url</code>, for organisation members); the docs App is for workspaces that want the same site inside Databricks. It ships with the Python SDK&#x27;s <code>[databricks]</code> extra as the console script <code>atfg-databricks</code>; <code>atfg databricks …</code> dispatches to it. Every command takes the workspace from a Databricks CLI <strong>profile you name</strong> — it is never chosen for you.</p>
+<pre><code class="language-sh">pip install &#x27;atfgraph[databricks]&#x27;          # the client installer&#x27;s venv already has it
+atfg databricks doctor --profile &lt;p&gt;        # tools, profile, Volume, release</code></pre>
+<p>The two credentials never mix: the workspace OAuth token travels as <code>Authorization</code> (the Apps proxy), the ATFGraph key as <code>X-API-Key</code>. Secret values go through 0600 files into secret scopes and are never printed; evidence and state hold names, URLs and digests only.</p>
+<h2 id="the-everyday-case-deploy-the-node-you-just-built">The everyday case: deploy the node you just built</h2>
+<p>You built and smoke-tested a node locally with the <code>atfgraph-vnext</code> skill or by hand, you are logged in to a graph server that runs as a Databricks App (<code>atfg login &lt;url&gt;</code>), and you want it deployed:</p>
+<pre><code class="language-sh">atfg databricks node deploy ./my-node --profile &lt;p&gt; --smoke &lt;capability&gt;</code></pre>
+<p>One command does all of it:</p>
+<ol><li>resolves the graph server and your key like <code>atfg</code> does (flag, environment, login file) and confirms it is ATFGraph vNext behind the workspace proxy; finds the server App from its URL;</li><li>mints a <strong>dedicated token for the node</strong> (<code>POST /api/v2/auth/tokens</code>, roles <code>invoke</code>+<code>worker</code> — since 0.3.3 a worker registers its own labels without <code>admin</code>, under your own principal so sessions and approvals bind correctly); earlier tokens for the same
+node are revoked;</li><li>creates the scope <code>atfgraph-node-&lt;label&gt;</code>, stores the token as <code>api-key</code>, and turns the node&#x27;s <code>.env</code> into App configuration (<code>*_KEY</code>, <code>*_TOKEN</code>, <code>*_SECRET</code>, <code>*PASSWORD*</code> become secrets bound
+with <code>value_from</code>, everything else plain values);</li><li>assembles the App bundle from the packaged template (worker entrypoint, your node as a package, the <code>atfgraph</code> wheel), runs the offline check, <code>databricks bundle validate → deploy → run</code> with
+the explicit profile; the bundle binds the server App with <code>CAN_USE</code>;</li><li>waits for <code>RUNNING</code>, for the node&#x27;s status page to say <code>registered: true</code>, and for the graph server to list the label; with <code>--smoke</code> it runs one traversal and prints its Console URL.</li></ol>
+<p>Re-running after code changes redeploys the same App. <code>--plan</code> assembles and validates without touching the workspace. Exit codes: 0 deployed, 1 refused (configuration, auth, a crashed App), 2 connectivity. Other knobs: <code>--env-file</code>, <code>--wheel</code>, <code>--reuse-caller-key</code>, <code>--wait</code>, <code>--bind-secret NAME=key</code> (bind an existing key of the node&#x27;s scope as an environment variable; no value travels through the tool).</p>
+<p><strong>Two engines.</strong> With <code>--profile</code> the tool uses the Databricks CLI and <code>databricks bundle</code> (<code>--engine bundle</code>, the default on a laptop). Without a profile, or with <code>--engine api</code>, it uses the Databricks SDK and the Apps API: unified auth from the environment (<code>DATABRICKS_HOST</code> with the service principal&#x27;s <code>DATABRICKS_CLIENT_ID</code>/<code>CLIENT_SECRET</code>, as inside a Databricks App), the bundle uploaded to <code>/Workspace/Users/&lt;caller&gt;/atfgraph-nodes/&lt;label&gt;</code>, the App created or updated with its resources (graph-server binding, secret bindings), a snapshot deployed. Registration (step 6) is the same for both. This is how the Studio node deploys the nodes it builds from its own App; a laptop with a profile may also pass <code>--engine api</code>.</p>
+<p>Afterwards: <code>atfg databricks node status ./my-node</code>, <code>node logs</code>, <code>node list</code>, and to take it down <code>node remove</code> (deletes the App and its scope and revokes the node&#x27;s tokens; the server keeps the definition until it gains a delete route, so the Console shows the node as offline).</p>
+<h2 id="getting-the-graph-server-s-key-and-logging-in">Getting the graph server&#x27;s key and logging in</h2>
+<p>The server App reads its key from the secret scope named in the manifest (<code>server.scope</code>, default the App name) under <code>api-key</code>. <code>server up</code> writes it there when it is absent and never prints it. Anyone who can read that scope gets it back with the Databricks CLI; the value comes base64-encoded, so decode it and hand it straight to <code>atfg login</code> on stdin (nothing lands in shell history or a file you did not choose):</p>
+<pre><code class="language-sh">databricks secrets get-secret atfgraph api-key --profile &lt;p&gt; -o json | python3 -c &quot;import json,sys,base64;print(base64.b64decode(json.load(sys.stdin)[&#x27;value&#x27;]).decode())&quot; \
+  | atfg login https://&lt;server app url&gt; --api-key-stdin --edge-auth databricks --databricks-profile &lt;p&gt;
+atfg whoami</code></pre>
+<p>The Console at <code>&lt;server app url&gt;/ui/</code> asks for the same value the first time; paste it there (the tab keeps it in sessionStorage and sends it as <code>X-API-Key</code>). A node deployed with <code>node deploy</code> never needs this key: it gets its own token, minted under your principal.</p>
+<blockquote><p>The <code>co_consult</code> example runs <strong>live by default</strong>: it needs its supplier settings and a model provider (<code>ATFGRAPH_MODEL_URL</code>, <code>ATFGRAPH_MODEL_NAME</code>, and either <code>ATFGRAPH_MODEL_API_KEY</code> as a secret or <strong>no key</strong>, in which case the node signs model calls with its App&#x27;s own service principal and <code>node deploy</code> grants that principal <code>CAN_QUERY</code> on the endpoint) in the <code>--env-file</code> you deploy with, and it refuses to start without them rather than serving demo data. For an offline demo set <code>CO_CONSULT_MODE=fixture CO_CONSULT_DECISIONS=fixture</code> explicitly; the fixture decision parser only understands <code>key=value</code> tokens, so free-text briefs stop at <code>intake_brief</code>/<code>extract_brief</code> in that mode. Structured output differs per endpoint: <code>databricks-claude-sonnet-5</code> accepts <code>response_format</code> (and <code>strict</code>); the Claude Fable endpoints reject <code>response_format</code> <strong>and</strong> forced tool use, so only the schema-in-the-prompt shape works there. The SDK steps down through the shapes on its own (strict → plain → forced tool → prompt) from the release after 0.3.4; on 0.3.4 use Sonnet, or set <code>ATFGRAPH_MODEL_STRUCTURED=prompt</code> once your client has it. Sonnet also refuses the <code>temperature</code> parameter. A run whose usage rows say <code>operation: fallback</code> used the fixtures, whatever the App&#x27;s environment says. The example also traces every run to MLflow by default (<code>ATFGRAPH_MLFLOW_TRACING=true</code>, <code>MLFLOW_TRACKING_URI=databricks</code>, experiment <code>/Shared/atfgraph/co-consult</code>, <code>mlflow</code> in its requirements): inside the App the traces are written as the App&#x27;s service principal, which needs permission to create or edit that experiment; <code>ATFGRAPH_MLFLOW_TRACING=false</code> in the env file switches it off. Traces carry no payloads until <code>ATFGRAPH_MLFLOW_CAPTURE_PAYLOADS=true</code> is in the env file (then every step&#x27;s inputs and outputs and every model call&#x27;s prompt and reply are recorded, and MLflow evaluations can score them). Databricks serving states no price, so model calls show as <code>unpriced</code> until the env file carries an <code>ATFGRAPH_MODEL_PRICES</code> rate table; the Console then shows those costs as estimates.</p></blockquote>
+<h2 id="the-operator-case-a-manifest-per-workspace">The operator case: a manifest per workspace</h2>
+<pre><code class="language-sh">atfg databricks init --profile &lt;p&gt; --catalog &lt;catalog&gt; --schema &lt;schema&gt; --release github:fclimited/ai-lab-atfgraph@vnext-&lt;version&gt;</code></pre>
+<p>writes <code>atfgraph.cloud.yaml</code>:</p>
+<pre><code class="language-yaml">version: 1
+targets:
+  dev:
+    profile: &lt;p&gt;                 # the only place a workspace is named
+    catalog: &lt;catalog&gt;
+    schema: &lt;schema&gt;
+    volume: dist                 # /Volumes/&lt;catalog&gt;/&lt;schema&gt;/dist holds the releases and the state mirror;
+                                 # leave catalog/schema/volume out for a target without a Volume (see below)
+    require_confirmation: true   # prod targets cannot switch this off
+server:
+  app: atfgraph
+  release: github:fclimited/ai-lab-atfgraph@vnext-&lt;version&gt;   # or @latest; or volume:/Volumes/&lt;catalog&gt;/&lt;schema&gt;/dist/vnext-&lt;version&gt;
+  database: lakebase             # or {secret: &lt;scope&gt;/&lt;key&gt;} for an existing database URL
+  lakebase: {project: atfgraph, branch: production, endpoint: primary, role: atfgraphd, pg_schema: atfgraph}
+nodes:
+  - path: ./my-node              # label, module and version come from its agentnode.yaml
+    smoke: chat
+docs:                            # optional: the documentation site inside the workspace
+  app: atfgraph-docs
+  site: ./site</code></pre>
+<p><code>server.release</code> is the release source. <code>github:&lt;owner&gt;/&lt;repo&gt;@&lt;tag&gt;</code> names a GitHub Release of the repository (<code>@latest</code> is GitHub&#x27;s latest — never a draft or pre-release — and is resolved to its tag before the version is read); <code>init --release</code> accepts it as given, while a bare <code>vnext-&lt;version&gt;</code> still means that directory in the target&#x27;s Volume, for a workspace that keeps the Volume channel.</p>
+<p>Then the reconciler verbs:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody><tr><td><code>atfg databricks plan</code></td><td>compares the manifest with the workspace; lists the actions; exit 3 when there is work, 0 when there is none; mutates nothing</td></tr><tr><td><code>atfg databricks apply</code></td><td>performs the plan in order: server, nodes, docs; stops at the first failure; a <code>prod</code> target asks for confirmation, and a plan that removes nodes names them and asks you to type <code>remove</code> (<code>--yes</code> when scripted)</td></tr><tr><td><code>atfg databricks status</code></td><td>server App state, URL, version and agent count; each node&#x27;s App state, registration and source drift; the docs App</td></tr><tr><td><code>atfg databricks doctor</code></td><td>Python, PyYAML, the Databricks CLI, <code>atfg</code>, the profile, the Apps API, the Volume (when the target names one) and the release: a <code>github:</code> release must be reachable with the token and hold <code>SHA256SUMS</code>; a <code>volume:</code> directory likewise</td></tr></tbody></table></div>
+<p><code>server up</code> fetches <code>atfgraph-server-app-&lt;version&gt;-linux-amd64.tar.gz</code> from the release, verifies it against <code>SHA256SUMS</code> — for a <code>github:</code> release both are downloaded through the GitHub API on your machine, with <code>GITHUB_TOKEN</code>, <code>GH_TOKEN</code>, <code>ATFGRAPH_CHANNEL_TOKEN</code> or a logged-in <code>gh</code>&#x27;s token, and pushed to the workspace as App source; the App never contacts GitHub — makes sure the Lakebase role and schema and the scope (<code>database-url</code>, <code>api-key</code>, <code>credential-key</code>) exist — creating them only when absent — creates the App with its three secret resources, patches the App&#x27;s own URL into <code>ATFGRAPH_PUBLIC_BASE_URL</code>, imports the source and deploys, then checks <code>/api/v2/server</code> through the proxy. <code>server upgrade --release …</code> repeats that on a running App; <code>server rollback</code> redeploys the previous source folder; <code>server status</code>, <code>server logs</code>, <code>server down [--delete]</code>. Every verb that deletes something says what goes and asks for a typed confirmation before touching the workspace: <code>node remove</code> wants the label, <code>server down --delete</code> the server App name, <code>apply</code> with removals the word <code>remove</code>; <code>--yes</code> stands in for the prompt when scripted, and without a terminal the command refuses instead of guessing. <code>docs publish [--site dir]</code> publishes the generated site to the optional docs App (the published documentation itself is served from GitHub Pages); <code>node rollback</code> redeploys the previous kept bundle.</p>
+<p>State lives beside the manifest in <code>.atfgraph-cloud/&lt;target&gt;.state.json</code> and, once a workspace is involved, is mirrored to the target&#x27;s Volume at <code>deployments/&lt;target&gt;/&lt;server app&gt;/state.json</code>: reads pull a newer mirror (another machine deployed last), saves push it back, so <code>plan</code> and <code>status</code> agree across laptops. The local file holds names, digests, URLs, workspace paths — no secrets); the last two node bundles and the fetched releases are kept under <code>.atfgraph-cloud/builds</code> and <code>.atfgraph-cloud/releases</code>.</p>
+<h2 id="scripted-use-a-runner-upgrades-the-server">Scripted use: a runner upgrades the server</h2>
+<p><code>server upgrade</code> and <code>server rollback</code> run without a terminal when every input is on the command line: <code>--profile</code> (a <code>~/.databrickscfg</code> profile — an OAuth service-principal profile with <code>host</code>, <code>client_id</code> and <code>client_secret</code> works; nothing in these verbs needs a user identity, and the source folder goes under the identity&#x27;s own workspace home), <code>--yes</code> (stands in for the <code>prod</code> confirmation), <code>--json</code> (the result on stdout, progress on stderr) and <code>--release github:&lt;owner&gt;/&lt;repo&gt;@&lt;tag&gt;</code> (overrides <code>server.release</code>; <code>GITHUB_TOKEN</code> reads a private release). The result names the old and the new version, the deployment id, the rollback target and the URL:</p>
+<pre><code class="language-json">{ &quot;action&quot;: &quot;server upgrade&quot;, &quot;app&quot;: &quot;atfgraph&quot;, &quot;url&quot;: &quot;https://…databricksapps.com&quot;, &quot;console&quot;: &quot;https://…databricksapps.com/ui/&quot;,
+  &quot;release&quot;: &quot;github:&lt;owner&gt;/&lt;repo&gt;@vnext-0.3.6&quot;, &quot;release_version&quot;: &quot;0.3.6&quot;,
+  &quot;version&quot;: &quot;0.3.6&quot;, &quot;verified&quot;: &quot;api&quot;, &quot;console_status&quot;: 200, &quot;app_state&quot;: &quot;RUNNING&quot;,
+  &quot;deployment_id&quot;: &quot;01f1…&quot;, &quot;source_path&quot;: &quot;/Workspace/Users/&lt;identity&gt;/atfgraph-vnext/atfgraph-0.3.6-&lt;stamp&gt;&quot;,
+  &quot;previous&quot;: {&quot;version&quot;: &quot;0.3.5&quot;, &quot;deployment_id&quot;: &quot;01f1…&quot;, &quot;source_path&quot;: &quot;/Workspace/Users/…/atfgraph-0.3.5-&lt;stamp&gt;&quot;},
+  &quot;rollback&quot;: {&quot;source_path&quot;: &quot;/Workspace/Users/…/atfgraph-0.3.5-&lt;stamp&gt;&quot;, &quot;deployment_id&quot;: &quot;01f1…&quot;, &quot;version&quot;: &quot;0.3.5&quot;} }</code></pre>
+<p>Three things make this work from a service principal that only manages the App:</p>
+<ul><li><strong>A target may name no Volume.</strong> Leave <code>catalog</code>, <code>schema</code> and <code>volume</code> out of the target (or set <code>volume: null</code>): the state stays in <code>.atfgraph-cloud/&lt;target&gt;.state.json</code> beside the manifest and is
+never mirrored — upload it as a run artifact when you want a record. <code>doctor</code> notes this instead of
+checking a Volume; <code>volume:</code> releases relative to the target are then unusable (<code>github:</code>, <code>https://</code>,
+<code>volume:/Volumes/…</code> and local directories are). A mirror that cannot be written never fails a verb:
+one <code>WARNING</code> line after the result.</li><li><strong>An upgrade does not touch the secret scope.</strong> When the App&#x27;s resources already bind <code>database-url</code>, <code>api-key</code> and <code>credential-key</code>, <code>server upgrade</code> skips the scope check (<code>secrets_checked: false</code>);
+creating or rotating secrets stays with <code>server up</code>.</li><li><strong>The version check degrades, it does not abort.</strong> After the App reports RUNNING the tool reads <code>/api/v2/server</code> with the key from <code>ATFGRAPH_API_KEY</code>, else the scope&#x27;s <code>api-key</code> when the identity may
+read it (<code>verified: &quot;api&quot;</code>); with neither it stops at <code>/health</code> and the Console&#x27;s <code>/ui/</code> status
+(<code>verified: &quot;health&quot;</code>, <code>version: null</code>). Give the runner <code>ATFGRAPH_API_KEY</code> or READ on the scope when
+the version must be proven.</li></ul>
+<p><code>server rollback</code> with an empty state (a fresh checkout) takes the newest successful deployment in the App&#x27;s own history whose source differs from the active one (<code>adopted_from_history: true</code>) and records the active one, so the rollback itself can be undone. <code>plan</code> resolves <code>github:…@latest</code> to the tag GitHub names before comparing versions; when it cannot (no token), it lists <code>server.unresolved</code> instead of failing. The repository&#x27;s <code>.github/workflows/deploy.yml</code> is this flow on a GitHub runner, gated by the <code>production</code> Environment&#x27;s protection rules.</p>
+<h2 id="what-it-does-not-do">What it does not do</h2>
+<p>It never chooses a profile, never prints a secret, never deletes a database or a secret scope it did not create for a node, and never reports success from a <code>bundle deploy</code> alone — registration on the graph server is the proof for a node, <code>/api/v2/server</code> for the server. <code>node remove</code> (and <code>apply</code> for a node the manifest no longer lists) deletes the App and its secret scope, revokes the node&#x27;s tokens and unregisters the label on the graph server (<code>DELETE /api/v2/agents/{label}</code>, 0.3.3+); <code>plan</code> shows such removals as <code>node.remove</code> before anything happens. Live suppliers, model endpoints and load are yours to verify.</p>
+<p>What has been run against a real workspace so far (profile-scoped acceptance after each release, latest 0.3.4): <code>status</code>, <code>plan</code>, <code>doctor</code>, <code>node deploy</code> — from a manifest and manifest-less with <code>--label</code>, from the installed client, including a keyless node whose model calls were signed by the App&#x27;s service principal — <code>node remove</code> (the typed/<code>--yes</code> confirmation and the server-side unregistration), <code>apply</code> adding and removing nodes, <code>docs publish</code>, <code>server upgrade</code> (the live graph server moved 0.3.1 → 0.3.2 → 0.3.3 → 0.3.4 with it) and <code>server rollback</code>. <code>server up</code> on a brand-new App and <code>node rollback</code> are implemented and covered by the offline tests but have not yet been exercised live; treat their first run on your workspace as the proof. The <code>github:</code> release source (<code>server up|upgrade</code>, <code>doctor</code>, <code>init --release</code>) is covered by the offline tests against a fake GitHub API; its first live use is the 0.3.6 release rehearsal.</p>
+<p>Run the verbs for one manifest one at a time: the state file beside the manifest is written last-writer-wins, so two concurrent runs against the same manifest can lose each other&#x27;s updates.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retrieval Quality — ATFGraph vNext reference</title>
+<meta name="description" content="Retrieval Quality: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Retrieval Quality</h1>
+<p class="meta">Directory <code>examples/python/retrieval_quality</code></p>
+<p>Evaluate faithfulness, relevance, hallucination and configurable principles. Quick mode uses one perspective per metric; standard uses a critic and defender; thorough adds an independent judge. Live runs also evaluate each configured principle. Domain weights change the constitutional score.</p>
+<p class="meta">Agent node label <code>retrieval_quality</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>evaluate_metric</code></td><td>traversal</td><td><code>(metric: str, question: str, context: str, response: str, perspective: str = &#x27;reviewer&#x27;, principles: list[dict] | None = None) -&gt; dict</code></td><td><code>examples/python/retrieval_quality/main.py</code></td><td></td></tr><tr><td><code>evaluate_rag_response</code></td><td>traversal</td><td><code>(question: str, context: str, response: str, mode: str = &#x27;quick&#x27;, domain: str = &#x27;general&#x27;, use_ml: bool = False) -&gt; dict</code></td><td><code>examples/python/retrieval_quality/main.py</code></td><td></td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">ATFGRAPH_SERVER=http://127.0.0.1:18880 npm run dev -- --hostname 127.0.0.1
+EXAMPLE_MODE=fixture python -m atfgraph.worker --module examples.python.retrieval_quality.main:app
+atfg install ./examples/python/retrieval_quality
+atfg run retrieval_quality
+atfg server start
+atfg traverse retrieval_quality.evaluate_rag_response --in &#x27;{&quot;question&quot;: &quot;When does the desk open?&quot;, &quot;context&quot;: &quot;The desk opens at 9am.&quot;, &quot;response&quot;: &quot;The desk opens at 9am.&quot;, &quot;mode&quot;: &quot;quick&quot;}&#x27;
+atfg traverse retrieval_quality.evaluate_rag_response --in &#x27;{&quot;question&quot;:&quot;When does the desk open?&quot;,&quot;context&quot;:&quot;The desk opens at 9am.&quot;,&quot;response&quot;:&quot;The desk opens at 9am.&quot;,&quot;mode&quot;:&quot;quick&quot;}&#x27;
+docker build -f deploy/docker/Dockerfile.server -t atfgraph-vnext/graph-server:local .
+docker compose -f examples/python/retrieval_quality/compose.yaml down
+docker compose -f examples/python/retrieval_quality/compose.yaml up --build -d
+python -m examples.python.retrieval_quality.call</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/retrieval_quality/Dockerfile</code></li><li><code>examples/python/retrieval_quality/Dockerfile.dockerignore</code></li><li><code>examples/python/retrieval_quality/README.md</code></li><li><code>examples/python/retrieval_quality/__init__.py</code></li><li><code>examples/python/retrieval_quality/agentnode.yaml</code></li><li><code>examples/python/retrieval_quality/call.py</code></li><li><code>examples/python/retrieval_quality/compose.yaml</code></li><li><code>examples/python/retrieval_quality/config/constitution.yaml</code></li><li><code>examples/python/retrieval_quality/config/presets/financial.yaml</code></li><li><code>examples/python/retrieval_quality/config/presets/legal.yaml</code></li><li><code>examples/python/retrieval_quality/config/presets/medical.yaml</code></li><li><code>examples/python/retrieval_quality/main.py</code></li><li><code>examples/python/retrieval_quality/ml_services/__init__.py</code></li><li><code>examples/python/retrieval_quality/ml_services/embeddings.py</code></li><li><code>examples/python/retrieval_quality/ml_services/ner.py</code></li><li><code>examples/python/retrieval_quality/ml_services/nli.py</code></li><li><code>examples/python/retrieval_quality/node.py</code></li><li><code>examples/python/retrieval_quality/requirements-ml.txt</code></li><li><code>examples/python/retrieval_quality/requirements.txt</code></li><li><code>examples/python/retrieval_quality/support.py</code></li><li><code>examples/python/retrieval_quality/ui/Dockerfile</code></li><li><code>examples/python/retrieval_quality/ui/app/api/graph/[...path]/route.ts</code></li><li><code>examples/python/retrieval_quality/ui/app/globals.css</code></li><li><code>examples/python/retrieval_quality/ui/app/layout.tsx</code></li><li><code>examples/python/retrieval_quality/ui/app/page.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ClaimBreakdown.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/EvaluationForm.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/LoadingState.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/MarkdownContent.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/MetricCard.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/OverallScore.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/PoweredBy.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/eval/DashboardShell.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/eval/InputPanel.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/eval/ResultsPanel.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/badge.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/button.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/card.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/collapsible.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/dropdown-menu.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/input.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/label.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/popover.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/progress.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/scroll-area.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/select.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/separator.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/tabs.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components/ui/textarea.tsx</code></li><li><code>examples/python/retrieval_quality/ui/components.json</code></li><li><code>examples/python/retrieval_quality/ui/hooks/useEvaluation.ts</code></li><li><code>examples/python/retrieval_quality/ui/lib/api.ts</code></li><li><code>examples/python/retrieval_quality/ui/lib/presets.ts</code></li><li><code>examples/python/retrieval_quality/ui/lib/types.ts</code></li><li><code>examples/python/retrieval_quality/ui/lib/utils.ts</code></li><li><code>examples/python/retrieval_quality/ui/next.config.js</code></li><li><code>examples/python/retrieval_quality/ui/package-lock.json</code></li><li><code>examples/python/retrieval_quality/ui/package.json</code></li><li><code>examples/python/retrieval_quality/ui/postcss.config.js</code></li><li><code>examples/python/retrieval_quality/ui/public/atfgraph-icon-dark.svg</code></li><li><code>examples/python/retrieval_quality/ui/public/atfgraph-icon-light.svg</code></li><li><code>examples/python/retrieval_quality/ui/public/atfgraph-logo-dark.svg</code></li><li><code>examples/python/retrieval_quality/ui/public/atfgraph-logo-light.svg</code></li><li><code>examples/python/retrieval_quality/ui/scripts/smoke.py</code></li><li><code>examples/python/retrieval_quality/ui/tailwind.config.ts</code></li><li><code>examples/python/retrieval_quality/ui/tsconfig.json</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/retrieval_quality/README.md</code>; the source file is not modified.</p>
+<p>Evaluate faithfulness, relevance, hallucination and configurable principles. Quick mode uses one perspective per metric; standard uses a critic and defender; thorough adds an independent judge. Live runs also evaluate each configured principle. Domain weights change the constitutional score.</p>
+<h2 id="run-locally">Run locally</h2>
+<p>From the <code>atfgraph-vnext</code> checkout, with its Python SDK installed in your active environment:</p>
+<pre><code class="language-bash">atfg server start
+EXAMPLE_MODE=fixture python -m atfgraph.worker --module examples.python.retrieval_quality.main:app
+# In a second terminal:
+python -m examples.python.retrieval_quality.call</code></pre>
+<p>Or install and run the node as a managed local installation:</p>
+<pre><code class="language-bash">atfg install ./examples/python/retrieval_quality
+atfg run retrieval_quality</code></pre>
+<p>The <code>node.py</code> entrypoint also works when this folder is copied out of the checkout. The graph server defaults to <code>http://127.0.0.1:18880</code>; inspect traversers and child calls at <code>http://127.0.0.1:18880/ui/</code>.</p>
+<h2 id="call-with-the-cli">Call with the CLI</h2>
+<pre><code class="language-bash">atfg traverse retrieval_quality.evaluate_rag_response --in &#x27;{&quot;question&quot;: &quot;When does the desk open?&quot;, &quot;context&quot;: &quot;The desk opens at 9am.&quot;, &quot;response&quot;: &quot;The desk opens at 9am.&quot;, &quot;mode&quot;: &quot;quick&quot;}&#x27;</code></pre>
+<h2 id="providers">Providers</h2>
+<p><code>EXAMPLE_MODE=fixture</code> is the default: deterministic local example data and calculations, no model or search calls. Fixture scores demonstrate mechanics, not model quality.</p>
+<p>To use live model decisions, set <code>EXAMPLE_MODE=live</code>, <code>ATFGRAPH_MODEL_URL</code>, <code>ATFGRAPH_MODEL_NAME</code> and, when needed, <code>ATFGRAPH_MODEL_API_KEY</code>. Configure these before starting the worker. Missing settings fail explicitly; live failures never silently fall back to fixture answers.</p>
+<h2 id="python-client">Python client</h2>
+<pre><code class="language-python">from atfgraph import Client
+
+async with Client(&quot;http://127.0.0.1:18880&quot;) as client:
+    result = await client.traverse(
+        &quot;retrieval_quality.evaluate_rag_response&quot;,
+        {&#x27;question&#x27;: &#x27;When does the desk open?&#x27;, &#x27;context&#x27;: &#x27;The desk opens at 9am.&#x27;, &#x27;response&#x27;: &#x27;The desk opens at 9am.&#x27;, &#x27;mode&#x27;: &#x27;quick&#x27;},
+        timeout=300,
+    )
+    print(result)</code></pre>
+<h2 id="evaluation-dashboard">Evaluation dashboard</h2>
+<p>The optional Next.js dashboard submits v2 traversers and displays results and runtime events. Its server-side proxy keeps <code>ATFGRAPH_API_KEY</code> out of browser JavaScript. The dashboard uses the model configured on the worker; it does not choose arbitrary provider models per request.</p>
+<pre><code class="language-bash">cd examples/python/retrieval_quality/ui
+npm ci
+ATFGRAPH_SERVER=http://127.0.0.1:18880 npm run dev -- --hostname 127.0.0.1
+# Open http://127.0.0.1:3000</code></pre>
+<p>Use this convenience dashboard on a trusted local machine. The proxy uses its configured server identity, so add your own user authentication before sharing the dashboard across users.</p>
+<h2 id="docker-compose">Docker Compose</h2>
+<p>Build the graph server image from the checkout and choose a local API key. Run this stack instead of a graph server already occupying port 18880:</p>
+<pre><code class="language-bash">docker build -f deploy/docker/Dockerfile.server -t atfgraph-vnext/graph-server:local .
+export ATFGRAPH_API_KEY=&quot;$(python -c &#x27;import secrets; print(secrets.token_urlsafe(32))&#x27;)&quot;
+docker compose -f examples/python/retrieval_quality/compose.yaml up --build -d
+atfg traverse retrieval_quality.evaluate_rag_response --in &#x27;{&quot;question&quot;:&quot;When does the desk open?&quot;,&quot;context&quot;:&quot;The desk opens at 9am.&quot;,&quot;response&quot;:&quot;The desk opens at 9am.&quot;,&quot;mode&quot;:&quot;quick&quot;}&#x27;
+docker compose -f examples/python/retrieval_quality/compose.yaml down</code></pre>
+<p>The evaluation dashboard is on port 3000; the graph server API and embedded UI are on 18880. Data persists in the named Compose volume.</p>
+<h2 id="local-ml-checks-and-principles">Local ML checks and principles</h2>
+<p><code>config/constitution.yaml</code> defines weighted principles and domain overrides. The domain preset YAML files are provided as editable configuration examples. The active configuration is <code>constitution.yaml</code>; the API&#x27;s <code>domain</code> selects its weight overrides.</p>
+<p>For optional NLI checks, install <code>requirements-ml.txt</code> (or build with <code>INSTALL_ML_DEPS=true</code>) and call with <code>use_ml=true</code>. This downloads the configured model on first use and reports NLI results separately from model or fixture scores. <code>ml_services/ner.py</code> and <code>ml_services/embeddings.py</code> also expose local entity-extraction and similarity utilities for extending your evaluation. Their model downloads require network access and may be substantial. Fixture mode alone needs no ML downloads. All scores are diagnostic judgements, not guarantees of factual accuracy or safety.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

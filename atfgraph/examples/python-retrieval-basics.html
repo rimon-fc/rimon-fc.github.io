@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retrieval Basics — ATFGraph vNext reference</title>
+<meta name="description" content="Retrieval Basics: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Retrieval Basics</h1>
+<p class="meta">Directory <code>examples/python/retrieval_basics</code></p>
+<p>Persistent document ingestion, hybrid retrieval, cited answers and deletion. Text and local .txt/.md/.rst files are supported.</p>
+<p class="meta">Agent node label <code>retrieval_basics</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>answer_question</code></td><td>traversal</td><td><code>(question: str, top_k: int = 3) -&gt; dict</code></td><td><code>examples/python/retrieval_basics/main.py</code></td><td></td></tr><tr><td><code>forget_document</code></td><td>skill</td><td><code>(document_id: str) -&gt; dict</code></td><td><code>examples/python/retrieval_basics/main.py</code></td><td></td></tr><tr><td><code>ingest_document</code></td><td>skill</td><td><code>(document_id: str, text: str | None = None, path: str | None = None) -&gt; dict</code></td><td><code>examples/python/retrieval_basics/main.py</code></td><td>Index supplied text or a file within the configured document root.</td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">EXAMPLE_MODE=fixture python -m atfgraph.worker --module examples.python.retrieval_basics.main:app
+atfg install ./examples/python/retrieval_basics
+atfg run retrieval_basics
+atfg server start
+atfg traverse retrieval_basics.answer_question --in &#x27;{&quot;question&quot;:&quot;When does the travel desk open?&quot;,&quot;top_k&quot;:3}&#x27;
+atfg traverse retrieval_basics.forget_document --in &#x27;{&quot;document_id&quot;:&quot;desk&quot;}&#x27;
+atfg traverse retrieval_basics.ingest_document --in &#x27;{&quot;document_id&quot;: &quot;desk&quot;, &quot;text&quot;: &quot;The travel desk opens at 9am.&quot;}&#x27;
+python -m examples.python.retrieval_basics.call</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/retrieval_basics/README.md</code></li><li><code>examples/python/retrieval_basics/__init__.py</code></li><li><code>examples/python/retrieval_basics/agentnode.yaml</code></li><li><code>examples/python/retrieval_basics/call.py</code></li><li><code>examples/python/retrieval_basics/main.py</code></li><li><code>examples/python/retrieval_basics/node.py</code></li><li><code>examples/python/retrieval_basics/requirements.txt</code></li><li><code>examples/python/retrieval_basics/support.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/retrieval_basics/README.md</code>; the source file is not modified.</p>
+<p>Persistent document ingestion, hybrid retrieval, cited answers and deletion. Text and local .txt/.md/.rst files are supported.</p>
+<h2 id="run-locally">Run locally</h2>
+<p>From the <code>atfgraph-vnext</code> checkout, with its Python SDK installed in your active environment:</p>
+<pre><code class="language-bash">atfg server start
+EXAMPLE_MODE=fixture python -m atfgraph.worker --module examples.python.retrieval_basics.main:app
+# In a second terminal:
+python -m examples.python.retrieval_basics.call</code></pre>
+<p>Or install and run the node as a managed local installation:</p>
+<pre><code class="language-bash">atfg install ./examples/python/retrieval_basics
+atfg run retrieval_basics</code></pre>
+<p>The <code>node.py</code> entrypoint also works when this folder is copied out of the checkout. The graph server defaults to <code>http://127.0.0.1:18880</code>; inspect traversers and child calls at <code>http://127.0.0.1:18880/ui/</code>.</p>
+<h2 id="call-with-the-cli">Call with the CLI</h2>
+<pre><code class="language-bash">atfg traverse retrieval_basics.ingest_document --in &#x27;{&quot;document_id&quot;: &quot;desk&quot;, &quot;text&quot;: &quot;The travel desk opens at 9am.&quot;}&#x27;</code></pre>
+<h2 id="providers">Providers</h2>
+<p><code>EXAMPLE_MODE=fixture</code> is the default: deterministic local example data and calculations, no model or search calls. Retrieval fixtures use token hashing, not a learned embedding model. Fixture scores demonstrate mechanics, not model quality.</p>
+<p>To use live model decisions, set <code>EXAMPLE_MODE=live</code>, <code>ATFGRAPH_MODEL_URL</code>, <code>ATFGRAPH_MODEL_NAME</code> and, when needed, <code>ATFGRAPH_MODEL_API_KEY</code>. Retrieval examples additionally require <code>ATFGRAPH_EMBEDDING_URL</code> (the full embeddings endpoint), <code>ATFGRAPH_EMBEDDING_MODEL</code> and optional <code>ATFGRAPH_EMBEDDING_API_KEY</code>. Configure these before starting the worker. Missing settings fail explicitly; live failures never silently fall back to fixture answers.</p>
+<p>Local document reads are restricted to <code>EXAMPLE_DOCUMENT_ROOT</code>, which defaults to this example folder. Only text, Markdown and reStructuredText are accepted, up to 1 MB per file. To index your documentation, set this root to the directory you want the worker to access. Folder ingestion accepts at most 100 files. Source text is untrusted data; generated prose requires review even when citation identifiers and quoted passages validate.</p>
+<h2 id="python-client">Python client</h2>
+<pre><code class="language-python">from atfgraph import Client
+
+async with Client(&quot;http://127.0.0.1:18880&quot;) as client:
+    result = await client.traverse(
+        &quot;retrieval_basics.ingest_document&quot;,
+        {&#x27;document_id&#x27;: &#x27;desk&#x27;, &#x27;text&#x27;: &#x27;The travel desk opens at 9am.&#x27;},
+        timeout=300,
+    )
+    print(result)</code></pre>
+<p>After ingestion, ask and remove a document:</p>
+<pre><code class="language-bash">atfg traverse retrieval_basics.answer_question --in &#x27;{&quot;question&quot;:&quot;When does the travel desk open?&quot;,&quot;top_k&quot;:3}&#x27;
+atfg traverse retrieval_basics.forget_document --in &#x27;{&quot;document_id&quot;:&quot;desk&quot;}&#x27;</code></pre>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

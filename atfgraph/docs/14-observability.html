@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usage, logs and tracing — ATFGraph vNext reference</title>
+<meta name="description" content="Usage, logs and tracing: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Usage, logs and tracing</h1>
+<p>At the end of this page you can see what every model and media call cost inside a traverser, read those totals from a client or from the graph server&#x27;s durable usage store, ship a node&#x27;s log records to the server, attach metadata to a run, drive the namespace webhook, and turn on MLflow tracing. Usage accounting works with nothing configured; node logs need an administrator opt-in; MLflow needs the optional extra.</p>
+<p>Prerequisites: a model provider (<code>ATFGRAPH_MODEL_URL</code>, <code>ATFGRAPH_MODEL_NAME</code>) only for the <code>app.ai</code> snippet; <code>python -m pip install &#x27;./python[mlflow]&#x27;</code> only for the tracing section.</p>
+<h2 id="what-is-recorded-without-asking">What is recorded without asking</h2>
+<p>Every model or media call made through an <code>Agent</code> (<code>app.ai</code>, <code>ai_generate_*</code>, <code>ai_transcribe_audio</code>, <code>harness</code>, realtime turns) records one <code>CostEntry</code> against the traverser it runs in (<code>python/atfgraph/costs.py</code>). Token counts come from the provider&#x27;s <code>usage</code> object. A price is filled only when the provider reported one (OpenRouter <code>usage.cost</code>, fal and MiniMax billing fields); the SDK never multiplies tokens by a price table, so an unknown price is <code>None</code> and is kept distinct from a reported <code>0.0</code>.</p>
+<p>Inside a worker task <code>app.record_usage</code> puts the entry in three places (<code>python/atfgraph/agent.py</code>):</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Destination</th><th scope="col">How to read it</th><th scope="col">Switch</th></tr></thead><tbody><tr><td>In-process tracker for this execution</td><td><code>app.execution_cost()</code></td><td>always on</td></tr><tr><td>The traverser&#x27;s event log, as a <code>progress</code> event <code>{&quot;usage&quot;: ..., &quot;totals&quot;: ...}</code></td><td><code>client.events(...)</code> with <code>UsageEvent.from_event</code></td><td><code>Agent(record_usage_events=False)</code></td></tr><tr><td>The graph server&#x27;s durable usage store</td><td><code>app.observability.usage(...)</code>, <code>usage_totals(...)</code></td><td><code>Agent(report_usage=False)</code></td></tr></tbody></table></div>
+<p>Accounting never fails a handler. If the server refuses a record, the entry stays in the tracker and the progress event, the failure is logged once, and <code>app.usage_reporting()</code> counts it.</p>
+<h2 id="return-the-cost-of-a-traverser">Return the cost of a traverser</h2>
+<p>Adapted from <code>examples/python/features/multimodal/agent.py</code>; this handler needs a chat provider that accepts image parts.</p>
+<pre><code class="language-python">from typing import List, Optional
+
+from pydantic import BaseModel
+
+from atfgraph import Agent, Image
+
+app = Agent(node_id=&quot;media&quot;, version=&quot;1.0.0&quot;)
+
+
+class Findings(BaseModel):
+    summary: str
+    objects: List[str]
+    readable_text: Optional[str] = None
+
+
+@app.traversal()
+async def describe(image_url: str, question: str = &quot;What is in this image?&quot;) -&gt; dict:
+    findings = await app.ai(question, Image.from_url(image_url), schema=Findings)
+    return {&quot;findings&quot;: findings.model_dump(), &quot;cost&quot;: app.execution_cost()}</code></pre>
+<p><code>app.execution_cost()</code> returns <code>total_calls</code>, <code>total_input_tokens</code>, <code>total_output_tokens</code>, <code>total_tokens</code>, <code>total_cost_usd</code>, <code>calls_without_price</code> and <code>by_model</code>. <code>total_cost_usd</code> is <code>None</code> unless at least one call has a price. A price is what the provider reported, or an estimate from the node&#x27;s rate table (<code>ATFGRAPH_MODEL_PRICES</code>, <a href="06-model-calls.html#what-a-call-cost">06-model-calls.md</a>) recorded with <code>cost_source=&quot;table&quot;</code>; the Console marks such calls estimated. The module-level <code>execution_cost(ctx)</code> gives the same totals for an explicit context, and <code>use_tracker()</code> binds a tracker for code running outside a worker task.</p>
+<h2 id="record-usage-yourself">Record usage yourself</h2>
+<p>When you call a provider directly, record what it reported so it lands in the same three places. <code>usage_from_response</code> lives in <code>atfgraph.costs</code>; adapted from <code>tests/test_mlflow_tracing.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent
+from atfgraph.costs import usage_from_response
+
+app = Agent(node_id=&quot;mlf-node&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal()
+async def run(n: int) -&gt; dict:
+    await app.record_usage(
+        usage_from_response({&quot;prompt_tokens&quot;: 7, &quot;completion_tokens&quot;: 5}, model=&quot;ollama/llama3&quot;, provider=&quot;ollama&quot;)
+    )
+    return {&quot;value&quot;: n * 2}</code></pre>
+<p>You can also build a <code>CostEntry</code> by hand; <code>tests/test_sdk_extension_integration.py</code> records <code>CostEntry(model=&quot;openrouter/qwen&quot;, provider=&quot;openrouter&quot;, input_tokens=10, output_tokens=5, total_tokens=15, cost_usd=0.0012, cost_source=&quot;provider&quot;)</code>. The durable record carries a <code>call_id</code> of the form <code>&lt;step&gt;-&lt;attempt&gt;-&lt;n&gt;</code>, so re-posting the same call deduplicates server-side while a retried attempt, which really did spend tokens again, records new rows.</p>
+<h2 id="read-usage-from-a-client">Read usage from a client</h2>
+<p>The progress events are visible to any caller that can read the traverser. Adapted from <code>examples/python/features/multimodal/call.py</code>:</p>
+<pre><code class="language-python">import asyncio
+import os
+
+from atfgraph import Client, UsageEvent
+
+
+async def show(client: Client, target: str, payload: dict) -&gt; None:
+    handle = await client.submit(target, payload)
+    print(target, await handle.result(timeout=300))
+    async for event in client.events(handle.id):
+        usage = UsageEvent.from_event(event)
+        if usage is not None:
+            print(f&quot;  usage {usage.operation:&lt;14} {usage.model:&lt;28} tokens={usage.total_tokens} cost_usd={usage.cost_usd}&quot;)
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        await show(client, &quot;media.describe&quot;, {&quot;image_url&quot;: os.environ[&quot;DEMO_IMAGE_URL&quot;]})
+
+
+asyncio.run(main())</code></pre>
+<p>The durable store is read through <code>app.observability</code> (an <code>Observability</code> facade; <code>Observability.for_client(client)</code> works outside an agent). Adapted from <code>tests/test_sdk_extension_integration.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Client, Observability
+
+
+async def report(url: str, traverser_id: str) -&gt; None:
+    async with Client(url) as client:
+        obs = Observability.for_client(client)
+        page = await obs.usage(traverser_id=traverser_id)
+        for record in page.items:
+            print(record.model, record.total_tokens, record.cost_usd, record.cost_known, record.capability)
+        totals = await obs.usage_totals(group_by=&quot;model&quot;)
+        print(totals.totals.calls, totals.totals.unpriced_calls)
+        print({key: bucket.cost_complete for key, bucket in totals.by_key.items()})</code></pre>
+<p><code>usage_totals</code> covers the caller&#x27;s own runs; <code>group_by</code> is one of <code>run</code>, <code>model</code>, <code>provider</code>, <code>day</code>, <code>attempt_status</code>, <code>label</code>, <code>principal</code>, <code>none</code>; <code>since</code>/<code>until</code> are epoch milliseconds; administrators may pass <code>principal</code> or <code>all_principals=True</code>. <code>UsageTotals.cost_complete</code> is true only when every call in the bucket was priced.</p>
+<h2 id="reporting-counters">Reporting counters</h2>
+<p><code>app.usage_reporting()</code> returns <code>{&quot;enabled&quot;, &quot;recorded&quot;, &quot;deduplicated&quot;, &quot;failed&quot;, &quot;events_failed&quot;, &quot;last_error&quot;}</code>. With <code>Agent(report_usage=False)</code> nothing is posted to <code>/api/v2/usage</code> and <code>enabled</code> is <code>False</code>; the progress event and the local tracker still work (<code>tests/test_sdk_extension_integration.py</code>).</p>
+<h2 id="node-logs">Node logs</h2>
+<p>Shipping this process&#x27;s log records to the graph server is off until two things happen: an administrator enables it for the namespace, and the node installs the handler.</p>
+<pre><code class="language-python">import logging
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;sdk-logs&quot;)
+logger = logging.getLogger(&quot;myapp&quot;)
+
+
+@app.traversal()
+async def work(step: str) -&gt; dict:
+    logger.info(&quot;handling %s&quot;, step)
+    await app.node_logs.flush_async()          # make these lines durable before the attempt ends
+    return {&quot;traverser_id&quot;: app.ctx.traverser_id}
+
+
+async def opt_in() -&gt; None:
+    await app.observability.set_settings(node_logs_enabled=True)     # administrator, once per namespace
+
+
+handler = app.enable_node_logs(logger, level=logging.INFO, max_pending=1000, batch_size=100, flush_interval=1.0)</code></pre>
+<p>Adapted from <code>tests/test_sdk_extension_integration.py</code>, which shows against a real daemon that records logged before the opt-in are rejected with <code>node_logs_disabled</code> and counted in <code>handler.failed</code>, not stored. Behaviour from <code>python/atfgraph/observability.py</code>:</p>
+<ul><li>Only records emitted inside a traversal are shipped; records outside one, and records from the shipping path itself (<code>atfgraph.observability</code>, <code>atfgraph.transport</code>, <code>httpx</code>, <code>httpcore</code>, plus any <code>exclude=</code> prefixes) stay local.</li><li>The queue holds <code>max_pending</code> records; beyond that the oldest is dropped and counted in <code>handler.dropped</code>.</li><li>The flusher runs while <code>serve()</code> runs. Logs are written under the task&#x27;s lease, so anything still queued when an attempt ends can no longer be sent; call <code>await app.node_logs.flush_async()</code> inside a long handler.</li><li><code>await app.disable_node_logs()</code> detaches the handler and ships what is queued; calling it twice is harmless. <code>enable_node_logs</code> twice raises <code>RuntimeError</code>.</li></ul>
+<p>Read them back with <code>await app.observability.query_logs(traverser_id=..., levels=[&quot;warn&quot;, &quot;error&quot;], contains=&quot;desk&quot;)</code> (levels are <code>trace</code>, <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>, <code>fatal</code>, <code>log</code>; Python&#x27;s <code>warning</code> and <code>critical</code> map to <code>warn</code> and <code>fatal</code>), or follow a run live with <code>async for record in app.observability.stream_logs(root_id=...)</code>, which consumes the server&#x27;s <code>GET /api/v2/logs/events</code> stream (resumes with <code>Last-Event-ID</code>, returns when the run is terminal and its last batch has arrived); <code>tail_logs</code> is the polling fallback. <code>app.observability.log(&quot;message&quot;, &quot;warn&quot;, step=1)</code> ships a single line for the current task without the logging handler.</p>
+<h2 id="run-metadata">Run metadata</h2>
+<p>A run (the root traverser) has a metadata document. Adapted from <code>tests/test_sdk_extension_integration.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent
+
+app = Agent(node_id=&quot;sdk-meta&quot;)
+
+
+@app.traversal()
+async def tag() -&gt; dict:
+    await app.observability.set_run_metadata(set={&quot;display_name&quot;: &quot;Trip 21&quot;, &quot;labels&quot;: [&quot;demo&quot;]})
+    return {&quot;root_id&quot;: app.ctx.root_id}
+
+
+async def read_back(root_id: str) -&gt; None:
+    metadata = await app.observability.run_metadata(root_id)
+    print(metadata.metadata, metadata.mlflow_trace_id, metadata.updated_at)</code></pre>
+<p>Inside a handler the root is taken from the context; outside one pass <code>root_id</code>. <code>set_run_metadata(set=..., unset=[...])</code> merges; at most 64 keys. Keys reserved by convention: <code>display_name</code>, <code>labels</code>, <code>links</code>, <code>mlflow_trace_id</code>, <code>mlflow_experiment_url</code>.</p>
+<h2 id="the-namespace-webhook">The namespace webhook</h2>
+<p>Administrators can have the server post observability events to one URL. Adapted from <code>tests/test_observability.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Client, Observability
+
+
+async def configure(url: str) -&gt; None:
+    async with Client(url) as client:
+        obs = Observability.for_client(client)
+        config = await obs.set_webhook(
+            &quot;https://hooks.example/atfgraph&quot;,
+            secret_env=&quot;HOOK_SECRET&quot;,
+            headers={&quot;X-Team&quot;: &quot;pricing&quot;},
+            event_types=[&quot;usage.recorded&quot;, &quot;run_metadata.updated&quot;],
+        )
+        assert config.secret_present
+        status = await obs.webhook_status()
+        print(status.pending, status.delivered, status.failed)
+        delivery_id = await obs.test_webhook(&quot;ping&quot;)
+        redriven = await obs.redrive_webhook(limit=100)
+        print(delivery_id, redriven)
+        await obs.delete_webhook()</code></pre>
+<p>The secret is never sent by the SDK: <code>secret_env</code> names an environment variable on the graph server host. <code>set_webhook</code> accepts only the event types in <code>atfgraph.observability.WEBHOOK_EVENT_TYPES</code>: <code>usage.recorded</code>, <code>node_logs.appended</code>, <code>run_metadata.updated</code>, <code>webhook.test</code>. Deliveries carry an <code>x-atfgraph-signature: sha256=...</code> HMAC over the body, which the bridge listener in <code>tests/test_mlflow_tracing.py</code> verifies against a real daemon.</p>
+<h3 id="run-completed"><code>run.completed</code></h3>
+<p>Subscribe the namespace webhook to <code>run.completed</code> to be told, once per root traverser, when it reaches a terminal status. The signed payload is <code>{root_id, traverser_id, target, label, version, status, principal, session_id, started_at, finished_at, duration_ms, error?, output_bytes}</code>; it never carries the output itself, so integrators fetch <code>GET /api/v2/traversers/{id}</code> for the result. Child steps do not emit it. This replaces polling for the callers that only need a completion signal; <code>Client.wait</code> and the event stream remain for callers that want the result inline.</p>
+<h2 id="mlflow-tracing">MLflow tracing</h2>
+<p><code>atfgraph.mlflow</code> is optional: <code>import atfgraph</code> never imports <code>mlflow</code>, and nothing is contacted until you call <code>enable</code>. Adapted from <code>python/atfgraph/mlflow.py</code> and <code>tests/test_mlflow_tracing.py</code>:</p>
+<pre><code class="language-python">import asyncio
+
+from atfgraph import Agent
+from atfgraph import mlflow as tracing
+
+app = Agent(node_id=&quot;trace-node&quot;, version=&quot;1.0.0&quot;)
+
+
+@tracing.trace(kind=&quot;tool&quot;)
+async def score(nights: int) -&gt; float:
+    await asyncio.sleep(0.01)
+    return nights * 1.5
+
+
+@app.traversal()
+async def plan(city: str, nights: int) -&gt; dict:
+    with tracing.span(&quot;lookup&quot;, kind=&quot;retriever&quot;, attributes={&quot;atfgraph.city&quot;: city}) as live:
+        if live is not None:
+            live.set_attribute(&quot;rates&quot;, 3)
+    return {&quot;city&quot;: city, &quot;score&quot;: await score(nights)}
+
+
+if __name__ == &quot;__main__&quot;:
+    tracing.enable(app, tracking_uri=&quot;sqlite:///./data/mlflow.db&quot;)
+    app.run()</code></pre>
+<p><code>enable(app)</code> returns <code>False</code> after one warning when <code>mlflow</code> is not installed. It wraps every registered handler (and handlers registered later), <code>app.traverse</code>, <code>app.ai</code>, <code>app.harness</code> and <code>app.record_usage</code> on that <code>Agent</code> instance; each worker task becomes one trace tagged with <code>atfgraph.root_id</code>, <code>atfgraph.node</code>, <code>atfgraph.capability</code> and <code>atfgraph.session_id</code>. The root step writes <code>mlflow_trace_id</code> (and <code>mlflow_experiment_url</code> for browsable stores) into the run metadata under its lease; a failure is counted in <code>tracing.stats()[&quot;metadata_failed&quot;]</code> and never reaches the handler. Inputs and outputs are not recorded unless you pass <code>capture_inputs</code>/<code>capture_outputs</code> (with an optional <code>redact</code> callback). <code>tracing.enable_from_env(app)</code> activates from <code>ATFGRAPH_MLFLOW_TRACING=true</code>; call <code>tracing.flush()</code> before a process exits. Configuration, span types and the bridge for runs traced elsewhere are in <a href="mlflow.html">../mlflow.md</a>.</p>
+<h2 id="opentelemetry-export">OpenTelemetry export</h2>
+<p><code>atfgraph.otel</code> is the OpenTelemetry sibling of the MLflow module, for teams whose traces live in Grafana Tempo, Honeycomb, Datadog or any OTLP collector rather than in MLflow. It is optional (<code>pip install &#x27;./python[otel]&#x27;</code>), <code>import atfgraph</code> never imports <code>opentelemetry</code>, and it never installs a global tracer provider. Adapted from <code>python/atfgraph/otel.py</code> and <code>tests/test_otel.py</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent
+from atfgraph import otel
+
+app = Agent(node_id=&quot;trace-node&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.traversal()
+async def plan(city: str, nights: int) -&gt; dict:
+    with otel.span(&quot;lookup&quot;, attributes={&quot;atfgraph.city&quot;: city}):
+        return {&quot;city&quot;: city, &quot;nights&quot;: nights}
+
+
+if __name__ == &quot;__main__&quot;:
+    otel.enable(app, endpoint=&quot;http://localhost:4318&quot;, service_name=&quot;atfgraph.trace-node&quot;)
+    app.run()</code></pre>
+<p><code>enable(app)</code> wraps the same points the MLflow module wraps: every handler becomes a <code>SERVER</code> span carrying <code>atfgraph.node</code>, <code>atfgraph.capability</code>, <code>atfgraph.traverser_id</code>, <code>atfgraph.root_id</code>, <code>atfgraph.session_id</code>, <code>atfgraph.attempt</code> and <code>atfgraph.kind</code>; <code>app.traverse</code> opens a <code>CLIENT</code> child span and the child step joins the same trace through a W3C <code>traceparent</code>; <code>app.ai</code> spans carry <code>gen_ai.request.model</code>, and recorded usage adds <code>gen_ai.usage.input_tokens</code>, <code>gen_ai.usage.output_tokens</code> and <code>atfgraph.usage.cost_usd</code>. The root step forwards <code>otel_trace_id</code> and <code>otel_traceparent</code> into run metadata, so the console&#x27;s run detail links the two systems. <code>otel.enable_from_env(app)</code> activates from <code>ATFGRAPH_OTEL_TRACING=true</code> with the standard <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>, <code>OTEL_EXPORTER_OTLP_HEADERS</code> and <code>OTEL_SERVICE_NAME</code> variables (<code>atfgraph.&lt;node_id&gt;</code> by default); <code>Agent.serve</code> calls it, so an installed node needs only those variables in its package <code>.env</code>. <code>ATFGRAPH_OTEL_CAPTURE_PAYLOADS=true</code> records inputs and outputs; <code>otel.flush()</code> drains the exporter before a process exits; <code>otel.stats()</code> reports spans, failures and forwarded metadata.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="06-model-calls.html">./06-model-calls.md</a> for the calls that produce these usage entries.</li><li><a href="13-identity-credentials-and-access.html">./13-identity-credentials-and-access.md</a> for the lease and role model behind worker writes.</li><li><a href="15-testing.html">./15-testing.md</a> for running these journeys against a real daemon.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

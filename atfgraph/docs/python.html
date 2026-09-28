@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python SDK guide — ATFGraph vNext reference</title>
+<meta name="description" content="Python SDK guide: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Python SDK guide</h1>
+<p>The <code>atfgraph</code> package is one wheel that contains both halves of the SDK: <code>Agent</code>, for writing agent nodes that register capabilities with the graph server and claim work from it, and <code>Client</code>, for starting traversers and reading paths from any Python program. These pages teach the SDK in the order a node grows: a single capability first, then calls between nodes, state, model and harness calls, triggers, multi-node systems, hosting, security, observability and testing. Every snippet is adapted from one of the shipped examples under <code>examples/</code> and is exercised by the repository&#x27;s tests against the real graph server.</p>
+<p>Start with the <a href="quickstart.html">quickstart</a> if you have not run a graph server yet, and keep <a href="concepts.html">core concepts</a> open for the vocabulary.</p>
+<h2 id="build-a-node">Build a node</h2>
+<ol><li><a href="01-install-and-first-node.html">Install and run a first node</a>: the wheel, an <code>Agent</code>, one traversal and one skill, three ways to run the worker, the first recorded path.</li><li><a href="02-traversals-skills-and-routers.html">Traversals, skills, typed input and output, routers</a>: what the two capability kinds mean on the path, Pydantic schemas, sync and async handlers, grouping capabilities with <code>AgentRouter</code>.</li><li><a href="03-calling-other-nodes.html">Calling other nodes and fanning out</a>: nested <code>traverse</code>, <code>call</code> and <code>submit</code>, <code>asyncio.gather</code>, capacity and deadlock avoidance, progress, cancellation, retries.</li><li><a href="04-sessions-and-memory.html">Sessions and memory</a>: server-created sessions, the four memory scopes, compare-and-set, TTL, vector memory, change feeds.</li><li><a href="05-knowledge.html">Document knowledge</a>: ingesting text, BM25 search with citations, when vector memory is the better tool.</li></ol>
+<h2 id="reach-out-of-the-node">Reach out of the node</h2>
+<ol><li><a href="06-model-calls.html">Model calls</a>: <code>app.ai</code> with structured output, tools and streaming, the multimodal family, provider configuration, cost entries.</li><li><a href="07-harness.html">Delegating to a coding harness</a>: <code>app.harness</code> and its providers, <code>harness_doctor</code>, typed output, how the run lands on the path.</li><li><a href="08-approvals-pauses-and-checkpoints.html">Approvals, pauses and checkpoints</a>: durable human-in-the-loop waits, deciding out of band, replay that runs pre-pause work once.</li><li><a href="09-emitters.html">Emitters: schedules and webhooks</a>: cron and interval triggers, authenticated webhook sources, transforms, duplicate suppression.</li></ol>
+<h2 id="grow-to-a-system">Grow to a system</h2>
+<ol><li><a href="10-multi-node.html">Multi-node systems</a>: discovery, several nodes in one process, the offline mesh, version routing, cross-node edges.</li><li><a href="11-resilience-and-controls.html">Resilience and client-side controls</a>: retries, budgets, cooperative cancellation, rate limiting, result caching, model routing.</li><li><a href="12-hosting.html">Hosting a node</a>: the long-running worker, serverless invocation, realtime sessions, containers.</li></ol>
+<h2 id="operate-it">Operate it</h2>
+<ol><li><a href="13-identity-credentials-and-access.html">Identity, credentials and access boundaries</a>: node identities, verifiable execution credentials, access policies enforced by the server.</li><li><a href="14-observability.html">Usage, logs and tracing</a>: usage accounting, node logs, run metadata, webhooks, MLflow.</li><li><a href="15-testing.html">Testing against the graph server</a>: the real-daemon fixture the repository uses, fixture modes, and the limits of the in-memory contract double.</li></ol>
+<h2 id="look-things-up">Look things up</h2>
+<ol><li><a href="16-api-reference.html">Python API reference</a>: every public export with its methods and purpose.</li></ol>
+<p>Related: the <a href="cli-reference.html"><code>atfg</code> command reference</a>, the <a href="catalog.html">HTTP API areas</a>, and <a href="troubleshooting.html">troubleshooting</a> for the exact error strings you will see.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

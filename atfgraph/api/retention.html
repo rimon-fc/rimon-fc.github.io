@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retention operations — ATFGraph vNext reference</title>
+<meta name="description" content="Retention operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Retention operations</h1>
+<p>Preview and apply pruning of old traversers, events and logs.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-retentionApply"><code>retentionApply</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/retention/apply</code></td></tr><tr><td><a href="#op-retentionPlan"><code>retentionPlan</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/retention/plan</code></td></tr></tbody></table></div>
+<section class="operation" id="op-retentionApply">
+<h3><code>retentionApply</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/retention/apply</code></p>
+<p class="meta">Requires: admin role</p>
+<p>The same report as plan; with dry_run:false each eligible root is pruned in its own transaction under a root lock with eligibility re-checked, and a storage failure rolls that root back while the batch continues (action failed with error). Only the journal tables in pruned_tables are deleted; traverser rows, usage, run metadata, replays, emitter lineage, credentials, sessions and memory are retained, so idempotency keys stay spent and traversers.get keeps answering. Repeat with the same cutoff until scanned is 0, or page with next_after_seq. With mode sessions each eligible session&#x27;s brief artifacts are deleted under the session row lock (rows_deleted.brief_artifacts); the session, its runs, memory and knowledge stay; page with cursor.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.retention_api.RetentionApi.retention_apply()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-retentionrequest"><code>RetentionRequest</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;cutoff&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-retentionreport"><code>RetentionReport</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;after_seq&quot;: 0,
+  &quot;cutoff&quot;: 0,
+  &quot;dry_run&quot;: false,
+  &quot;eligible&quot;: 0,
+  &quot;evaluated_at&quot;: 0,
+  &quot;exhausted&quot;: false,
+  &quot;failed&quot;: 0,
+  &quot;limit&quot;: 0,
+  &quot;mode&quot;: &quot;string&quot;,
+  &quot;namespace&quot;: &quot;string&quot;,
+  &quot;next_after_seq&quot;: 0,
+  &quot;next_cursor&quot;: &quot;string&quot;,
+  &quot;operation&quot;: &quot;string&quot;,
+  &quot;pruned&quot;: 0,
+  &quot;pruned_tables&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;retained_tables&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;roots&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;descendants&quot;: 0,
+      &quot;error&quot;: {
+        &quot;code&quot;: &quot;string&quot;,
+        &quot;message&quot;: &quot;string&quot;
+      },
+      &quot;finished_at&quot;: 0,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;reason&quot;: &quot;string&quot;,
+      &quot;root_id&quot;: &quot;string&quot;,
+      &quot;rows&quot;: {
+        &quot;approvals&quot;: 0,
+        &quot;attempts&quot;: 0,
+        &quot;brief_artifacts&quot;: 0,
+        &quot;checkpoints&quot;: 0,
+        &quot;events&quot;: 0,
+        &quot;execution_artifacts&quot;: 0,
+        &quot;node_logs&quot;: 0,
+        &quot;signed_paths&quot;: 0,
+        &quot;total&quot;: 0
+      },
+      &quot;seq&quot;: 0,
+      &quot;status&quot;: &quot;queued&quot;
+    }
+  ],
+  &quot;rows_deleted&quot;: {
+    &quot;approvals&quot;: 0,
+    &quot;attempts&quot;: 0,
+    &quot;brief_artifacts&quot;: 0,
+    &quot;checkpoints&quot;: 0,
+    &quot;events&quot;: 0,
+    &quot;execution_artifacts&quot;: 0,
+    &quot;node_logs&quot;: 0,
+    &quot;signed_paths&quot;: 0,
+    &quot;total&quot;: 0
+  },
+  &quot;rows_planned&quot;: {
+    &quot;approvals&quot;: 0,
+    &quot;attempts&quot;: 0,
+    &quot;brief_artifacts&quot;: 0,
+    &quot;checkpoints&quot;: 0,
+    &quot;events&quot;: 0,
+    &quot;execution_artifacts&quot;: 0,
+    &quot;node_logs&quot;: 0,
+    &quot;signed_paths&quot;: 0,
+    &quot;total&quot;: 0
+  },
+  &quot;scanned&quot;: 0,
+  &quot;sessions&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;artifacts&quot;: 0,
+      &quot;bytes&quot;: 0,
+      &quot;error&quot;: {
+        &quot;code&quot;: &quot;string&quot;,
+        &quot;message&quot;: &quot;string&quot;
+      },
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;reason&quot;: &quot;string&quot;,
+      &quot;rows&quot;: {
+        &quot;approvals&quot;: 0,
+        &quot;attempts&quot;: 0,
+        &quot;brief_artifacts&quot;: 0,
+        &quot;checkpoints&quot;: 0,
+        &quot;events&quot;: 0,
+        &quot;execution_artifacts&quot;: 0,
+        &quot;node_logs&quot;: 0,
+        &quot;signed_paths&quot;: 0,
+        &quot;total&quot;: 0
+      },
+      &quot;session_id&quot;: &quot;string&quot;,
+      &quot;updated_at&quot;: 0
+    }
+  ],
+  &quot;skip_reasons&quot;: {
+    &quot;key&quot;: 0
+  },
+  &quot;skipped&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-retentionPlan">
+<h3><code>retentionPlan</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/retention/plan</code></p>
+<p class="meta">Requires: admin role</p>
+<p>Read-only report of the next batch (limit, default 100) of finished root executions in the caller&#x27;s namespace whose whole tree finished strictly before cutoff, with the journal rows that would be pruned and the reason for every skip (active lease, unfinished descendant, recent activity, pending approval, active session). With mode sessions the batch is instead the sessions with brief artifacts whose last activity is strictly before cutoff (skips: session_active, unfinished_traverser, recent_activity), paged with cursor / next_cursor and reported under sessions. dry_run:false is rejected here; a body namespace field is rejected (400 invalid_retention_request). Non-admins get 403 before any read.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.retention_api.RetentionApi.retention_plan()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-retentionrequest"><code>RetentionRequest</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;cutoff&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-retentionreport"><code>RetentionReport</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;after_seq&quot;: 0,
+  &quot;cutoff&quot;: 0,
+  &quot;dry_run&quot;: false,
+  &quot;eligible&quot;: 0,
+  &quot;evaluated_at&quot;: 0,
+  &quot;exhausted&quot;: false,
+  &quot;failed&quot;: 0,
+  &quot;limit&quot;: 0,
+  &quot;mode&quot;: &quot;string&quot;,
+  &quot;namespace&quot;: &quot;string&quot;,
+  &quot;next_after_seq&quot;: 0,
+  &quot;next_cursor&quot;: &quot;string&quot;,
+  &quot;operation&quot;: &quot;string&quot;,
+  &quot;pruned&quot;: 0,
+  &quot;pruned_tables&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;retained_tables&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;roots&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;descendants&quot;: 0,
+      &quot;error&quot;: {
+        &quot;code&quot;: &quot;string&quot;,
+        &quot;message&quot;: &quot;string&quot;
+      },
+      &quot;finished_at&quot;: 0,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;reason&quot;: &quot;string&quot;,
+      &quot;root_id&quot;: &quot;string&quot;,
+      &quot;rows&quot;: {
+        &quot;approvals&quot;: 0,
+        &quot;attempts&quot;: 0,
+        &quot;brief_artifacts&quot;: 0,
+        &quot;checkpoints&quot;: 0,
+        &quot;events&quot;: 0,
+        &quot;execution_artifacts&quot;: 0,
+        &quot;node_logs&quot;: 0,
+        &quot;signed_paths&quot;: 0,
+        &quot;total&quot;: 0
+      },
+      &quot;seq&quot;: 0,
+      &quot;status&quot;: &quot;queued&quot;
+    }
+  ],
+  &quot;rows_deleted&quot;: {
+    &quot;approvals&quot;: 0,
+    &quot;attempts&quot;: 0,
+    &quot;brief_artifacts&quot;: 0,
+    &quot;checkpoints&quot;: 0,
+    &quot;events&quot;: 0,
+    &quot;execution_artifacts&quot;: 0,
+    &quot;node_logs&quot;: 0,
+    &quot;signed_paths&quot;: 0,
+    &quot;total&quot;: 0
+  },
+  &quot;rows_planned&quot;: {
+    &quot;approvals&quot;: 0,
+    &quot;attempts&quot;: 0,
+    &quot;brief_artifacts&quot;: 0,
+    &quot;checkpoints&quot;: 0,
+    &quot;events&quot;: 0,
+    &quot;execution_artifacts&quot;: 0,
+    &quot;node_logs&quot;: 0,
+    &quot;signed_paths&quot;: 0,
+    &quot;total&quot;: 0
+  },
+  &quot;scanned&quot;: 0,
+  &quot;sessions&quot;: [
+    {
+      &quot;action&quot;: &quot;string&quot;,
+      &quot;artifacts&quot;: 0,
+      &quot;bytes&quot;: 0,
+      &quot;error&quot;: {
+        &quot;code&quot;: &quot;string&quot;,
+        &quot;message&quot;: &quot;string&quot;
+      },
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;reason&quot;: &quot;string&quot;,
+      &quot;rows&quot;: {
+        &quot;approvals&quot;: 0,
+        &quot;attempts&quot;: 0,
+        &quot;brief_artifacts&quot;: 0,
+        &quot;checkpoints&quot;: 0,
+        &quot;events&quot;: 0,
+        &quot;execution_artifacts&quot;: 0,
+        &quot;node_logs&quot;: 0,
+        &quot;signed_paths&quot;: 0,
+        &quot;total&quot;: 0
+      },
+      &quot;session_id&quot;: &quot;string&quot;,
+      &quot;updated_at&quot;: 0
+    }
+  ],
+  &quot;skip_reasons&quot;: {
+    &quot;key&quot;: 0
+  },
+  &quot;skipped&quot;: 0
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

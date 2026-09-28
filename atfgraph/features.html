@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature areas — ATFGraph vNext reference</title>
+<meta name="description" content="Feature areas: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/theme.js"></script>
+</head>
+<body class="page-features" data-site-root="">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="index.html">Overview</a></li><li><a href="api/index.html">API reference</a></li><li><a href="schemas/index.html">Schemas</a></li><li><a href="features.html" aria-current="page">Feature areas</a></li><li><a href="examples/index.html">Examples</a></li><li><a href="docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Feature areas</h1>
+<p>Each area is a tag in the contract. Counts, methods and roles come from the contract file; the one-line notes are editorial. An area listed here describes the published contract, not the state of a running deployment.</p>
+<p class="meta">Roles are the contract&#x27;s own x-required-roles. Credentials carry a namespace and a principal; admin implies every role, and an operation marked &quot;no credentials&quot; is unauthenticated. A role is necessary, not sufficient: the server also enforces ownership.</p>
+<p>Generated route counts cover JSON request/response operations. The public Python SDK also provides <code>Client.events(traverser_id)</code> for SSE streaming and reconnection.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Area</th><th scope="col">Operations</th><th scope="col">Methods</th><th scope="col">Roles</th><th scope="col">Generated Python client</th></tr></thead><tbody><tr><td><a href="#area-access">Access</a></td><td>12</td><td>DELETE, GET, PATCH, POST, PUT</td><td>admin, invoke, worker</td><td>12/12</td></tr><tr><td><a href="#area-admin">Admin</a></td><td>2</td><td>DELETE, POST</td><td>worker</td><td>2/2</td></tr><tr><td><a href="#area-approvals">Approvals</a></td><td>4</td><td>GET, POST</td><td>invoke, worker</td><td>4/4</td></tr><tr><td><a href="#area-artifacts">Artifacts</a></td><td>8</td><td>DELETE, GET, POST</td><td>invoke, worker</td><td>8/8</td></tr><tr><td><a href="#area-auth">Auth</a></td><td>4</td><td>DELETE, GET, POST</td><td>admin</td><td>4/4</td></tr><tr><td><a href="#area-budgets">Budgets</a></td><td>7</td><td>DELETE, GET, PATCH, POST</td><td>invoke</td><td>7/7</td></tr><tr><td><a href="#area-checkpoints">Checkpoints</a></td><td>3</td><td>GET, POST</td><td>invoke, worker</td><td>3/3</td></tr><tr><td><a href="#area-credentials">Credentials</a></td><td>14</td><td>GET, POST, PUT</td><td>admin, invoke, worker</td><td>14/14</td></tr><tr><td><a href="#area-discovery">Discovery</a></td><td>8</td><td>DELETE, GET, POST</td><td>admin, invoke</td><td>8/8</td></tr><tr><td><a href="#area-emitters">Emitters</a></td><td>10</td><td>DELETE, GET, PATCH, POST</td><td>admin, invoke</td><td>10/10</td></tr><tr><td><a href="#area-evaluations">Evaluations</a></td><td>14</td><td>DELETE, GET, PATCH, POST</td><td>invoke</td><td>14/14</td></tr><tr><td><a href="#area-events">Events</a></td><td>3</td><td>GET</td><td>invoke, worker</td><td>2/3</td></tr><tr><td><a href="#area-health">Health</a></td><td>1</td><td>GET</td><td>public</td><td>1/1</td></tr><tr><td><a href="#area-identity">Identity</a></td><td>7</td><td>GET, POST</td><td>admin, invoke</td><td>7/7</td></tr><tr><td><a href="#area-knowledge">Knowledge</a></td><td>7</td><td>POST</td><td>invoke, worker</td><td>7/7</td></tr><tr><td><a href="#area-memory">Memory</a></td><td>9</td><td>POST</td><td>invoke, worker</td><td>9/9</td></tr><tr><td><a href="#area-observability">Observability</a></td><td>19</td><td>DELETE, GET, PATCH, POST, PUT</td><td>admin, invoke, worker</td><td>19/19</td></tr><tr><td><a href="#area-retention">Retention</a></td><td>2</td><td>POST</td><td>admin</td><td>2/2</td></tr><tr><td><a href="#area-runtimesettings">RuntimeSettings</a></td><td>5</td><td>DELETE, GET, POST, PUT</td><td>invoke</td><td>5/5</td></tr><tr><td><a href="#area-sessions">Sessions</a></td><td>7</td><td>DELETE, GET, POST, PUT</td><td>invoke, worker</td><td>7/7</td></tr><tr><td><a href="#area-traversers">Traversers</a></td><td>6</td><td>GET, POST</td><td>invoke</td><td>6/6</td></tr><tr><td><a href="#area-worker">Worker</a></td><td>10</td><td>GET, POST</td><td>invoke, worker</td><td>10/10</td></tr></tbody></table></div>
+<section id="area-access">
+<h2>Access</h2>
+<p>Access policies and connector grants: who may start which traversals, and which external connectors a namespace may reach. Server authorization is authoritative; these operations edit the rules it enforces.</p>
+<ul><li><a href="api/access.html#op-admitAccess"><code>POST /api/v2/access/admit</code></a> — <code>admitAccess</code></li><li><a href="api/access.html#op-getOwnConnector"><code>GET /api/v2/access/connector</code></a> — <code>getOwnConnector</code></li><li><a href="api/access.html#op-listConnectors"><code>GET /api/v2/access/connectors</code></a> — <code>listConnectors</code></li><li><a href="api/access.html#op-getConnector"><code>GET /api/v2/access/connectors/{principal}</code></a> — <code>getConnector</code></li><li><a href="api/access.html#op-putConnector"><code>PUT /api/v2/access/connectors/{principal}</code></a> — <code>putConnector</code></li><li><a href="api/access.html#op-revokeConnector"><code>POST /api/v2/access/connectors/{principal}/revoke</code></a> — <code>revokeConnector</code></li><li><a href="api/access.html#op-evaluateAccess"><code>POST /api/v2/access/evaluate</code></a> — <code>evaluateAccess</code></li><li><a href="api/access.html#op-listAccessPolicies"><code>GET /api/v2/access/policies</code></a> — <code>listAccessPolicies</code></li><li><a href="api/access.html#op-createAccessPolicy"><code>POST /api/v2/access/policies</code></a> — <code>createAccessPolicy</code></li><li><a href="api/access.html#op-getAccessPolicy"><code>GET /api/v2/access/policies/{id}</code></a> — <code>getAccessPolicy</code></li><li><a href="api/access.html#op-updateAccessPolicy"><code>PATCH /api/v2/access/policies/{id}</code></a> — <code>updateAccessPolicy</code></li><li><a href="api/access.html#op-deleteAccessPolicy"><code>DELETE /api/v2/access/policies/{id}</code></a> — <code>deleteAccessPolicy</code></li></ul>
+</section>
+<section id="area-admin">
+<h2>Admin</h2>
+<p>Registering agent node definitions. Registration is immutable per version.</p>
+<ul><li><a href="api/admin.html#op-registerAgent"><code>POST /api/v2/agents</code></a> — <code>registerAgent</code></li><li><a href="api/admin.html#op-unregisterAgent"><code>DELETE /api/v2/agents/{label}</code></a> — <code>unregisterAgent</code></li></ul>
+</section>
+<section id="area-approvals">
+<h2>Approvals</h2>
+<p>Requesting a decision from a human or another principal while a traverser waits.</p>
+<ul><li><a href="api/approvals.html#op-listApprovals"><code>GET /api/v2/approvals</code></a> — <code>listApprovals</code></li><li><a href="api/approvals.html#op-requestApproval"><code>POST /api/v2/approvals</code></a> — <code>requestApproval</code></li><li><a href="api/approvals.html#op-getApproval"><code>GET /api/v2/approvals/{id}</code></a> — <code>getApproval</code></li><li><a href="api/approvals.html#op-decideApproval"><code>POST /api/v2/approvals/{id}/decide</code></a> — <code>decideApproval</code></li></ul>
+</section>
+<section id="area-artifacts">
+<h2>Artifacts</h2>
+<p>Files a traverser produced or consumed: upload, list, download and delete them by traverser.</p>
+<ul><li><a href="api/artifacts.html#op-getArtifact"><code>GET /api/v2/artifacts/{id}</code></a> — <code>getArtifact</code></li><li><a href="api/artifacts.html#op-deleteArtifact"><code>DELETE /api/v2/artifacts/{id}</code></a> — <code>deleteArtifact</code></li><li><a href="api/artifacts.html#op-listBriefArtifacts"><code>GET /api/v2/sessions/{id}/artifacts</code></a> — <code>listBriefArtifacts</code></li><li><a href="api/artifacts.html#op-putBriefArtifact"><code>POST /api/v2/sessions/{id}/artifacts</code></a> — <code>putBriefArtifact</code></li><li><a href="api/artifacts.html#op-getBriefArtifact"><code>GET /api/v2/sessions/{id}/artifacts/{artifact_id}</code></a> — <code>getBriefArtifact</code></li><li><a href="api/artifacts.html#op-deleteBriefArtifact"><code>DELETE /api/v2/sessions/{id}/artifacts/{artifact_id}</code></a> — <code>deleteBriefArtifact</code></li><li><a href="api/artifacts.html#op-listArtifacts"><code>GET /api/v2/traversers/{id}/artifacts</code></a> — <code>listArtifacts</code></li><li><a href="api/artifacts.html#op-putArtifact"><code>POST /api/v2/traversers/{id}/artifacts</code></a> — <code>putArtifact</code></li></ul>
+</section>
+<section id="area-auth">
+<h2>Auth</h2>
+<p>Operations grouped under this contract tag.</p>
+<ul><li><a href="api/auth.html#op-listApiTokens"><code>GET /api/v2/auth/tokens</code></a> — <code>listApiTokens</code></li><li><a href="api/auth.html#op-createApiToken"><code>POST /api/v2/auth/tokens</code></a> — <code>createApiToken</code></li><li><a href="api/auth.html#op-revokeApiToken"><code>DELETE /api/v2/auth/tokens/{id}</code></a> — <code>revokeApiToken</code></li><li><a href="api/auth.html#op-rotateApiToken"><code>POST /api/v2/auth/tokens/{id}/rotate</code></a> — <code>rotateApiToken</code></li></ul>
+</section>
+<section id="area-budgets">
+<h2>Budgets</h2>
+<p>Operations grouped under this contract tag.</p>
+<ul><li><a href="api/budgets.html#op-listBudgets"><code>GET /api/v2/budgets</code></a> — <code>listBudgets</code></li><li><a href="api/budgets.html#op-createBudget"><code>POST /api/v2/budgets</code></a> — <code>createBudget</code></li><li><a href="api/budgets.html#op-budgetStatus"><code>GET /api/v2/budgets/status</code></a> — <code>budgetStatus</code></li><li><a href="api/budgets.html#op-getBudget"><code>GET /api/v2/budgets/{id}</code></a> — <code>getBudget</code></li><li><a href="api/budgets.html#op-updateBudget"><code>PATCH /api/v2/budgets/{id}</code></a> — <code>updateBudget</code></li><li><a href="api/budgets.html#op-deleteBudget"><code>DELETE /api/v2/budgets/{id}</code></a> — <code>deleteBudget</code></li><li><a href="api/budgets.html#op-budgetUsage"><code>GET /api/v2/budgets/{id}/usage</code></a> — <code>budgetUsage</code></li></ul>
+</section>
+<section id="area-checkpoints">
+<h2>Checkpoints</h2>
+<p>Named, revisioned state a live traverser writes and reads back.</p>
+<ul><li><a href="api/checkpoints.html#op-listCheckpoints"><code>GET /api/v2/traversers/{id}/checkpoints</code></a> — <code>listCheckpoints</code></li><li><a href="api/checkpoints.html#op-getCheckpoint"><code>GET /api/v2/traversers/{id}/checkpoints/{name}</code></a> — <code>getCheckpoint</code></li><li><a href="api/checkpoints.html#op-writeCheckpoint"><code>POST /api/v2/traversers/{id}/checkpoints/{name}</code></a> — <code>writeCheckpoint</code></li></ul>
+</section>
+<section id="area-credentials">
+<h2>Credentials</h2>
+<p>Node identity enrolment, credential issuance and verification, revocation and the node tag ledger. Keys stay on the graph server; nothing here hands out private material.</p>
+<ul><li><a href="api/credentials.html#op-listCredentials"><code>GET /api/v2/credentials</code></a> — <code>listCredentials</code></li><li><a href="api/credentials.html#op-issueCredential"><code>POST /api/v2/credentials</code></a> — <code>issueCredential</code></li><li><a href="api/credentials.html#op-listDids"><code>GET /api/v2/credentials/dids</code></a> — <code>listDids</code></li><li><a href="api/credentials.html#op-enrolDid"><code>POST /api/v2/credentials/dids</code></a> — <code>enrolDid</code></li><li><a href="api/credentials.html#op-resolveDid"><code>POST /api/v2/credentials/dids/resolve</code></a> — <code>resolveDid</code></li><li><a href="api/credentials.html#op-getDid"><code>GET /api/v2/credentials/dids/{label}</code></a> — <code>getDid</code></li><li><a href="api/credentials.html#op-listTagLedger"><code>GET /api/v2/credentials/tags</code></a> — <code>listTagLedger</code></li><li><a href="api/credentials.html#op-proposeTags"><code>POST /api/v2/credentials/tags</code></a> — <code>proposeTags</code></li><li><a href="api/credentials.html#op-decideTags"><code>POST /api/v2/credentials/tags/decide</code></a> — <code>decideTags</code></li><li><a href="api/credentials.html#op-getTagPolicy"><code>GET /api/v2/credentials/tags/policy</code></a> — <code>getTagPolicy</code></li><li><a href="api/credentials.html#op-putTagPolicy"><code>PUT /api/v2/credentials/tags/policy</code></a> — <code>putTagPolicy</code></li><li><a href="api/credentials.html#op-verifyCredential"><code>POST /api/v2/credentials/verify</code></a> — <code>verifyCredential</code></li><li><a href="api/credentials.html#op-getCredential"><code>GET /api/v2/credentials/{id}</code></a> — <code>getCredential</code></li><li><a href="api/credentials.html#op-revokeCredential"><code>POST /api/v2/credentials/{id}/revoke</code></a> — <code>revokeCredential</code></li></ul>
+</section>
+<section id="area-discovery">
+<h2>Discovery</h2>
+<p>Reading the server description, the registered agent nodes and their capabilities, and the agent-resource-discovery publications and search under /api/v2/ard.</p>
+<ul><li><a href="api/discovery.html#op-listAgents"><code>GET /api/v2/agents</code></a> — <code>listAgents</code></li><li><a href="api/discovery.html#op-agentCapabilities"><code>GET /api/v2/agents/{label}/capabilities</code></a> — <code>agentCapabilities</code></li><li><a href="api/discovery.html#op-listPublications"><code>GET /api/v2/ard/publications</code></a> — <code>listPublications</code></li><li><a href="api/discovery.html#op-publishDiscovery"><code>POST /api/v2/ard/publications</code></a> — <code>publishDiscovery</code></li><li><a href="api/discovery.html#op-deletePublication"><code>DELETE /api/v2/ard/publications/{id}</code></a> — <code>deletePublication</code></li><li><a href="api/discovery.html#op-searchDiscovery"><code>POST /api/v2/ard/search</code></a> — <code>searchDiscovery</code></li><li><a href="api/discovery.html#op-discoverySettings"><code>GET /api/v2/ard/settings</code></a> — <code>discoverySettings</code></li><li><a href="api/discovery.html#op-serverInfo"><code>GET /api/v2/server</code></a> — <code>serverInfo</code></li></ul>
+</section>
+<section id="area-emitters">
+<h2>Emitters</h2>
+<p>Scheduled and event-driven sources that start traversers, plus their delivery log.</p>
+<ul><li><a href="api/emitters.html#op-syncEmitters"><code>POST /api/v2/agents/{label}/emitters</code></a> — <code>syncEmitters</code></li><li><a href="api/emitters.html#op-listEmitters"><code>GET /api/v2/emitters</code></a> — <code>listEmitters</code></li><li><a href="api/emitters.html#op-createEmitter"><code>POST /api/v2/emitters</code></a> — <code>createEmitter</code></li><li><a href="api/emitters.html#op-emitterMetrics"><code>GET /api/v2/emitters/metrics</code></a> — <code>emitterMetrics</code></li><li><a href="api/emitters.html#op-getEmitter"><code>GET /api/v2/emitters/{id}</code></a> — <code>getEmitter</code></li><li><a href="api/emitters.html#op-updateEmitter"><code>PATCH /api/v2/emitters/{id}</code></a> — <code>updateEmitter</code></li><li><a href="api/emitters.html#op-deleteEmitter"><code>DELETE /api/v2/emitters/{id}</code></a> — <code>deleteEmitter</code></li><li><a href="api/emitters.html#op-emitterEvents"><code>GET /api/v2/emitters/{id}/events</code></a> — <code>emitterEvents</code></li><li><a href="api/emitters.html#op-fireEmitter"><code>POST /api/v2/emitters/{id}/fire</code></a> — <code>fireEmitter</code></li><li><a href="api/emitters.html#op-replayEmitterEvent"><code>POST /api/v2/emitters/{id}/replay</code></a> — <code>replayEmitterEvent</code></li></ul>
+</section>
+<section id="area-evaluations">
+<h2>Evaluations</h2>
+<p>Operations grouped under this contract tag.</p>
+<ul><li><a href="api/evaluations.html#op-listEvalCaseSets"><code>GET /api/v2/evals/case-sets</code></a> — <code>listEvalCaseSets</code></li><li><a href="api/evaluations.html#op-createEvalCaseSet"><code>POST /api/v2/evals/case-sets</code></a> — <code>createEvalCaseSet</code></li><li><a href="api/evaluations.html#op-getEvalCaseSet"><code>GET /api/v2/evals/case-sets/{id}</code></a> — <code>getEvalCaseSet</code></li><li><a href="api/evaluations.html#op-updateEvalCaseSet"><code>PATCH /api/v2/evals/case-sets/{id}</code></a> — <code>updateEvalCaseSet</code></li><li><a href="api/evaluations.html#op-deleteEvalCaseSet"><code>DELETE /api/v2/evals/case-sets/{id}</code></a> — <code>deleteEvalCaseSet</code></li><li><a href="api/evaluations.html#op-listEvalCases"><code>GET /api/v2/evals/case-sets/{id}/cases</code></a> — <code>listEvalCases</code></li><li><a href="api/evaluations.html#op-createEvalCase"><code>POST /api/v2/evals/case-sets/{id}/cases</code></a> — <code>createEvalCase</code></li><li><a href="api/evaluations.html#op-startEvalRun"><code>POST /api/v2/evals/case-sets/{id}/run</code></a> — <code>startEvalRun</code></li><li><a href="api/evaluations.html#op-evalScores"><code>GET /api/v2/evals/case-sets/{id}/scores</code></a> — <code>evalScores</code></li><li><a href="api/evaluations.html#op-updateEvalCase"><code>PATCH /api/v2/evals/cases/{id}</code></a> — <code>updateEvalCase</code></li><li><a href="api/evaluations.html#op-deleteEvalCase"><code>DELETE /api/v2/evals/cases/{id}</code></a> — <code>deleteEvalCase</code></li><li><a href="api/evaluations.html#op-listEvalRuns"><code>GET /api/v2/evals/runs</code></a> — <code>listEvalRuns</code></li><li><a href="api/evaluations.html#op-getEvalRun"><code>GET /api/v2/evals/runs/{id}</code></a> — <code>getEvalRun</code></li><li><a href="api/evaluations.html#op-cancelEvalRun"><code>POST /api/v2/evals/runs/{id}/cancel</code></a> — <code>cancelEvalRun</code></li></ul>
+</section>
+<section id="area-events">
+<h2>Events</h2>
+<p>The durable event log of a traverser, as a snapshot or as a stream.</p>
+<ul><li><a href="api/events.html#op-streamNodeLogs"><code>GET /api/v2/logs/events</code></a> — <code>streamNodeLogs</code></li><li><a href="api/events.html#op-getEventLog"><code>GET /api/v2/traversers/{id}/event-log</code></a> — <code>getEventLog</code></li><li><a href="api/events.html#op-streamExecutionEvents"><code>GET /api/v2/traversers/{id}/events</code></a> — <code>streamExecutionEvents</code></li></ul>
+<p class="meta">Not exposed by the generated Python client modules: <code>streamExecutionEvents</code>.</p>
+</section>
+<section id="area-health">
+<h2>Health</h2>
+<p>Unauthenticated liveness of the graph server.</p>
+<ul><li><a href="api/health.html#op-health"><code>GET /health</code></a> — <code>health</code></li></ul>
+</section>
+<section id="area-identity">
+<h2>Identity</h2>
+<p>Node identities, signed paths and proof verification.</p>
+<ul><li><a href="api/identity.html#op-listIdentities"><code>GET /api/v2/identities</code></a> — <code>listIdentities</code></li><li><a href="api/identity.html#op-createIdentity"><code>POST /api/v2/identities</code></a> — <code>createIdentity</code></li><li><a href="api/identity.html#op-revokeIdentity"><code>POST /api/v2/identities/{id}/revoke</code></a> — <code>revokeIdentity</code></li><li><a href="api/identity.html#op-rotateIdentity"><code>POST /api/v2/identities/{id}/rotate</code></a> — <code>rotateIdentity</code></li><li><a href="api/identity.html#op-verifyProof"><code>POST /api/v2/proofs/verify</code></a> — <code>verifyProof</code></li><li><a href="api/identity.html#op-listPathProofs"><code>GET /api/v2/traversers/{id}/proofs</code></a> — <code>listPathProofs</code></li><li><a href="api/identity.html#op-signPath"><code>POST /api/v2/traversers/{id}/sign</code></a> — <code>signPath</code></li></ul>
+</section>
+<section id="area-knowledge">
+<h2>Knowledge</h2>
+<p>Document knowledge per scope: put, list, get, delete, lexical BM25 search with citations, and per-scope statistics.</p>
+<ul><li><a href="api/knowledge.html#op-deleteKnowledgeDocument"><code>POST /api/v2/knowledge/delete</code></a> — <code>deleteKnowledgeDocument</code></li><li><a href="api/knowledge.html#op-getKnowledgeDocument"><code>POST /api/v2/knowledge/get</code></a> — <code>getKnowledgeDocument</code></li><li><a href="api/knowledge.html#op-listKnowledgeDocuments"><code>POST /api/v2/knowledge/list</code></a> — <code>listKnowledgeDocuments</code></li><li><a href="api/knowledge.html#op-putKnowledgeDocument"><code>POST /api/v2/knowledge/put</code></a> — <code>putKnowledgeDocument</code></li><li><a href="api/knowledge.html#op-putKnowledgeBatch"><code>POST /api/v2/knowledge/put-batch</code></a> — <code>putKnowledgeBatch</code></li><li><a href="api/knowledge.html#op-searchKnowledge"><code>POST /api/v2/knowledge/search</code></a> — <code>searchKnowledge</code></li><li><a href="api/knowledge.html#op-knowledgeStats"><code>POST /api/v2/knowledge/stats</code></a> — <code>knowledgeStats</code></li></ul>
+</section>
+<section id="area-memory">
+<h2>Memory</h2>
+<p>Reading and writing the session, actor, workflow and global memory scopes.</p>
+<ul><li><a href="api/memory.html#op-memoryChanges"><code>POST /api/v2/memory/changes</code></a> — <code>memoryChanges</code></li><li><a href="api/memory.html#op-deleteMemory"><code>POST /api/v2/memory/delete</code></a> — <code>deleteMemory</code></li><li><a href="api/memory.html#op-listMemory"><code>POST /api/v2/memory/list</code></a> — <code>listMemory</code></li><li><a href="api/memory.html#op-readMemory"><code>POST /api/v2/memory/read</code></a> — <code>readMemory</code></li><li><a href="api/memory.html#op-deleteMemoryVector"><code>POST /api/v2/memory/vector/delete</code></a> — <code>deleteMemoryVector</code></li><li><a href="api/memory.html#op-getMemoryVector"><code>POST /api/v2/memory/vector/get</code></a> — <code>getMemoryVector</code></li><li><a href="api/memory.html#op-searchMemoryVectors"><code>POST /api/v2/memory/vector/search</code></a> — <code>searchMemoryVectors</code></li><li><a href="api/memory.html#op-setMemoryVector"><code>POST /api/v2/memory/vector/set</code></a> — <code>setMemoryVector</code></li><li><a href="api/memory.html#op-writeMemory"><code>POST /api/v2/memory/write</code></a> — <code>writeMemory</code></li></ul>
+</section>
+<section id="area-observability">
+<h2>Observability</h2>
+<p>What the server knows about running work: usage accounting, node logs, traverser metadata, the observability webhook, server-wide stats and model-endpoint health.</p>
+<ul><li><a href="api/observability.html#op-queryLogs"><code>GET /api/v2/logs</code></a> — <code>queryLogs</code></li><li><a href="api/observability.html#op-appendLogs"><code>POST /api/v2/logs</code></a> — <code>appendLogs</code></li><li><a href="api/observability.html#op-modelHealth"><code>GET /api/v2/model-health</code></a> — <code>modelHealth</code></li><li><a href="api/observability.html#op-getObservabilitySettings"><code>GET /api/v2/observability/settings</code></a> — <code>getObservabilitySettings</code></li><li><a href="api/observability.html#op-updateObservabilitySettings"><code>PATCH /api/v2/observability/settings</code></a> — <code>updateObservabilitySettings</code></li><li><a href="api/observability.html#op-getObservabilityWebhook"><code>GET /api/v2/observability/webhook</code></a> — <code>getObservabilityWebhook</code></li><li><a href="api/observability.html#op-putObservabilityWebhook"><code>PUT /api/v2/observability/webhook</code></a> — <code>putObservabilityWebhook</code></li><li><a href="api/observability.html#op-deleteObservabilityWebhook"><code>DELETE /api/v2/observability/webhook</code></a> — <code>deleteObservabilityWebhook</code></li><li><a href="api/observability.html#op-redriveObservabilityWebhook"><code>POST /api/v2/observability/webhook/redrive</code></a> — <code>redriveObservabilityWebhook</code></li><li><a href="api/observability.html#op-observabilityWebhookStatus"><code>GET /api/v2/observability/webhook/status</code></a> — <code>observabilityWebhookStatus</code></li><li><a href="api/observability.html#op-testObservabilityWebhook"><code>POST /api/v2/observability/webhook/test</code></a> — <code>testObservabilityWebhook</code></li><li><a href="api/observability.html#op-recordRetrievalFeedback"><code>POST /api/v2/retrieval/feedback</code></a> — <code>recordRetrievalFeedback</code></li><li><a href="api/observability.html#op-retrievalFeedbackTotals"><code>POST /api/v2/retrieval/feedback/totals</code></a> — <code>retrievalFeedbackTotals</code></li><li><a href="api/observability.html#op-stats"><code>GET /api/v2/stats</code></a> — <code>stats</code></li><li><a href="api/observability.html#op-getRunMetadata"><code>GET /api/v2/traversers/{id}/metadata</code></a> — <code>getRunMetadata</code></li><li><a href="api/observability.html#op-updateRunMetadata"><code>PATCH /api/v2/traversers/{id}/metadata</code></a> — <code>updateRunMetadata</code></li><li><a href="api/observability.html#op-listUsage"><code>GET /api/v2/usage</code></a> — <code>listUsage</code></li><li><a href="api/observability.html#op-recordUsage"><code>POST /api/v2/usage</code></a> — <code>recordUsage</code></li><li><a href="api/observability.html#op-usageTotals"><code>GET /api/v2/usage/totals</code></a> — <code>usageTotals</code></li></ul>
+</section>
+<section id="area-retention">
+<h2>Retention</h2>
+<p>Preview and apply pruning of old traversers, events and logs.</p>
+<ul><li><a href="api/retention.html#op-retentionApply"><code>POST /api/v2/retention/apply</code></a> — <code>retentionApply</code></li><li><a href="api/retention.html#op-retentionPlan"><code>POST /api/v2/retention/plan</code></a> — <code>retentionPlan</code></li></ul>
+</section>
+<section id="area-runtimesettings">
+<h2>RuntimeSettings</h2>
+<p>Stored runtime documents per namespace: list, read, write and delete a key, then apply it to the running process. Saving a document and applying it are separate steps.</p>
+<ul><li><a href="api/runtimesettings.html#op-listRuntimeSettings"><code>GET /api/v2/runtime/settings</code></a> — <code>listRuntimeSettings</code></li><li><a href="api/runtimesettings.html#op-getRuntimeSettings"><code>GET /api/v2/runtime/settings/{key}</code></a> — <code>getRuntimeSettings</code></li><li><a href="api/runtimesettings.html#op-putRuntimeSettings"><code>PUT /api/v2/runtime/settings/{key}</code></a> — <code>putRuntimeSettings</code></li><li><a href="api/runtimesettings.html#op-deleteRuntimeSettings"><code>DELETE /api/v2/runtime/settings/{key}</code></a> — <code>deleteRuntimeSettings</code></li><li><a href="api/runtimesettings.html#op-applyRuntimeSettings"><code>POST /api/v2/runtime/settings/{key}/apply</code></a> — <code>applyRuntimeSettings</code></li></ul>
+</section>
+<section id="area-sessions">
+<h2>Sessions</h2>
+<p>Creating sessions and binding a worker task to one.</p>
+<ul><li><a href="api/sessions.html#op-listSessions"><code>GET /api/v2/sessions</code></a> — <code>listSessions</code></li><li><a href="api/sessions.html#op-createSession"><code>POST /api/v2/sessions</code></a> — <code>createSession</code></li><li><a href="api/sessions.html#op-getSession"><code>GET /api/v2/sessions/{id}</code></a> — <code>getSession</code></li><li><a href="api/sessions.html#op-deleteSession"><code>DELETE /api/v2/sessions/{id}</code></a> — <code>deleteSession</code></li><li><a href="api/sessions.html#op-getSessionSecrets"><code>GET /api/v2/sessions/{id}/secrets</code></a> — <code>getSessionSecrets</code></li><li><a href="api/sessions.html#op-putSessionSecrets"><code>PUT /api/v2/sessions/{id}/secrets</code></a> — <code>putSessionSecrets</code></li><li><a href="api/sessions.html#op-deleteSessionSecrets"><code>DELETE /api/v2/sessions/{id}/secrets</code></a> — <code>deleteSessionSecrets</code></li></ul>
+</section>
+<section id="area-traversers">
+<h2>Traversers</h2>
+<p>Submitting traversers, listing them with status, time-window and cursor paging, reading one traverser and its path, cancelling and restarting.</p>
+<ul><li><a href="api/traversers.html#op-listTraversers"><code>GET /api/v2/traversers</code></a> — <code>listTraversers</code></li><li><a href="api/traversers.html#op-submitTraverser"><code>POST /api/v2/traversers</code></a> — <code>submitTraverser</code></li><li><a href="api/traversers.html#op-getTraverser"><code>GET /api/v2/traversers/{id}</code></a> — <code>getTraverser</code></li><li><a href="api/traversers.html#op-cancelTraverser"><code>POST /api/v2/traversers/{id}/cancel</code></a> — <code>cancelTraverser</code></li><li><a href="api/traversers.html#op-getPath"><code>GET /api/v2/traversers/{id}/path</code></a> — <code>getPath</code></li><li><a href="api/traversers.html#op-restartTraverser"><code>POST /api/v2/traversers/{id}/restart</code></a> — <code>restartTraverser</code></li></ul>
+</section>
+<section id="area-worker">
+<h2>Worker</h2>
+<p>The outbound worker protocol: enrol, claim, renew, report, complete, drain; and the fleet view of every enrolled worker.</p>
+<ul><li><a href="api/worker.html#op-bindSession"><code>POST /api/v2/sessions/bind</code></a> — <code>bindSession</code></li><li><a href="api/worker.html#op-claimTask"><code>POST /api/v2/worker/claim</code></a> — <code>claimTask</code></li><li><a href="api/worker.html#op-completeTask"><code>POST /api/v2/worker/complete</code></a> — <code>completeTask</code></li><li><a href="api/worker.html#op-drainWorker"><code>POST /api/v2/worker/drain</code></a> — <code>drainWorker</code></li><li><a href="api/worker.html#op-enrollWorker"><code>POST /api/v2/worker/enroll</code></a> — <code>enrollWorker</code></li><li><a href="api/worker.html#op-reportProgress"><code>POST /api/v2/worker/progress</code></a> — <code>reportProgress</code></li><li><a href="api/worker.html#op-renewLease"><code>POST /api/v2/worker/renew</code></a> — <code>renewLease</code></li><li><a href="api/worker.html#op-resumeTask"><code>POST /api/v2/worker/resume</code></a> — <code>resumeTask</code></li><li><a href="api/worker.html#op-suspendTask"><code>POST /api/v2/worker/suspend</code></a> — <code>suspendTask</code></li><li><a href="api/worker.html#op-listWorkers"><code>GET /api/v2/workers</code></a> — <code>listWorkers</code></li></ul>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/search.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

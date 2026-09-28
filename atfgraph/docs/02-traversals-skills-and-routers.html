@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traversals, skills, typed input and output, routers — ATFGraph vNext reference</title>
+<meta name="description" content="Traversals, skills, typed input and output, routers: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Traversals, skills, typed input and output, routers</h1>
+<p>By the end of this page you will know what <code>@app.traversal()</code> and <code>@app.skill()</code> register, how a handler&#x27;s signature becomes the input and output schema the graph server enforces, when to write a handler as <code>def</code> versus <code>async def</code>, and how to split a large node into <code>AgentRouter</code> groups. It requires only the SDK and a running graph server; every snippet runs with no model provider configured.</p>
+<h2 id="two-capability-kinds">Two capability kinds</h2>
+<p>Both decorators register a capability on the node. The difference is the recorded <code>kind</code>, and the convention <code>../concepts.md</code> attaches to it:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Kind</th><th scope="col">Decorator</th><th scope="col">Convention</th></tr></thead><tbody><tr><td>traversal</td><td><code>@app.traversal()</code></td><td>Decides a route through the graph; calls other capabilities with <code>await app.traverse(...)</code>.</td></tr><tr><td>skill</td><td><code>@app.skill()</code></td><td>Deterministic, does one thing and returns; does not call through the graph.</td></tr></tbody></table></div>
+<p>The worker treats the two identically (<code>python/atfgraph/worker.py</code> binds input, runs the handler, completes the task); the SDK does not stop a skill from calling <code>app.traverse</code>. <code>atfg ls</code> prints the kind, and the path shows both as steps. Keep the convention so a path reads as &quot;traversals route, skills do work&quot;.</p>
+<p>The registered name is the function name unless you pass one: <code>@app.skill(&quot;upper&quot;)</code> registers <code>upper</code>. The target you call is always <code>label.capability</code>; <code>app.target(&quot;greet&quot;)</code> builds it for the node&#x27;s own label.</p>
+<h2 id="a-skill-is-an-api-the-model-can-trust">A skill is an API the model can trust</h2>
+<p>A skill is any function you write. What it does inside is up to you: call an HTTP API, query a database, invoke an MCP tool, read a file, compute. &quot;Deterministic&quot; here means it does not call a model and does not call other capabilities through the graph, not that it cannot do I/O. <code>examples/python/co_consult</code>&#x27;s skills are exactly this: <code>hotel_search</code> calls SerpAPI, <code>flight_shop</code> calls Sabre, <code>context_lookup</code> calls an MCP tool.</p>
+<p>The layering is:</p>
+<pre><code>external API or MCP tool  →  @app.skill()  →  a capability on the graph  →  offered to the model as a tool</code></pre>
+<p>The model never sees the API. It sees your skill, with your parameter names, your docstring and your error handling, and every call to it is a recorded step. An API becomes usable by a model only after you have wrapped it in something typed, bounded and observable.</p>
+<pre><code class="language-python">import httpx
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;weather&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.skill()
+async def forecast(city: str, days: int = 3) -&gt; dict:
+    &quot;&quot;&quot;Daily forecast for a city from the weather API; days 1-7.&quot;&quot;&quot;
+    async with httpx.AsyncClient(timeout=20) as http:
+        response = await http.get(&quot;https://api.example.com/forecast&quot;, params={&quot;q&quot;: city, &quot;days&quot;: min(max(days, 1), 7)})
+        response.raise_for_status()
+        return {&quot;city&quot;: city, &quot;days&quot;: response.json()[&quot;daily&quot;]}
+
+
+@app.traversal()
+async def advise(question: str) -&gt; str:
+    # tools=&quot;self&quot; offers this node&#x27;s capabilities; the model sees weather__forecast(city, days)
+    return await app.ai(
+        system=&quot;Answer travel weather questions. Use the forecast tool; never guess.&quot;,
+        user=question,
+        tools=&quot;self&quot;,
+    )</code></pre>
+<pre><code class="language-bash">atfg traverse weather.advise --in &#x27;{&quot;question&quot;: &quot;Do I need a jacket in Tokyo this weekend?&quot;}&#x27;</code></pre>
+<p>The path shows <code>advise</code> with one child step <code>weather.forecast</code>, the API call inside it, and the model&#x27;s answer built on the result. If the API fails, the skill raises, the model receives an error result and can say so instead of inventing a forecast. Tool loops are covered in <a href="06-model-calls.html">06-model-calls.md</a>.</p>
+<p>Two related things that are different. Consuming MCP tools happens inside a skill, as <code>co_consult</code> does. Publishing is the server&#x27;s job: with <code>ATFGRAPH_MCP_ENABLED</code> or <code>ATFGRAPH_A2A_ENABLED</code> and <code>app.discovery.publish(...)</code>, other agents consume your capabilities the same way (<a href="10-multi-node.html">10-multi-node.md</a>). And a skill stays a leaf: if a tool needs to call another node, make it a traversal instead. It still works as a tool.</p>
+<h2 id="two-more-kinds-decision-and-realtime">Two more kinds: <code>decision</code> and <code>realtime</code></h2>
+<p><code>@app.decision()</code> registers a capability whose model call reports its own confidence (<code>confidence_field</code> on <code>app.ai</code>), so usage totals can count unsure and fallen-back decisions per capability. <code>@app.realtime(name, provider=, transport=, model=None)</code> registers a <strong>realtime entrypoint</strong>: it is listed, tagged and publishable over HTTP like any capability, but the graph server refuses <code>POST /api/v2/traversers</code> to it with <code>400 realtime_entrypoint</code>, because a session is opened by the node (or a browser page through the node) rather than admitted as a traverser; see the hosting guide and <code>examples/python/realtime_browser</code>.</p>
+<h2 id="tags-reach-the-server">Tags reach the server</h2>
+<p>Tags on a capability (<code>tags=[...]</code>), on a router (<code>AgentRouter(tags=[...])</code>) and on the node (<code>Agent(tags=[...])</code>) are sent with the registration. Rules: at most 16 per capability, each 1 to 64 characters of <code>[a-z0-9_.:-]</code>, no duplicates; otherwise registration fails with <code>400 invalid_tags</code>. Tags drive <code>GET /api/v2/agents?tag=</code>, <code>GET /api/v2/agents/{label}/capabilities?tag=</code>, tag-scoped access policies and <code>POST /api/v2/ard/search {&quot;tags&quot;: [...]}</code>.</p>
+<h2 id="sync-and-async-handlers">Sync and async handlers</h2>
+<p>Adapted from <code>examples/python/first_node/agent.py</code>, which has one of each:</p>
+<pre><code class="language-python">from atfgraph import Agent
+
+app = Agent(node_id=&quot;hello&quot;, version=&quot;1.0.0&quot;)
+
+
+@app.skill()
+def shout(text: str) -&gt; dict:
+    &quot;&quot;&quot;Synchronous: runs in a worker thread via asyncio.to_thread.&quot;&quot;&quot;
+    return {&quot;text&quot;: text.upper()}
+
+
+@app.traversal()
+async def greet(name: str) -&gt; dict:
+    &quot;&quot;&quot;Asynchronous: runs on the worker&#x27;s event loop.&quot;&quot;&quot;
+    loud = await app.traverse(&quot;hello.shout&quot;, text=f&quot;hello {name}&quot;)
+    return {&quot;greeting&quot;: f&quot;Hello {name}&quot;, &quot;shouted&quot;: loud[&quot;text&quot;]}</code></pre>
+<p>An <code>async def</code> handler runs on the worker loop. A plain <code>def</code> handler runs in a thread through <code>asyncio.to_thread</code>; the lease heartbeat runs in its own task, so a blocking handler keeps its lease (<code>tests/python_test_worker.py::test_heartbeats_keep_lease_during_blocking_sync_handler</code>). Two consequences follow from the thread:</p>
+<ul><li>A sync handler cannot <code>await app.traverse</code>. Use <code>app.traverse_sync(target, **input)</code>, which schedules the call on the worker loop and blocks the thread until the child completes (<code>test_traverse_sync_from_thread_handler</code>). Calling <code>traverse_sync</code> from the loop thread raises <code>RuntimeError</code>.</li><li>Cancellation cannot interrupt a thread. An async handler sees a cancel at its next <code>await</code>; a sync handler runs to its own end and its result is discarded. Prefer <code>async def</code> for anything long.</li></ul>
+<p><code>current_context()</code> works in both: the worker binds the <code>ExecutionContext</code> with <code>contextvars</code>, and <code>asyncio.to_thread</code> copies the context (<code>python/atfgraph/context.py</code>).</p>
+<h2 id="typed-input">Typed input</h2>
+<p>The input schema is an object whose properties are the handler&#x27;s keyword parameters (<code>python/atfgraph/schema.py</code>, <code>input_schema_for</code>). Rules the worker applies when it binds the delivered JSON (<code>coerce_input</code>):</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Signature</th><th scope="col">Schema and binding</th></tr></thead><tbody><tr><td><code>name: str</code></td><td><code>{&quot;type&quot;: &quot;string&quot;}</code>, required.</td></tr><tr><td><code>punctuation: str = &quot;!&quot;</code></td><td>Same type, optional.</td></tr><tr><td><code>brief: dict</code>, <code>tags: list[str]</code></td><td><code>object</code>, <code>array</code> with <code>items</code>.</td></tr><tr><td>`nights: int \</td><td>None = None`</td><td><code>{&quot;type&quot;: [&quot;integer&quot;, &quot;null&quot;]}</code>.</td></tr><tr><td><code>body: Brief</code> (Pydantic)</td><td><code>Brief.model_json_schema()</code>; the dict is validated with <code>model_validate</code>.</td></tr><tr><td>one Pydantic parameter only</td><td>The model&#x27;s fields may also arrive unwrapped at the top level.</td></tr><tr><td><code>trigger</code>, <code>webhook</code>, <code>execution_context</code></td><td>Injected by the worker; never in the schema; input that sets them is refused.</td></tr></tbody></table></div>
+<p>A missing required field, an unknown field (unless the handler takes <code>**kwargs</code>) or a Pydantic validation error fails the task with code <code>invalid_input</code> and <code>retryable: false</code> (<code>test_retryable_error_uses_max_attempts_and_progress_is_durable</code> asserts the code). The server also validates input against the registered schema at admission, so a bad request is rejected before a worker sees it.</p>
+<h2 id="typed-output">Typed output</h2>
+<p>The return annotation becomes the output schema (<code>output_schema_for</code>); no annotation, or <code>Any</code>, registers <code>{}</code> meaning any JSON. The worker encodes the returned value with <code>encode_output</code>: Pydantic models through <code>model_dump(mode=&quot;json&quot;)</code>, dataclasses through <code>asdict</code>, enums to their value. This is the <code>first_node</code> output model:</p>
+<pre><code class="language-python">from pydantic import BaseModel
+
+
+class Greeting(BaseModel):
+    greeting: str
+    shouted: str
+    length: int</code></pre>
+<p><code>tests/python_test_examples.py</code> checks that <code>client.capabilities(&quot;hello&quot;)</code> reports <code>output_schema[&quot;required&quot;] == [&quot;greeting&quot;, &quot;shouted&quot;, &quot;length&quot;]</code>. The graph server checks the completed output against that schema: <code>tests/test_integration.py::test_registered_schema_rejects_bad_output</code> completes a task with a string where an object was registered and the traverser does not end <code>succeeded</code>. Return the type you declared.</p>
+<h2 id="capability-options">Capability options</h2>
+<p>Every keyword the decorators accept, from <code>AgentRouter.add</code> in <code>python/atfgraph/agent.py</code>:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>max_attempts</code></td><td><code>1</code></td><td>Attempts the server may schedule when the handler raises <code>RetryableError</code>. Shows as <code>retry.max_attempts</code> in <code>definition()</code>.</td></tr><tr><td><code>timeout_seconds</code></td><td><code>300</code></td><td>Budget per attempt; the worker stops the handler at it (<code>handler_timeout</code>).</td></tr><tr><td><code>description</code></td><td>first docstring line</td><td>Shown by <code>atfg ls</code> and discovery.</td></tr><tr><td><code>input_schema</code>, <code>output_schema</code></td><td>derived</td><td>Override the derivation with your own JSON Schema.</td></tr><tr><td><code>tags</code></td><td>router tags</td><td>Labels merged with the router&#x27;s <code>tags</code>.</td></tr><tr><td><code>triggers</code></td><td>none</td><td><code>EventTrigger</code> / <code>ScheduleTrigger</code> bindings (<a href="09-emitters.html">09-emitters.md</a>).</td></tr><tr><td><code>accepts_manual_emitters</code></td><td><code>True</code></td><td>Whether UI-managed emitters may deliver into this capability.</td></tr></tbody></table></div>
+<p>Adapted from <code>tests/python_test_worker.py::test_decorators_derive_capabilities_and_routers_merge</code>:</p>
+<pre><code class="language-python">from atfgraph import Agent
+
+app = Agent(node_id=&quot;node&quot;, version=&quot;0.0.1&quot;)
+
+
+@app.traversal(max_attempts=3, timeout_seconds=10)
+def plan(brief: dict, nights: int = 3) -&gt; dict:
+    return {&quot;ok&quot;: True}
+
+
+caps = app.capabilities()
+assert caps[&quot;plan&quot;].max_attempts == 3 and caps[&quot;plan&quot;].timeout_seconds == 10
+assert caps[&quot;plan&quot;].input_schema[&quot;required&quot;] == [&quot;brief&quot;]</code></pre>
+<h2 id="routers">Routers</h2>
+<p><code>AgentRouter(prefix=&quot;&quot;, tags=None)</code> groups handlers that an <code>Agent</code> later includes; the decorated functions stay callable. <code>examples/python/co_consult</code> has one router per desk (<code>desks/intake.py</code>, <code>desks/flights.py</code>, ...) and <code>main.py</code> includes them all:</p>
+<pre><code class="language-python">from atfgraph import Agent, AgentRouter
+
+NODE_ID = &quot;co-consult&quot;
+app = Agent(node_id=NODE_ID, version=&quot;0.3.0&quot;)
+router = AgentRouter(tags=[&quot;intake&quot;])
+
+
+@router.traversal()
+async def extract_brief(request: str, today: str) -&gt; dict:
+    &quot;&quot;&quot;Given the traveller&#x27;s sentence, return the structured facts it contains.&quot;&quot;&quot;
+    return {&quot;request&quot;: request, &quot;today&quot;: today, &quot;confident&quot;: True}
+
+
+@router.traversal()
+async def intake_brief(request: str) -&gt; dict:
+    extracted = await router.traverse(f&quot;{NODE_ID}.extract_brief&quot;, request=request, today=&quot;2026-09-15&quot;)
+    return {&quot;status&quot;: &quot;ready&quot;, &quot;brief&quot;: extracted}
+
+
+app.include_router(router)</code></pre>
+<p>How the pieces behave, from <code>python/atfgraph/agent.py</code> and <code>tests/python_test_worker.py</code>:</p>
+<ul><li><code>prefix</code> is joined to each name with an underscore: <code>AgentRouter(prefix=&quot;desk&quot;)</code> plus <code>def lookup</code> registers <code>desk_lookup</code>, so the target is <code>node.desk_lookup</code>. <code>co_consult</code> uses no prefix and relies on distinct names.</li><li><code>router.traverse</code>, <code>router.submit</code>, <code>router.ai</code> and <code>router.memory</code> forward to the including <code>Agent</code>. Before inclusion, and outside a handler, they raise <code>NoExecutionContext</code>.</li><li>Including the same name twice raises <code>ValueError</code> (<code>capability ... is registered twice</code>), as does including a router already included in another agent, or an <code>Agent</code> in an <code>Agent</code>.</li><li>Capabilities added to a router after <code>include_router</code> are adopted too.</li></ul>
+<h2 id="inspecting-what-will-be-registered">Inspecting what will be registered</h2>
+<p><code>app.capabilities()</code> returns <code>{name: Capability}</code>; <code>app.definition()</code> is the wire body sent by <code>register</code> (<code>label</code>, <code>version</code>, <code>tags</code>, <code>capabilities</code>, each with <code>kind</code>, <code>input_schema</code>, <code>output_schema</code>, <code>retry</code>, <code>timeout_seconds</code>, <code>description</code>, <code>tags</code> and, for <code>realtime</code>, the <code>realtime</code> binding); <code>app.entry(name)</code> returns the <code>CapabilityEntry</code> with the function, tags and triggers. The definition is immutable once registered: a different definition under the same label and version raises <code>ConflictError</code>, and the fix is a new <code>version</code>.</p>
+<p><code>app.call_local(capability, **input)</code> runs one of the node&#x27;s own handlers in-process with the same input coercion and output encoding. No traverser is created and nothing is recorded on the graph; it exists for unit tests of handler logic.</p>
+<h2 id="retained-module-level-decorators">Retained module-level decorators</h2>
+<p><code>from atfgraph import traversal, skill</code> register on the most recently constructed <code>Agent</code> (<code>Agent.get_current()</code>), or on the one passed as <code>agent=</code>. <code>python/atfgraph/decorators.py</code> keeps them for code written against the previous authoring runtime; <code>@app.traversal()</code> is the primary form and the one this guide uses.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="03-calling-other-nodes.html">03-calling-other-nodes.md</a>: what <code>app.traverse</code> records, fan-out, capacity and retries.</li><li><a href="09-emitters.html">09-emitters.md</a>: the <code>triggers</code> option, schedules and webhooks.</li><li><a href="16-api-reference.html">16-api-reference.md</a>: every option and method in one place.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline mesh example — ATFGraph vNext reference</title>
+<meta name="description" content="Offline mesh example: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Offline mesh example</h1>
+<p class="meta">Directory <code>examples/python/features/offline_mesh</code></p>
+<p>Two ordinary <code>Agent</code> nodes, <code>concierge</code> and <code>fares</code>, hosted in one process by <code>atfgraph.offline.OfflineMesh</code> with <strong>no graph server</strong>. Verified by <code>tests/test_offline_mesh.py</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>plan</code></td><td>traversal</td><td><code>(origin: str, cities: List[str], nights: int = 2) -&gt; dict</code></td><td><code>examples/python/features/offline_mesh/agent.py</code></td><td>Quote each leg through the fares node, keep the itinerary in session memory, return the cost tree.</td></tr><tr><td><code>quote</code></td><td>skill</td><td><code>(origin: str, destination: str, nights: int = 1) -&gt; dict</code></td><td><code>examples/python/features/offline_mesh/agent.py</code></td><td>Deterministic fixture fare; records usage as if a pricing model had been consulted.</td></tr><tr><td><code>recall</code></td><td>traversal</td><td><code>() -&gt; dict</code></td><td><code>examples/python/features/offline_mesh/agent.py</code></td><td>Read the itinerary the session remembered (empty outside a session that planned one).</td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.offline_mesh.agent:concierge
+python -m atfgraph.worker --module examples.python.features.offline_mesh.agent:fares
+python -m examples.python.features.offline_mesh.run
+python -m examples.python.features.offline_mesh.run --serve 127.0.0.1:8765    # optional uvicorn
+python -m examples.python.features.offline_mesh.run --serve 127.0.0.1:8765   # needs the optional uvicorn</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/offline_mesh/README.md</code></li><li><code>examples/python/features/offline_mesh/__init__.py</code></li><li><code>examples/python/features/offline_mesh/agent.py</code></li><li><code>examples/python/features/offline_mesh/agentnode.yaml</code></li><li><code>examples/python/features/offline_mesh/run.py</code></li></ul>
+<p class="meta">Note: More than one agent node is declared in this directory; capabilities are listed without a single label.</p>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/features/offline_mesh/README.md</code>; the source file is not modified.</p>
+<p>Two ordinary <code>Agent</code> nodes, <code>concierge</code> and <code>fares</code>, hosted in one process by <code>atfgraph.offline.OfflineMesh</code> with <strong>no graph server</strong>. Verified by <code>tests/test_offline_mesh.py</code>.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Piece</th><th scope="col">What it shows</th></tr></thead><tbody><tr><td><code>OfflineMesh([concierge, fares])</code></td><td>each node mounted as an ASGI sub-app at <code>/{node_id}</code> of one root ASGI app (<code>/health</code>, <code>/nodes</code>, <code>/{node}/health</code>, <code>/{node}/definition</code>, <code>POST /{node}/capabilities/{name}</code>)</td></tr><tr><td><code>mesh.invoke(&quot;concierge.plan&quot;, ..., session_id=&quot;trip-1&quot;)</code></td><td>dispatch through the ASGI app; failures raise the usual <code>TraversalFailed</code> / <code>TraversalCancelled</code> / <code>TraversalTimedOut</code></td></tr><tr><td><code>await concierge.traverse(&quot;fares.quote&quot;, ...)</code> inside the handler</td><td>a nested child executed in-process by the other node, with its own task-local <code>ExecutionContext</code> (parent step, inherited root and session, real local lease)</td></tr><tr><td><code>fares.memory.set(...)</code> / <code>concierge.memory.get(...)</code></td><td>the mesh&#x27;s in-memory store, scoped exactly as the SDK selects (session → workflow → global)</td></tr><tr><td><code>record_usage</code> + <code>app.execution_cost()</code></td><td>per-execution tracker, <code>usage</code> progress events, offline usage store, child usage propagated into the parent</td></tr><tr><td><code>mesh.discovery</code></td><td>the normal <code>AgentMesh</code> facade over the offline registry</td></tr><tr><td><code>mesh.submit(...)</code> → <code>Handle</code></td><td>poll, cancel, <code>path()</code>, <code>event_log()</code>, <code>events()</code> through <code>mesh.client()</code></td></tr></tbody></table></div>
+<pre><code>python -m examples.python.features.offline_mesh.run
+python -m examples.python.features.offline_mesh.run --serve 127.0.0.1:8765    # optional uvicorn
+curl -s -X POST localhost:8765/concierge/capabilities/plan -H &#x27;x-atfgraph-session-id: t1&#x27; \
+     -d &#x27;{&quot;origin&quot;:&quot;BNE&quot;,&quot;cities&quot;:[&quot;SYD&quot;]}&#x27;</code></pre>
+<p>The same <code>concierge</code> and <code>fares</code> objects run unchanged as outbound workers against a real graph server (<code>python -m atfgraph.worker --module examples.python.features.offline_mesh.agent:concierge</code>).</p>
+<h2 id="what-offline-means-here">What offline means here</h2>
+<ul><li>The mesh never contacts a graph server and never claims or renews a remote lease. Leases are issued by the offline graph when a local execution starts
+and are checked on nested submits, progress, usage and checkpoints; a forged
+or stale lease is a <code>409</code>, not a silent success.</li><li>Routes with no offline meaning (worker claim/renew, approvals, knowledge, vectors/search, publications, retention, ...) answer
+<code>501 offline_unsupported</code>; <code>mesh.graph.unsupported</code> lists any that were hit.</li><li>Nothing is durable: state lives in <code>mesh.graph</code> for the life of the mesh.</li><li>Fares are a deterministic fixture; no supplier or model is called.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approvals, pauses and checkpoints — ATFGraph vNext reference</title>
+<meta name="description" content="Approvals, pauses and checkpoints: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Approvals, pauses and checkpoints</h1>
+<p>By the end of this page you will be able to stop a traversal for a human decision without holding a worker, decide it from another program, have the handler continue with that decision after a restart of both the server and the worker, and use checkpoints so the work done before the pause runs exactly once. It requires only the SDK and a running graph server; the <code>features/approvals</code> example runs against invented fixture data with no provider configured.</p>
+<h2 id="what-a-pause-is">What a pause is</h2>
+<p><code>await app.request_approval(prompt, operation_key=..., checkpoint=...)</code> (<code>python/atfgraph/agent.py</code>) posts the prompt and checkpoint to <code>POST /api/v2/approvals</code> with the task&#x27;s lease. The server stores the approval as <code>pending</code>, closes the lease and moves the traverser to the <code>waiting</code> state. Inside the worker the call raises an internal <code>_TraversalPaused</code> control exception, so the handler stops right there and its worker permit is released; <code>python/atfgraph/worker.py</code> counts it as <code>stats.paused</code> and does not complete the task. No process holds anything while the reviewer thinks.</p>
+<p>When someone decides, the server queues a continuation for the same traverser id. The handler runs again from the top with a fresh lease and <code>current_context().attempt</code> increased by one; on that attempt <code>request_approval</code> with the same <code>operation_key</code> returns the stored decision instead of pausing. <code>app.pause(...)</code> is a retained name for the same method; it is a durable server-side pause, never an in-process wait.</p>
+<p>Three server rules shape how you write the handler (<code>docs/feature-examples-evidence.md</code>, verified by the tests cited below):</p>
+<ul><li>An approval is keyed by <code>(traverser, operation_key)</code>. Requesting the same key again with a different prompt is <code>409 approval_conflict</code>, so the prompt on the replay must be byte-identical.</li><li>A decision is <code>approved</code> or <code>rejected</code>. Deciding the same way twice is idempotent; a different second decision is <code>409 approval_decided</code>.</li><li>The continuation raises <code>max_attempts</code> by one, so it is not charged to the capability&#x27;s failure budget.</li></ul>
+<h2 id="checkpoints-make-the-replay-safe">Checkpoints make the replay safe</h2>
+<p>Everything the handler does before the pause runs again on the continuation unless you stop it. <code>app.save_checkpoint(name, value, expected_revision=None)</code> stores a JSON value on the current traverser (<code>POST /api/v2/traversers/{id}/checkpoints/{name}</code>) and returns the revision; <code>app.load_checkpoint(name, default=None)</code> reads it back or returns the default when it does not exist. <code>expected_revision=0</code> means &quot;create only&quot;, so a racing replay conflicts instead of preparing the case twice.</p>
+<p>The pattern from <code>examples/python/features/approvals/agent.py</code>: load the checkpoint; if it is missing, do the preparatory work (here a recorded child step) and save it; build the prompt only from the checkpoint; then pause.</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from typing import Dict
+
+from atfgraph import Agent, HandlerError, current_context
+
+app = Agent(node_id=&quot;refunds&quot;, version=&quot;1.0.0&quot;, description=&quot;Refund desk with a durable approval pause&quot;, capacity=2)
+
+AUTO_LIMIT_AUD = 200.0
+CASE = &quot;refund case&quot;
+
+FIXTURE_TICKETS: Dict[str, dict] = {
+    &quot;QF-4417&quot;: {&quot;route&quot;: &quot;BNE-SYD&quot;, &quot;fare_aud&quot;: 612.40, &quot;fare_basis&quot;: &quot;flex&quot;, &quot;flown&quot;: False},
+    &quot;NZ-0882&quot;: {&quot;route&quot;: &quot;AKL-QUN&quot;, &quot;fare_aud&quot;: 189.00, &quot;fare_basis&quot;: &quot;saver&quot;, &quot;flown&quot;: False},
+}
+
+
+@app.skill()
+async def assess(ticket: str) -&gt; dict:
+    record = FIXTURE_TICKETS.get(ticket.upper())
+    if record is None:
+        raise HandlerError(f&quot;unknown ticket {ticket!r}&quot;, code=&quot;ticket_not_found&quot;)
+    return {&quot;ticket&quot;: ticket.upper(), **record}
+
+
+@app.traversal(timeout_seconds=3600)
+async def request_refund(ticket: str, amount_aud: float, reason: str = &quot;schedule change&quot;) -&gt; dict:
+    attempt = current_context().attempt
+    case = await app.load_checkpoint(CASE)
+    if case is None:
+        ticket_record = await app.traverse(&quot;refunds.assess&quot;, ticket=ticket)
+        case = {
+            &quot;ticket&quot;: ticket_record[&quot;ticket&quot;],
+            &quot;route&quot;: ticket_record[&quot;route&quot;],
+            &quot;fare_aud&quot;: ticket_record[&quot;fare_aud&quot;],
+            &quot;amount_aud&quot;: round(float(amount_aud), 2),
+            &quot;reason&quot;: reason,
+            &quot;prepared_on_attempt&quot;: attempt,
+        }
+        await app.save_checkpoint(CASE, case, expected_revision=0)
+
+    if case[&quot;amount_aud&quot;] &lt;= AUTO_LIMIT_AUD:
+        return {&quot;ticket&quot;: case[&quot;ticket&quot;], &quot;amount_aud&quot;: case[&quot;amount_aud&quot;], &quot;status&quot;: &quot;approved&quot;, &quot;decided_by&quot;: &quot;desk-policy&quot;, &quot;attempts&quot;: attempt}
+
+    decision = await app.request_approval(
+        {&quot;question&quot;: f&quot;Refund {case[&#x27;amount_aud&#x27;]} AUD on {case[&#x27;ticket&#x27;]} ({case[&#x27;route&#x27;]})?&quot;, &quot;case&quot;: case, &quot;auto_limit_aud&quot;: AUTO_LIMIT_AUD},
+        operation_key=f&quot;refund:{case[&#x27;ticket&#x27;]}&quot;,
+        checkpoint=case,
+    )
+    return {
+        &quot;ticket&quot;: case[&quot;ticket&quot;],
+        &quot;amount_aud&quot;: case[&quot;amount_aud&quot;],
+        &quot;status&quot;: decision[&quot;status&quot;],
+        &quot;decided_by&quot;: decision.get(&quot;decided_by&quot;),
+        &quot;response&quot;: decision.get(&quot;response&quot;),
+        &quot;attempts&quot;: current_context().attempt,
+        &quot;prepared_on_attempt&quot;: case[&quot;prepared_on_attempt&quot;],
+    }</code></pre>
+<p><code>tests/test_feature_examples_extended.py::test_approval_example_pauses_across_a_restart_and_prepares_its_case_once</code> runs this against the real daemon and pins the outcome: the result reports <code>attempts == 2</code> and <code>prepared_on_attempt == 1</code>, and the path contains exactly one <code>refunds.assess</code> step. Without the checkpoint the child step would run twice and appear twice.</p>
+<p>The <code>checkpoint=</code> argument on <code>request_approval</code> is separate from <code>save_checkpoint</code>: it is stored with the approval so the reviewer can see the state the question was asked about, and it is returned in <code>list_approvals()</code>. The two are usually the same object, as above.</p>
+<p><code>timeout_seconds=3600</code> on the traversal is the capability budget for one attempt; the pause itself is not charged against it because the attempt ends when the lease closes.</p>
+<h2 id="what-the-decision-looks-like">What the decision looks like</h2>
+<p>The dict <code>request_approval</code> returns on the continuation is the approval record: <code>status</code> (<code>approved</code> or <code>rejected</code>), <code>decided_by</code>, <code>response</code> (whatever the decider passed), <code>operation_key</code>, <code>prompt</code>, <code>checkpoint</code>, <code>id</code> and <code>traverser_id</code>. A rejection also resumes the handler, so your code decides what a rejection means; the example returns it as <code>status: &quot;rejected&quot;</code> and succeeds.</p>
+<p>Not verified: the complete field list of the approval record beyond the keys the tests read (<code>id</code>, <code>status</code>, <code>traverser_id</code>, <code>operation_key</code>, <code>prompt</code>, <code>checkpoint</code>, <code>decided_by</code>, <code>response</code>). Confirming it needs one <code>list_approvals()</code> call against <code>atfgraphd</code> printed in full.</p>
+<h2 id="deciding-out-of-band">Deciding out of band</h2>
+<p>The reviewer is another program with a <code>Client</code>. <code>list_approvals()</code> returns the pending records, <code>get_approval(id)</code> one record, and <code>decide_approval(id, decision, response=None)</code> records the decision. Adapted from <code>examples/python/features/approvals/review.py</code>:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+import asyncio
+import json
+import os
+
+from atfgraph import Client
+
+
+async def wait_for_status(client: Client, traverser_id: str, status: str, seconds: float = 30.0) -&gt; None:
+    deadline = asyncio.get_running_loop().time() + seconds
+    while asyncio.get_running_loop().time() &lt; deadline:
+        current = await client.get(traverser_id)
+        if current.status == status:
+            return
+        if current.is_terminal:
+            raise SystemExit(f&quot;traverser {traverser_id} reached {current.status} before {status}: {current.error}&quot;)
+        await asyncio.sleep(0.05)
+    raise SystemExit(f&quot;traverser {traverser_id} never reached {status}&quot;)
+
+
+async def main() -&gt; None:
+    async with Client(os.getenv(&quot;ATFGRAPH_SERVER&quot;)) as client:
+        handle = await client.submit(&quot;refunds.request_refund&quot;, {&quot;ticket&quot;: &quot;QF-4417&quot;, &quot;amount_aud&quot;: 480.0, &quot;reason&quot;: &quot;cancelled leg&quot;})
+        await wait_for_status(client, handle.id, &quot;waiting&quot;)
+        pending = [a for a in await client.list_approvals() if a[&quot;traverser_id&quot;] == handle.id]
+        approval = pending[0]
+        print(&quot;prompt    &quot;, json.dumps(approval[&quot;prompt&quot;][&quot;question&quot;]))
+        print(&quot;checkpoint&quot;, json.dumps(approval[&quot;checkpoint&quot;], sort_keys=True))
+        decided = await client.decide_approval(approval[&quot;id&quot;], &quot;approved&quot;, {&quot;note&quot;: &quot;verified against the disruption log&quot;})
+        print(&quot;decided   &quot;, decided[&quot;status&quot;], &quot;by&quot;, decided[&quot;decided_by&quot;])
+        result = await handle.result(timeout=60)
+        print(&quot;result&quot;, json.dumps(result, sort_keys=True))
+        for step in (await handle.path()).items:
+            print(f&quot;  {step.target:&lt;26} {step.status}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</code></pre>
+<p><code>waiting</code> is not terminal, so <code>handle.result()</code> keeps polling through the pause and returns once the continuation finishes. <code>Client.wait</code> and <code>Client.traverse</code> behave the same way; a <code>timeout=</code> on them bounds the whole wait including the human.</p>
+<p>The <code>atfg</code> command reference (<code>../cli-reference.md</code>) has no approval command; <code>atfg ps</code> shows the traverser in <code>waiting</code>, but the decision itself is made through <code>Client.decide_approval</code>, the <code>POST /api/v2/approvals/{id}/decide</code> operation, or the web console&#x27;s Policies page (<code>../howto-web-console.md</code>). Decisions are owner or admin operations; a worker-only credential cannot decide.</p>
+<p>Run the example from this repository&#x27;s root with a graph server running:</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.approvals.agent:app
+python -m examples.python.features.approvals.review --ticket QF-4417 --amount 480
+python -m examples.python.features.approvals.review --ticket QF-4417 --amount 480 --decision rejected
+python -m examples.python.features.approvals.review --ticket NZ-0882 --amount 150</code></pre>
+<p>The third run is under the desk limit and never creates an approval (<code>test_approval_example_settles_small_refunds_rejects_and_refuses_over_fare</code> asserts <code>list_approvals() == []</code> afterwards).</p>
+<h2 id="surviving-a-restart">Surviving a restart</h2>
+<p>The pause is server state, not worker state. <code>tests/test_runtime_journeys.py::test_approval_continues_after_server_and_worker_restart</code> stops the daemon and the worker while the approval is pending, starts a new daemon on the same SQLite file, decides through a fresh <code>Client</code>, starts the worker again, and sees the traverser reach <code>succeeded</code> with the decision and the checkpoint intact. Its handler is the minimal form of the pattern:</p>
+<pre><code class="language-python">from __future__ import annotations
+
+from atfgraph import Agent
+
+app = Agent(node_id=&quot;approval&quot;, capacity=1)
+
+
+@app.skill()
+async def reviewed() -&gt; dict:
+    saved = await app.load_checkpoint(&quot;travel brief&quot;)
+    if saved is None:
+        saved = {&quot;origin&quot;: &quot;BNE&quot;, &quot;revision&quot;: 1}
+        await app.save_checkpoint(&quot;travel brief&quot;, saved, expected_revision=0)
+    decision = await app.request_approval(&quot;Review this plan&quot;, operation_key=&quot;review&quot;, checkpoint=saved)
+    return {&quot;decision&quot;: decision[&quot;status&quot;], &quot;saved&quot;: saved}</code></pre>
+<p>Two consequences follow. First, a worker that is deploying a new version while approvals are pending must still serve the same label and version, because a continuation is claimed by <code>(label, version)</code> like any other task. Second, the handler code that runs on the continuation is whatever is deployed then; keep the pre-pause work behind the checkpoint so a code change does not repeat side effects.</p>
+<h2 id="checkpoints-without-a-pause">Checkpoints without a pause</h2>
+<p>Checkpoints are a per-traverser store you can use on their own. The typical case is a handler with <code>max_attempts &gt; 1</code> that performs an external side effect: save a marker before the call, check it on retry. Reading a checkpoint from outside the handler is <code>Client.get_checkpoint(traverser_id, name)</code>, which returns <code>{&quot;value&quot;: ..., &quot;revision&quot;: ...}</code> or raises <code>NotFoundError</code>; writing one requires a task lease, so <code>Client.put_checkpoint</code> only works inside a handler and <code>app.save_checkpoint</code> is the normal spelling.</p>
+<p>A checkpoint is scoped to one traverser. State that must outlive the traverser or be shared belongs in memory (<a href="04-sessions-and-memory.html">04-sessions-and-memory.md</a>), which has the same <code>expected_revision</code> compare-and-set.</p>
+<h2 id="replay-once-summary">Replay-once summary</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Concern</th><th scope="col">Mechanism</th><th scope="col">Where enforced</th></tr></thead><tbody><tr><td>Pre-pause work runs once</td><td><code>load_checkpoint</code> then <code>save_checkpoint(..., expected_revision=0)</code></td><td>your handler, with the server&#x27;s revision check</td></tr><tr><td>Same question on replay</td><td>build the prompt from the checkpoint</td><td>server: <code>409 approval_conflict</code> otherwise</td></tr><tr><td>Child steps not resubmitted</td><td>guard <code>app.traverse</code> behind the checkpoint</td><td>your handler; the path shows one step</td></tr><tr><td>One decision</td><td><code>approved</code> or <code>rejected</code>, idempotent repeat</td><td>server: <code>409 approval_decided</code></td></tr><tr><td>Continuation not counted as failure</td><td><code>max_attempts</code> raised by one</td><td>server</td></tr></tbody></table></div>
+<p>Not verified: approval expiry. The wire operation accepts <code>expires_in_seconds</code> and the runtime notes say an expired request times out the traverser and its descendants (<code>docs/runtime-parity-evidence.md</code>), but <code>Agent.request_approval</code> and <code>Client.request_approval</code> do not expose that parameter, and no repository test exercises expiry. Also not verified: <code>Client.request_approval(..., pause=False)</code>, which the client accepts but <code>Agent.request_approval</code> never passes; what the server does with a non-pausing approval request needs a test against <code>atfgraphd</code>.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="03-calling-other-nodes.html">03-calling-other-nodes.md</a>: child steps, <code>max_attempts</code> and <code>RetryableError</code>, which the checkpoint pattern protects.</li><li><a href="04-sessions-and-memory.html">04-sessions-and-memory.md</a>: the memory scopes for state that outlives one traverser.</li><li><a href="13-identity-credentials-and-access.html">13-identity-credentials-and-access.md</a>: who may decide an approval and what a worker credential may do.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

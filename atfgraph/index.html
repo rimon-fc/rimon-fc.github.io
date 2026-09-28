@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview — ATFGraph vNext reference</title>
+<meta name="description" content="Overview: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/theme.js"></script>
+</head>
+<body class="landing" data-site-root="">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="index.html" aria-current="page">Overview</a></li><li><a href="api/index.html">API reference</a></li><li><a href="schemas/index.html">Schemas</a></li><li><a href="features.html">Feature areas</a></li><li><a href="examples/index.html">Examples</a></li><li><a href="docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<div class="hero"><pre class="ascii-mark" aria-hidden="true">      o-----o
+     / \   / \
+    o   \ /   o
+    |    o    |
+    o   / \   o
+     \ /   \ /
+      o-----o</pre><div class="hero-copy"><p class="hero-kicker">ATFGraph vNext documentation</p><h1>Overview</h1></div></div>
+<h2>Start here</h2>
+<p>ATFGraph vNext is a graph server for multi-agent systems: agent nodes register their functions and every call between them is routed and recorded by the server as a step on a path. It is installed from source today.</p>
+<ol><li><a href="docs/overview.html">Overview</a>: what it is and what it is not.</li><li><a href="docs/quickstart.html">Quickstart</a>: server, node, traverser and path in five minutes.</li><li><a href="docs/concepts.html">Core concepts</a>: the ten nouns.</li><li><a href="docs/vs-frameworks.html">Why ATFGraph, and how it compares</a>: what production means for an agent.</li><li><a href="docs/index.html">How-to guides</a>: one problem per page.</li><li><a href="docs/api-reference.html">API reference</a>, <a href="docs/cli-reference.html">CLI reference</a> and <a href="docs/troubleshooting.html">Troubleshooting</a>: for looking things up.</li></ol>
+<p>Build Python agent nodes, invoke them through the CLI or HTTP API, and deploy workers with Docker Compose, Kubernetes or Databricks.</p>
+<h2>Explore the documentation</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Section</th><th scope="col">Contents</th></tr></thead><tbody><tr><td><a href="api/index.html">API reference</a></td><td>162 operations in 22 areas, from <code>contracts/openapi-v2.json</code></td></tr><tr><td><a href="schemas/index.html">Schemas</a></td><td>280 component schemas with field tables and examples</td></tr><tr><td><a href="features.html">Feature areas</a></td><td>what each contract area covers and which roles it needs</td></tr><tr><td><a href="examples/index.html">Examples</a></td><td>39 example directories, 156 declared capabilities</td></tr><tr><td><a href="docs/index.html">Guides</a></td><td>41 pages: overview, quickstart, concepts, how-to guides, reference introductions and troubleshooting</td></tr></tbody></table></div>
+<h2>API connection</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody><tr><td>Title</td><td><code>ATFGraph HTTP API</code></td></tr><tr><td>API version</td><td><code>2.0.0</code></td></tr><tr><td>OpenAPI</td><td><code>3.1.0</code></td></tr><tr><td>Authentication</td><td><code>apiKeyAuth</code>, <code>bearerAuth</code></td></tr><tr><td>Default server</td><td><code>http://127.0.0.1:18880</code></td></tr></tbody></table></div>
+<h2>Vocabulary</h2>
+<p>The names used throughout this reference, as the contract uses them.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Term</th><th scope="col">Meaning in the contract</th></tr></thead><tbody><tr><td>graph server</td><td>the only inbound endpoint; it owns the graph, the queue and the durable records</td></tr><tr><td>agent node</td><td>a registered <code>label</code> at an immutable <code>version</code>, carrying a set of capabilities</td></tr><tr><td>capability</td><td>one entry point on an agent node: a <code>traversal</code> or a <code>skill</code> (the <code>CapabilityKind</code> enum)</td></tr><tr><td>traverser</td><td>one durable execution of <code>label.capability</code>; nested calls get their own id and share a <code>root_id</code></td></tr><tr><td>path</td><td>the recorded steps and attempts of a traverser, read with <code>getPath</code></td></tr><tr><td>session</td><td>a server-created scope that serialises root turns and anchors session memory</td></tr><tr><td>worker</td><td>an outbound process that enrols, claims tasks for one label and version, renews its lease and reports results</td></tr><tr><td>emitter</td><td>a scheduled or event-driven source that starts traversers on the server's side</td></tr></tbody></table></div>
+<h2>Use the API examples</h2>
+<p>Replace sample identifiers and input values with your own. Connect to your graph server URL and supply an API key with the roles listed for the operation.</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/search.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

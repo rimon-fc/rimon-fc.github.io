@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multimodal example — ATFGraph vNext reference</title>
+<meta name="description" content="Multimodal example: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Multimodal example</h1>
+<p class="meta">Directory <code>examples/python/features/multimodal</code></p>
+<p>Five traversals on one node, all fixture-tested without a live provider (<code>tests/test_media_parity.py</code>):</p>
+<p class="meta">Agent node label <code>media</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>describe</code></td><td>traversal</td><td><code>(image_url: str, question: str = &#x27;What is in this image?&#x27;) -&gt; dict</code></td><td><code>examples/python/features/multimodal/agent.py</code></td><td>Vision: image content part + question, structured answer, usage recorded on the execution.</td></tr><tr><td><code>narrate</code></td><td>traversal</td><td><code>(text: str, voice: str = &#x27;alloy&#x27;, model: Optional[str] = None, format: str = &#x27;mp3&#x27;) -&gt; dict</code></td><td><code>examples/python/features/multimodal/agent.py</code></td><td>Text to speech via the media router; the audio is saved under ATFGRAPH_MEDIA_DIR.</td></tr><tr><td><code>narrate_stream</code></td><td>traversal</td><td><code>(text: str) -&gt; dict</code></td><td><code>examples/python/features/multimodal/agent.py</code></td><td>Streaming text completion: deltas are forwarded as progress notes, the final text is returned.</td></tr><tr><td><code>poster</code></td><td>traversal</td><td><code>(prompt: str, model: Optional[str] = None, size: str = &#x27;1024x1024&#x27;) -&gt; dict</code></td><td><code>examples/python/features/multimodal/agent.py</code></td><td>Image generation; inline results are saved, URL results are returned as-is (no implicit download).</td></tr><tr><td><code>transcribe</code></td><td>traversal</td><td><code>(audio_b64: str, format: str = &#x27;wav&#x27;, model: Optional[str] = None, language: Optional[str] = None) -&gt; dict</code></td><td><code>examples/python/features/multimodal/agent.py</code></td><td>Speech to text: inline audio is uploaded as multipart (OpenAI) or a data: URL (fal).</td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.multimodal.agent:app
+python -m examples.python.features.multimodal.call</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/multimodal/README.md</code></li><li><code>examples/python/features/multimodal/__init__.py</code></li><li><code>examples/python/features/multimodal/agent.py</code></li><li><code>examples/python/features/multimodal/agentnode.yaml</code></li><li><code>examples/python/features/multimodal/call.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/features/multimodal/README.md</code>; the source file is not modified.</p>
+<p>Five traversals on one node, all fixture-tested without a live provider (<code>tests/test_media_parity.py</code>):</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Traversal</th><th scope="col">Surface</th><th scope="col">Notes</th></tr></thead><tbody><tr><td><code>describe(image_url, question)</code></td><td><code>app.ai(text, Image.from_url(...), schema=Findings)</code></td><td>image content part + structured output; Anthropic gets an <code>image</code> block, OpenAI-compatible gets <code>image_url</code></td></tr><tr><td><code>narrate(text, voice, model, format)</code></td><td><code>app.ai_generate_audio</code></td><td><code>tts-1</code> default; <code>minimax/speech-*</code>, <code>fal-ai/...</code>, <code>openrouter/...</code> by prefix; inline audio saved under <code>ATFGRAPH_MEDIA_DIR</code></td></tr><tr><td><code>transcribe(audio_b64, format, model)</code></td><td><code>app.ai_transcribe_audio</code></td><td>multipart upload to <code>/audio/transcriptions</code> (<code>whisper-1</code>), or <code>data:</code> URL to <code>fal-ai/whisper</code></td></tr><tr><td><code>poster(prompt, model, size)</code></td><td><code>app.ai_generate_image</code></td><td><code>dall-e-3</code>/<code>gpt-image-1</code>, <code>openrouter/google/...</code>, <code>fal-ai/flux/...</code>, <code>minimax/image-01</code>; URL outputs are never downloaded implicitly</td></tr><tr><td><code>narrate_stream(text)</code></td><td><code>app.ai(..., stream=True)</code></td><td>SSE deltas forwarded as <code>app.note</code> progress events</td></tr></tbody></table></div>
+<p>Every call appends <code>{&quot;usage&quot;: {...}, &quot;totals&quot;: {...}}</code> to the traverser&#x27;s event log; <code>call.py</code> prints them with <code>UsageEvent.from_event</code>. <code>cost_usd</code> is only what the provider reported (OpenRouter <code>usage.cost</code>); OpenAI, fal and MiniMax responses carry tokens or timings but no price, so <code>total_cost_usd</code> stays <code>None</code> and <code>calls_without_price</code> counts them.</p>
+<pre><code>python -m atfgraph.worker --module examples.python.features.multimodal.agent:app
+python -m examples.python.features.multimodal.call</code></pre>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

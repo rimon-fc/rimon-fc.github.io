@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discovery operations — ATFGraph vNext reference</title>
+<meta name="description" content="Discovery operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Discovery operations</h1>
+<p>Reading the server description, the registered agent nodes and their capabilities, and the agent-resource-discovery publications and search under /api/v2/ard.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-listAgents"><code>listAgents</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/agents</code></td></tr><tr><td><a href="#op-agentCapabilities"><code>agentCapabilities</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/agents/{label}/capabilities</code></td></tr><tr><td><a href="#op-listPublications"><code>listPublications</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/ard/publications</code></td></tr><tr><td><a href="#op-publishDiscovery"><code>publishDiscovery</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/ard/publications</code></td></tr><tr><td><a href="#op-deletePublication"><code>deletePublication</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/ard/publications/{id}</code></td></tr><tr><td><a href="#op-searchDiscovery"><code>searchDiscovery</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/ard/search</code></td></tr><tr><td><a href="#op-discoverySettings"><code>discoverySettings</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/ard/settings</code></td></tr><tr><td><a href="#op-serverInfo"><code>serverInfo</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/server</code></td></tr></tbody></table></div>
+<section class="operation" id="op-listAgents">
+<h3><code>listAgents</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/agents</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.list_agents()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>tag</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-agentlist"><code>AgentList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;capabilities&quot;: {
+        &quot;key&quot;: {
+          &quot;input_schema&quot;: {},
+          &quot;kind&quot;: {},
+          &quot;output_schema&quot;: {},
+          &quot;realtime&quot;: {},
+          &quot;retry&quot;: {},
+          &quot;tags&quot;: [
+            {}
+          ],
+          &quot;timeout_seconds&quot;: 0
+        }
+      },
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;tags&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-agentCapabilities">
+<h3><code>agentCapabilities</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/agents/{label}/capabilities</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.agent_capabilities()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>label</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>tag</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>version</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-agentdefinition"><code>AgentDefinition</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;capabilities&quot;: {
+    &quot;key&quot;: {
+      &quot;input_schema&quot;: {},
+      &quot;kind&quot;: &quot;traversal&quot;,
+      &quot;output_schema&quot;: {},
+      &quot;realtime&quot;: {
+        &quot;model&quot;: &quot;string&quot;,
+        &quot;provider&quot;: &quot;string&quot;,
+        &quot;transport&quot;: &quot;string&quot;
+      },
+      &quot;retry&quot;: {
+        &quot;max_attempts&quot;: 0
+      },
+      &quot;tags&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;timeout_seconds&quot;: 0
+    }
+  },
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;tags&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-listPublications">
+<h3><code>listPublications</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/ard/publications</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.list_publications()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-discoverypublications"><code>DiscoveryPublications</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;artifact&quot;: {},
+      &quot;artifact_type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;display_name&quot;: &quot;string&quot;,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;published&quot;: false,
+      &quot;tags&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;updated_at&quot;: 0,
+      &quot;validation&quot;: {
+        &quot;scope&quot;: &quot;string&quot;,
+        &quot;status&quot;: &quot;string&quot;
+      },
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-publishDiscovery">
+<h3><code>publishDiscovery</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/ard/publications</code></p>
+<p class="meta">Requires: admin role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.publish_discovery()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-publishdiscovery"><code>PublishDiscovery</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;label&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-discoverypublication"><code>DiscoveryPublication</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;artifact&quot;: {},
+  &quot;artifact_type&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;display_name&quot;: &quot;string&quot;,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;published&quot;: false,
+  &quot;tags&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;updated_at&quot;: 0,
+  &quot;validation&quot;: {
+    &quot;scope&quot;: &quot;string&quot;,
+    &quot;status&quot;: &quot;string&quot;
+  },
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-deletePublication">
+<h3><code>deletePublication</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/ard/publications/{id}</code></p>
+<p class="meta">Requires: admin role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.delete_publication()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-deleted"><code>Deleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-searchDiscovery">
+<h3><code>searchDiscovery</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/ard/search</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.search_discovery()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-discoverysearch"><code>DiscoverySearch</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;query&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-discoverypublications"><code>DiscoveryPublications</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;artifact&quot;: {},
+      &quot;artifact_type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;display_name&quot;: &quot;string&quot;,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;published&quot;: false,
+      &quot;tags&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;updated_at&quot;: 0,
+      &quot;validation&quot;: {
+        &quot;scope&quot;: &quot;string&quot;,
+        &quot;status&quot;: &quot;string&quot;
+      },
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-discoverySettings">
+<h3><code>discoverySettings</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/ard/settings</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.discovery_settings()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-discoverysettings"><code>DiscoverySettings</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;configuration_path&quot;: &quot;string&quot;,
+  &quot;configuration_source&quot;: &quot;string&quot;,
+  &quot;enabled&quot;: false,
+  &quot;locked_reason&quot;: &quot;string&quot;,
+  &quot;protocols&quot;: {
+    &quot;a2a_enabled&quot;: false,
+    &quot;mcp_enabled&quot;: false,
+    &quot;public_base_url&quot;: &quot;string&quot;
+  },
+  &quot;public_base_url&quot;: &quot;string&quot;,
+  &quot;public_registry&quot;: false,
+  &quot;publish_catalog&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-serverInfo">
+<h3><code>serverInfo</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/server</code></p>
+<p class="meta">Requires: invoke role</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.discovery_api.DiscoveryApi.server_info()</code></p>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-serverinfo"><code>ServerInfo</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;api_version&quot;: &quot;string&quot;,
+  &quot;features&quot;: {
+    &quot;key&quot;: false
+  },
+  &quot;namespace&quot;: &quot;string&quot;,
+  &quot;product&quot;: &quot;string&quot;,
+  &quot;version&quot;: &quot;string&quot;,
+  &quot;worker_protocol&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

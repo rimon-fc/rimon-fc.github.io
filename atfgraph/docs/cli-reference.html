@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>`atfg` command reference — ATFGraph vNext reference</title>
+<meta name="description" content="`atfg` command reference: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>`atfg` command reference</h1>
+<p>Command reference for <code>atfg 0.3.15 (ATFGraph vNext)</code>. Use <code>atfg &lt;command&gt; --help</code> for help in your terminal.</p>
+<p>ATFGraph vNext: start the graph server, list elements, start traversers, wait at the barrier, read paths.</p>
+<pre><code class="language-text">Usage: atfg [OPTIONS] &lt;COMMAND&gt;</code></pre>
+<h2 id="commands">Commands</h2>
+<ul><li><a href="#atfg-server"><code>atfg server</code></a> — Start, inspect or stop the sibling <code>atfgraphd</code> graph server<ul><li><a href="#atfg-server-start"><code>atfg server start</code></a> — Start <code>atfgraphd</code> from the same directory as this binary</li><li><a href="#atfg-server-status"><code>atfg server status</code></a> — Report pid metadata, process state and <code>/health</code> for a server started by this CLI</li><li><a href="#atfg-server-stop"><code>atfg server stop</code></a> — Stop a server started by this CLI. Only the recorded pid is signalled, and only if it is still <code>atfgraphd</code></li></ul></li><li><a href="#atfg-ls"><code>atfg ls</code></a> — List elements: every traversal and skill registered on the graph</li><li><a href="#atfg-ps"><code>atfg ps</code></a> — List traversers known to the graph server</li><li><a href="#atfg-traverse"><code>atfg traverse</code></a> — Start a traverser on <code>label.capability</code> and print its result</li><li><a href="#atfg-wait"><code>atfg wait</code></a> — Block at the barrier until a traverser reaches a terminal state</li><li><a href="#atfg-cancel"><code>atfg cancel</code></a> — Cancel a traverser and its children</li><li><a href="#atfg-path"><code>atfg path</code></a> — Print the recorded path of a traverser: every step and attempt</li><li><a href="#atfg-share"><code>atfg share</code></a> — Export a recorded path as a self-contained, offline file you can keep or send</li><li><a href="#atfg-show"><code>atfg show</code></a> — Show one traverser</li><li><a href="#atfg-config"><code>atfg config</code></a> — Validate a graph server configuration file<ul><li><a href="#atfg-config-validate"><code>atfg config validate</code></a> — Check a YAML configuration against the vNext contract shape</li></ul></li><li><a href="#atfg-dev"><code>atfg dev</code></a> — Run a Python agent node worker against a local graph server</li><li><a href="#atfg-install"><code>atfg install</code></a> — Install an agent node package (directory, .tar.gz artifact or git URL with <code>agentnode.yaml</code>) into an isolated venv</li><li><a href="#atfg-run"><code>atfg run</code></a> — Start an installed agent node as a detached outbound worker and wait until its label is registered</li><li><a href="#atfg-stop"><code>atfg stop</code></a> — Stop a worker started by <code>atfg run</code>: SIGTERM the recorded pid after checking it is that worker; it drains first</li><li><a href="#atfg-logs"><code>atfg logs</code></a> — Show a worker&#x27;s log written by <code>atfg run</code></li><li><a href="#atfg-list"><code>atfg list</code></a> — List installed agent node packages with process and registration state</li><li><a href="#atfg-uninstall"><code>atfg uninstall</code></a> — Remove an installed package (refuses while its worker runs)</li><li><a href="#atfg-package"><code>atfg package</code></a> — Build a local <code>.tar.gz</code> artifact with SHA-256 checksums and version metadata from an agent node project</li><li><a href="#atfg-login"><code>atfg login</code></a> — Save a graph server, its API key and edge settings to the shared credentials file</li><li><a href="#atfg-logout"><code>atfg logout</code></a> — Remove one saved graph server (default: the current one). Other entries are untouched</li><li><a href="#atfg-whoami"><code>atfg whoami</code></a> — Show the resolved server, key prefix and edge settings, where each came from, and whether the server accepts them</li><li><a href="#atfg-doctor"><code>atfg doctor</code></a> — Inspect this machine: binaries, Python SDK, container/cluster tools and the graph server</li><li><a href="#atfg-migrate"><code>atfg migrate</code></a> — Migrate history, back up, verify or restore a store. Run <code>atfg migrate --help</code> for tool options</li><li><a href="#atfg-skill"><code>atfg skill</code></a> — Install a bundled coding skill into a coding harness (Claude Code or Codex)<ul><li><a href="#atfg-skill-install"><code>atfg skill install</code></a> — Install one bundled skill; scripts/install-skills.py does the copying and ownership checks</li></ul></li><li><a href="#atfg-docs"><code>atfg docs</code></a> — Serve the documentation site on the loopback address and open it in the browser</li><li><a href="#atfg-deploy"><code>atfg deploy</code></a> — Validate, scaffold or manage deployments<ul><li><a href="#atfg-deploy-validate"><code>atfg deploy validate</code></a> — Run the local validation commands for the deployment files (no cluster or registry is contacted)</li><li><a href="#atfg-deploy-scaffold"><code>atfg deploy scaffold</code></a> — Write Dockerfile, Compose or Kubernetes files for a Python agent node worker</li><li><a href="#atfg-deploy-compose"><code>atfg deploy compose</code></a> — Manage a local Docker Compose deployment: desired state on disk, observed state from Docker and the graph server</li><li><a href="#atfg-deploy-compose-up"><code>atfg deploy compose up</code></a> — Create or re-apply a deployment: <code>docker compose up --wait</code>, then verify <code>/health</code> and node registration</li><li><a href="#atfg-deploy-compose-status"><code>atfg deploy compose status</code></a> — Observe containers, health and registered labels; exit 3 when they differ from the desired state</li><li><a href="#atfg-deploy-compose-logs"><code>atfg deploy compose logs</code></a> — Print container logs of the deployment</li><li><a href="#atfg-deploy-compose-down"><code>atfg deploy compose down</code></a> — Stop and remove the deployment&#x27;s containers and network; <code>--volumes</code> also removes its data volume</li><li><a href="#atfg-deploy-compose-rollback"><code>atfg deploy compose rollback</code></a> — Re-apply the previous successfully deployed image tag</li><li><a href="#atfg-deploy-list"><code>atfg deploy list</code></a> — List deployments recorded by this CLI</li></ul></li></ul>
+<h2 id="global-options">Global options</h2>
+<p>Accepted by every command; each command&#x27;s own help repeats them under <code>Global:</code>, and that repeated section is omitted from the help blocks below.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Option</th><th scope="col">Description</th></tr></thead><tbody><tr><td><code>-s, --server &lt;SERVER&gt;</code></td><td>Graph server URL [env: ATFGRAPH_SERVER=] [default: http://127.0.0.1:18880]</td></tr><tr><td><code>-k, --api-key &lt;API_KEY&gt;</code></td><td>API key sent as the X-API-Key header. Omit for loopback development without keys [env: ATFGRAPH_API_KEY]</td></tr><tr><td><code>--edge-auth &lt;EDGE_AUTH&gt;</code></td><td>Edge credential for a platform proxy in front of the graph server. <code>databricks</code> sends a workspace OAuth token as <code>Authorization</code>; the API key stays in X-API-Key [env: ATFGRAPH_EDGE_AUTH=] [default: none] [possible values: none, databricks]</td></tr><tr><td><code>--databricks-profile &lt;DATABRICKS_PROFILE&gt;</code></td><td>Databricks CLI profile for <code>--edge-auth databricks</code>. Always explicit; never auto-selected [env: ATFGRAPH_DATABRICKS_PROFILE=]</td></tr><tr><td><code>--json</code></td><td>Print raw JSON instead of tables</td></tr><tr><td><code>--timeout &lt;TIMEOUT&gt;</code></td><td>HTTP request timeout in seconds [default: 30]</td></tr><tr><td><code>--state-dir &lt;STATE_DIR&gt;</code></td><td>Directory for pid metadata and daemon logs written by <code>atfg server</code> [env: ATFGRAPH_VNEXT_HOME=]</td></tr></tbody></table></div>
+<h2 id="option-index">Option index</h2>
+<p>Command-specific options, and the commands that accept them.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Option</th><th scope="col">Commands</th><th scope="col">Description</th></tr></thead><tbody><tr><td><code>--api-key-env</code></td><td><code>atfg deploy compose up</code></td><td>Environment variable that holds the API key handed to the containers. Only the name is recorded [default: ATFGRAPH_API_KEY]</td></tr><tr><td><code>--api-key-stdin</code></td><td><code>atfg login</code></td><td>Read the API key from standard input instead of prompting</td></tr><tr><td><code>--async</code></td><td><code>atfg traverse</code></td><td>Return immediately with the traverser id instead of waiting at the barrier</td></tr><tr><td><code>--build</code></td><td><code>atfg deploy compose up</code></td><td>Build the images before starting</td></tr><tr><td><code>--build</code></td><td><code>atfg deploy compose rollback</code></td><td>Build the images for that tag before starting (when they are not present locally)</td></tr><tr><td><code>--capacity</code></td><td><code>atfg run</code></td><td>Worker concurrency permits</td></tr><tr><td><code>--config</code></td><td><code>atfg server start</code></td><td>Configuration file passed to the daemon</td></tr><tr><td><code>--daemon</code></td><td><code>atfg server start</code></td><td>Explicit daemon path. Defaults to <code>atfgraphd</code> next to this binary, or <code>ATFGRAPHD_BIN</code> [env: ATFGRAPHD_BIN=]</td></tr><tr><td><code>--database-url</code></td><td><code>atfg server start</code></td><td>Database URL passed to the daemon (default sqlite://./data/graph.db?mode=rwc)</td></tr><tr><td><code>--destination</code></td><td><code>atfg skill install</code></td><td>Directory the harness owns (default: the harness&#x27;s own directory under $HOME)</td></tr><tr><td><code>--expect-label</code></td><td><code>atfg deploy compose up</code></td><td>Additional labels that must be registered before the deployment counts as converged</td></tr><tr><td><code>--expect-label</code></td><td><code>atfg dev</code></td><td>Report when this label is registered on the graph server (checked in the background while the worker runs)</td></tr><tr><td><code>--file</code></td><td><code>atfg deploy compose up</code></td><td>Compose file to deploy [default: deploy/docker/compose.yaml]</td></tr><tr><td><code>--follow</code></td><td><code>atfg logs</code></td><td>Keep printing new lines until Ctrl-C</td></tr><tr><td><code>--force</code></td><td><code>atfg deploy scaffold</code></td><td>Overwrite existing files</td></tr><tr><td><code>--force</code></td><td><code>atfg share</code></td><td>Overwrite the output file if it already exists</td></tr><tr><td><code>--force</code></td><td><code>atfg install</code></td><td>Reinstall over an existing package</td></tr><tr><td><code>--foreground</code></td><td><code>atfg server start</code></td><td>Run in the foreground with inherited stdio instead of detaching</td></tr><tr><td><code>--forget</code></td><td><code>atfg deploy compose down</code></td><td>Delete the deployment record after a clean teardown</td></tr><tr><td><code>--format</code></td><td><code>atfg share</code></td><td>Artifact format: a readable offline document, or the bundle on its own Possible values: - html: Self-contained HTML: no network, no remote assets, no JavaScript - json: The versioned bundle alone, as JSON [default: html]</td></tr><tr><td><code>--grace</code></td><td><code>atfg stop</code></td><td>Seconds to wait for a clean exit [default: 30]</td></tr><tr><td><code>--grace</code></td><td><code>atfg server stop</code></td><td>Seconds to wait for a graceful exit after SIGTERM [default: 20]</td></tr><tr><td><code>--grace</code></td><td><code>atfg dev</code></td><td>Seconds to wait for the worker to drain after Ctrl-C before it is killed [default: 20]</td></tr><tr><td><code>--idempotency-key</code></td><td><code>atfg traverse</code></td><td>Idempotency key for safe retries</td></tr><tr><td><code>--image-tag</code></td><td><code>atfg deploy compose up</code></td><td>Image tag substituted into the Compose file as ATFGRAPH_IMAGE_TAG</td></tr><tr><td><code>--in</code></td><td><code>atfg traverse</code></td><td>JSON input document</td></tr><tr><td><code>--in-file</code></td><td><code>atfg traverse</code></td><td>Read the JSON input document from a file (<code>-</code> for stdin)</td></tr><tr><td><code>--interval-ms</code></td><td><code>atfg wait</code></td><td>Poll interval in milliseconds [default: 500]</td></tr><tr><td><code>--kill</code></td><td><code>atfg stop</code></td><td>SIGKILL when the grace period passes</td></tr><tr><td><code>--label</code></td><td><code>atfg deploy scaffold</code></td><td>Agent node label</td></tr><tr><td><code>--listen</code></td><td><code>atfg server start</code></td><td>Listen address passed to the daemon [default: 127.0.0.1:18880]</td></tr><tr><td><code>--listen</code></td><td><code>atfg server status</code>, <code>atfg server stop</code></td><td>Listen address used at start time [default: 127.0.0.1:18880]</td></tr><tr><td><code>--module</code></td><td><code>atfg deploy scaffold</code></td><td>Worker module in <code>module:agent</code> form</td></tr><tr><td><code>--module</code></td><td><code>atfg dev</code></td><td>Worker module in <code>module:agent</code> form, passed to <code>python -m atfgraph.worker</code></td></tr><tr><td><code>--name</code></td><td><code>atfg deploy compose down</code>, <code>atfg deploy compose logs</code>, <code>atfg deploy compose rollback</code>, <code>atfg deploy compose status</code></td><td></td></tr><tr><td><code>--name</code></td><td><code>atfg deploy compose up</code></td><td>Deployment name; the Compose project becomes <code>atfgv-&lt;name&gt;</code></td></tr><tr><td><code>--new-session</code></td><td><code>atfg traverse</code></td><td>Create a session first and attach the traverser to it</td></tr><tr><td><code>--no-browser</code></td><td><code>atfg docs</code></td><td>Do not open the site in the default browser</td></tr><tr><td><code>--no-verify</code></td><td><code>atfg login</code></td><td>Save without first checking that the server accepts the credentials</td></tr><tr><td><code>--node-version</code></td><td><code>atfg traverse</code></td><td>Pin the agent node version (the contract&#x27;s optional <code>version</code> field)</td></tr><tr><td><code>--out</code></td><td><code>atfg package</code></td><td>Output directory [default: target/dist/packages]</td></tr><tr><td><code>--out</code></td><td><code>atfg share</code></td><td>Write here. Default: <code>path-&lt;id&gt;.html</code> (or <code>.json</code>) in the current directory</td></tr><tr><td><code>--path</code></td><td><code>atfg deploy validate</code></td><td>Deployment directory. Defaults to <code>./deploy</code> [default: deploy]</td></tr><tr><td><code>--path</code></td><td><code>atfg install</code></td><td>Install from this subdirectory of the source</td></tr><tr><td><code>--port</code></td><td><code>atfg deploy compose up</code></td><td>Loopback port to publish the graph server on (default: a free port, fixed for the deployment&#x27;s lifetime)</td></tr><tr><td><code>--port</code></td><td><code>atfg docs</code></td><td>Loopback port to serve on; 0 asks the kernel for a free one [default: 8000]</td></tr><tr><td><code>--python</code></td><td><code>atfg doctor</code></td><td>Interpreter to probe for the <code>atfgraph</code> package [default: python3]</td></tr><tr><td><code>--python</code></td><td><code>atfg install</code></td><td>Interpreter used to create the package venv [default: python3]</td></tr><tr><td><code>--python</code></td><td><code>atfg dev</code></td><td>Python interpreter [default: python3]</td></tr><tr><td><code>--python</code></td><td><code>atfg skill install</code></td><td>Python interpreter that runs the installer (3.10 or newer) [env: ATFG_PYTHON=] [default: python3]</td></tr><tr><td><code>--python</code></td><td><code>atfg docs</code></td><td>Python interpreter that runs the web server (3.10 or newer) [env: ATFG_PYTHON=] [default: python3]</td></tr><tr><td><code>--ready-timeout</code></td><td><code>atfg dev</code></td><td>Seconds allowed for <code>--expect-label</code> to appear before the worker is stopped with exit 2 [default: 30]</td></tr><tr><td><code>--redact</code></td><td><code>atfg share</code></td><td>Replace every input, output and error preview with <code>[redacted]</code></td></tr><tr><td><code>--require-tools</code></td><td><code>atfg deploy validate</code></td><td>Fail when a validation tool is missing instead of skipping it</td></tr><tr><td><code>--sdk</code></td><td><code>atfg install</code></td><td>Directory or wheel of the <code>atfgraph</code> Python package (default: ATFGRAPH_SDK, a wheel next to atfg, or the source checkout)</td></tr><tr><td><code>--service</code></td><td><code>atfg deploy compose logs</code></td><td>Only this service</td></tr><tr><td><code>--session</code></td><td><code>atfg traverse</code></td><td>Attach the traverser to a session (created with <code>atfg traverse --new-session</code>)</td></tr><tr><td><code>--start-server</code></td><td><code>atfg dev</code>, <code>atfg run</code></td><td>Start the sibling daemon when <code>--server</code> is loopback and not healthy</td></tr><tr><td><code>--status</code></td><td><code>atfg ps</code></td><td>Only show traversers in this status</td></tr><tr><td><code>--strict</code></td><td><code>atfg config validate</code></td><td>Treat warnings as errors</td></tr><tr><td><code>--tail</code></td><td><code>atfg logs</code></td><td>Lines from the end of the log [default: 50]</td></tr><tr><td><code>--tail</code></td><td><code>atfg deploy compose logs</code></td><td>[default: 100]</td></tr><tr><td><code>--target</code></td><td><code>atfg skill install</code></td><td>Coding harness to install into Possible values: - claude-code: Claude Code; mapped to the installer&#x27;s <code>claude</code> client - codex:       OpenAI Codex</td></tr><tr><td><code>--target</code></td><td><code>atfg deploy scaffold</code></td><td>Which files to write [default: docker] [possible values: docker, kubernetes]</td></tr><tr><td><code>--target</code></td><td><code>atfg deploy validate</code></td><td>Which target to validate [default: all] [possible values: all, compose, kubernetes, helm]</td></tr><tr><td><code>--title</code></td><td><code>atfg share</code></td><td>Human title. Default: <code>path of &lt;target&gt;</code> from the entry step</td></tr><tr><td><code>--volumes</code></td><td><code>atfg deploy compose down</code></td><td></td></tr><tr><td><code>--wait</code></td><td><code>atfg server start</code></td><td>Seconds to wait for <code>/health</code> after starting [default: 15]</td></tr><tr><td><code>--wait</code></td><td><code>atfg deploy compose up</code></td><td>Seconds to wait for health checks and node registration [default: 180]</td></tr><tr><td><code>--wait</code></td><td><code>atfg run</code></td><td>Seconds to wait for registration (exit 2 when exceeded; the worker keeps running) [default: 30]</td></tr><tr><td><code>--wait</code></td><td><code>atfg deploy compose rollback</code></td><td>[default: 180]</td></tr><tr><td><code>--wait-timeout</code></td><td><code>atfg wait</code></td><td>Seconds to wait before giving up (exit code 2) [default: 300]</td></tr><tr><td><code>--wait-timeout</code></td><td><code>atfg traverse</code></td><td>Seconds to wait when not <code>--async</code> (exit code 2 on timeout) [default: 300]</td></tr></tbody></table></div>
+<h2 id="atfg-server"><code>atfg server</code></h2>
+<pre><code class="language-text">Start, inspect or stop the sibling `atfgraphd` graph server
+
+Usage: atfg server [OPTIONS] &lt;COMMAND&gt;
+
+Commands:
+  start   Start `atfgraphd` from the same directory as this binary
+  status  Report pid metadata, process state and `/health` for a server started by this CLI
+  stop    Stop a server started by this CLI. Only the recorded pid is signalled, and only if it is still `atfgraphd`
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-server-start"><code>atfg server start</code></h2>
+<pre><code class="language-text">Start `atfgraphd` from the same directory as this binary
+
+Usage: atfg server start [OPTIONS]
+
+Options:
+      --listen &lt;LISTEN&gt;              Listen address passed to the daemon [default: 127.0.0.1:18880]
+      --config &lt;CONFIG&gt;              Configuration file passed to the daemon
+      --database-url &lt;DATABASE_URL&gt;  Database URL passed to the daemon (default sqlite://./data/graph.db?mode=rwc)
+      --daemon &lt;DAEMON&gt;              Explicit daemon path. Defaults to `atfgraphd` next to this binary, or `ATFGRAPHD_BIN` [env: ATFGRAPHD_BIN=]
+      --foreground                   Run in the foreground with inherited stdio instead of detaching
+      --wait &lt;WAIT&gt;                  Seconds to wait for `/health` after starting [default: 15]
+  -h, --help                         Print help
+  -V, --version                      Print version</code></pre>
+<h2 id="atfg-server-status"><code>atfg server status</code></h2>
+<pre><code class="language-text">Report pid metadata, process state and `/health` for a server started by this CLI
+
+Usage: atfg server status [OPTIONS]
+
+Options:
+      --listen &lt;LISTEN&gt;  Listen address used at start time [default: 127.0.0.1:18880]
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-server-stop"><code>atfg server stop</code></h2>
+<pre><code class="language-text">Stop a server started by this CLI. Only the recorded pid is signalled, and only if it is still `atfgraphd`
+
+Usage: atfg server stop [OPTIONS]
+
+Options:
+      --listen &lt;LISTEN&gt;  Listen address used at start time [default: 127.0.0.1:18880]
+      --grace &lt;GRACE&gt;    Seconds to wait for a graceful exit after SIGTERM [default: 20]
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-ls"><code>atfg ls</code></h2>
+<pre><code class="language-text">List elements: every traversal and skill registered on the graph
+
+Usage: atfg ls [OPTIONS] [LABEL]
+
+Arguments:
+  [LABEL]  Only show elements of this label
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-ps"><code>atfg ps</code></h2>
+<pre><code class="language-text">List traversers known to the graph server
+
+Usage: atfg ps [OPTIONS]
+
+Options:
+      --status &lt;STATUS&gt;  Only show traversers in this status
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-traverse"><code>atfg traverse</code></h2>
+<pre><code class="language-text">Start a traverser on `label.capability` and print its result
+
+Usage: atfg traverse [OPTIONS] &lt;TARGET&gt;
+
+Arguments:
+  &lt;TARGET&gt;  Target in the form `label.capability`
+
+Options:
+      --in &lt;JSON&gt;
+          JSON input document
+      --in-file &lt;PATH&gt;
+          Read the JSON input document from a file (`-` for stdin)
+      --node-version &lt;VERSION&gt;
+          Pin the agent node version (the contract&#x27;s optional `version` field)
+      --session &lt;SESSION&gt;
+          Attach the traverser to a session (created with `atfg traverse --new-session`)
+      --new-session
+          Create a session first and attach the traverser to it
+      --idempotency-key &lt;IDEMPOTENCY_KEY&gt;
+          Idempotency key for safe retries
+      --async
+          Return immediately with the traverser id instead of waiting at the barrier
+      --wait-timeout &lt;WAIT_TIMEOUT&gt;
+          Seconds to wait when not `--async` (exit code 2 on timeout) [default: 300]
+  -h, --help
+          Print help
+  -V, --version
+          Print version</code></pre>
+<h2 id="atfg-wait"><code>atfg wait</code></h2>
+<pre><code class="language-text">Block at the barrier until a traverser reaches a terminal state
+
+Usage: atfg wait [OPTIONS] &lt;ID&gt;
+
+Arguments:
+  &lt;ID&gt;  Traverser id
+
+Options:
+      --wait-timeout &lt;WAIT_TIMEOUT&gt;  Seconds to wait before giving up (exit code 2) [default: 300]
+      --interval-ms &lt;INTERVAL_MS&gt;    Poll interval in milliseconds [default: 500]
+  -h, --help                         Print help
+  -V, --version                      Print version</code></pre>
+<h2 id="atfg-cancel"><code>atfg cancel</code></h2>
+<pre><code class="language-text">Cancel a traverser and its children
+
+Usage: atfg cancel [OPTIONS] &lt;ID&gt;
+
+Arguments:
+  &lt;ID&gt;  Traverser id
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-path"><code>atfg path</code></h2>
+<pre><code class="language-text">Print the recorded path of a traverser: every step and attempt
+
+Usage: atfg path [OPTIONS] &lt;ID&gt;
+
+Arguments:
+  &lt;ID&gt;  Traverser id
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-share"><code>atfg share</code></h2>
+<pre><code class="language-text">Export a recorded path as a self-contained, offline file you can keep or send
+
+Usage: atfg share [OPTIONS] &lt;ID&gt;
+
+Arguments:
+  &lt;ID&gt;
+          Traverser id whose path is exported
+
+Options:
+  -o, --out &lt;PATH&gt;
+          Write here. Default: `path-&lt;id&gt;.html` (or `.json`) in the current directory
+
+      --format &lt;FORMAT&gt;
+          Artifact format: a readable offline document, or the bundle on its own
+
+          Possible values:
+          - html: Self-contained HTML: no network, no remote assets, no JavaScript
+          - json: The versioned bundle alone, as JSON
+
+          [default: html]
+
+      --title &lt;TITLE&gt;
+          Human title. Default: `path of &lt;target&gt;` from the entry step
+
+      --redact
+          Replace every input, output and error preview with `[redacted]`
+
+      --force
+          Overwrite the output file if it already exists
+
+  -h, --help
+          Print help (see a summary with &#x27;-h&#x27;)
+
+  -V, --version
+          Print version
+
+Global:
+  -s, --server &lt;SERVER&gt;
+          Graph server URL
+
+          [env: ATFGRAPH_SERVER=]
+          [default: http://127.0.0.1:18880]
+
+  -k, --api-key &lt;API_KEY&gt;
+          API key sent as the X-API-Key header. Omit for loopback development without keys
+
+          [env: ATFGRAPH_API_KEY]
+
+      --edge-auth &lt;EDGE_AUTH&gt;
+          Edge credential for a platform proxy in front of the graph server. `databricks` sends a workspace OAuth token as `Authorization`; the API key stays in X-API-Key
+
+          [env: ATFGRAPH_EDGE_AUTH=]
+          [default: none]
+          [possible values: none, databricks]
+
+      --databricks-profile &lt;DATABRICKS_PROFILE&gt;
+          Databricks CLI profile for `--edge-auth databricks`. Always explicit; never auto-selected
+
+          [env: ATFGRAPH_DATABRICKS_PROFILE=]
+
+      --json
+          Print raw JSON instead of tables
+
+      --timeout &lt;TIMEOUT&gt;
+          HTTP request timeout in seconds
+
+          [default: 30]
+
+      --state-dir &lt;STATE_DIR&gt;
+          Directory for pid metadata and daemon logs written by `atfg server`
+
+          [env: ATFGRAPH_VNEXT_HOME=]</code></pre>
+<h2 id="atfg-show"><code>atfg show</code></h2>
+<pre><code class="language-text">Show one traverser
+
+Usage: atfg show [OPTIONS] &lt;ID&gt;
+
+Arguments:
+  &lt;ID&gt;  Traverser id
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-config"><code>atfg config</code></h2>
+<pre><code class="language-text">Validate a graph server configuration file
+
+Usage: atfg config [OPTIONS] &lt;COMMAND&gt;
+
+Commands:
+  validate  Check a YAML configuration against the vNext contract shape
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-config-validate"><code>atfg config validate</code></h2>
+<pre><code class="language-text">Check a YAML configuration against the vNext contract shape
+
+Usage: atfg config validate [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  Path to the YAML file. Defaults to `ATFGRAPH_CONFIG_FILE` or `config/atfgraph.yaml`
+
+Options:
+      --strict   Treat warnings as errors
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-dev"><code>atfg dev</code></h2>
+<pre><code class="language-text">Run a Python agent node worker against a local graph server
+
+Usage: atfg dev [OPTIONS] --module &lt;MODULE&gt; [-- &lt;WORKER_ARGS&gt;...]
+
+Arguments:
+  [WORKER_ARGS]...  Extra arguments forwarded to the worker after `--`
+
+Options:
+      --module &lt;MODULE&gt;                Worker module in `module:agent` form, passed to `python -m atfgraph.worker`
+      --python &lt;PYTHON&gt;                Python interpreter [default: python3]
+      --start-server                   Start the sibling daemon when `--server` is loopback and not healthy
+      --expect-label &lt;EXPECT_LABEL&gt;    Report when this label is registered on the graph server (checked in the background while the worker runs)
+      --ready-timeout &lt;READY_TIMEOUT&gt;  Seconds allowed for `--expect-label` to appear before the worker is stopped with exit 2 [default: 30]
+      --grace &lt;GRACE&gt;                  Seconds to wait for the worker to drain after Ctrl-C before it is killed [default: 20]
+  -h, --help                           Print help
+  -V, --version                        Print version</code></pre>
+<h2 id="atfg-install"><code>atfg install</code></h2>
+<pre><code class="language-text">Install an agent node package (directory, .tar.gz artifact or git URL with `agentnode.yaml`) into an isolated venv
+
+Usage: atfg install [OPTIONS] &lt;SOURCE&gt;
+
+Arguments:
+  &lt;SOURCE&gt;  Local directory, `atfg package` artifact, or git URL (`https://host/repo[//subdir][@ref]`)
+
+Options:
+      --path &lt;PATH&gt;      Install from this subdirectory of the source
+      --python &lt;PYTHON&gt;  Interpreter used to create the package venv [default: python3]
+      --sdk &lt;SDK&gt;        Directory or wheel of the `atfgraph` Python package (default: ATFGRAPH_SDK, a wheel next to atfg, or the source checkout)
+  -f, --force            Reinstall over an existing package
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-run"><code>atfg run</code></h2>
+<pre><code class="language-text">Start an installed agent node as a detached outbound worker and wait until its label is registered
+
+Usage: atfg run [OPTIONS] &lt;NAME&gt;
+
+Arguments:
+  &lt;NAME&gt;  Package name from its manifest
+
+Options:
+      --wait &lt;WAIT&gt;          Seconds to wait for registration (exit 2 when exceeded; the worker keeps running) [default: 30]
+      --capacity &lt;CAPACITY&gt;  Worker concurrency permits
+      --start-server         Start the sibling daemon when `--server` is loopback and not healthy
+  -h, --help                 Print help
+  -V, --version              Print version</code></pre>
+<h2 id="atfg-stop"><code>atfg stop</code></h2>
+<pre><code class="language-text">Stop a worker started by `atfg run`: SIGTERM the recorded pid after checking it is that worker; it drains first
+
+Usage: atfg stop [OPTIONS] &lt;NAME&gt;
+
+Arguments:
+  &lt;NAME&gt;  Package name
+
+Options:
+      --grace &lt;GRACE&gt;  Seconds to wait for a clean exit [default: 30]
+      --kill           SIGKILL when the grace period passes
+  -h, --help           Print help
+  -V, --version        Print version</code></pre>
+<h2 id="atfg-logs"><code>atfg logs</code></h2>
+<pre><code class="language-text">Show a worker&#x27;s log written by `atfg run`
+
+Usage: atfg logs [OPTIONS] &lt;NAME&gt;
+
+Arguments:
+  &lt;NAME&gt;  Package name
+
+Options:
+      --tail &lt;TAIL&gt;  Lines from the end of the log [default: 50]
+  -f, --follow       Keep printing new lines until Ctrl-C
+  -h, --help         Print help
+  -V, --version      Print version</code></pre>
+<h2 id="atfg-list"><code>atfg list</code></h2>
+<pre><code class="language-text">List installed agent node packages with process and registration state
+
+Usage: atfg list [OPTIONS]
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-uninstall"><code>atfg uninstall</code></h2>
+<pre><code class="language-text">Remove an installed package (refuses while its worker runs)
+
+Usage: atfg uninstall [OPTIONS] &lt;NAME&gt;
+
+Arguments:
+  &lt;NAME&gt;  Package name
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-package"><code>atfg package</code></h2>
+<pre><code class="language-text">Build a local `.tar.gz` artifact with SHA-256 checksums and version metadata from an agent node project
+
+Usage: atfg package [OPTIONS] [DIR]
+
+Arguments:
+  [DIR]  Project directory containing `agentnode.yaml` [default: .]
+
+Options:
+      --out &lt;OUT&gt;  Output directory [default: target/dist/packages]
+  -h, --help       Print help
+  -V, --version    Print version</code></pre>
+<h2 id="atfg-login"><code>atfg login</code></h2>
+<pre><code class="language-text">Save a graph server, its API key and edge settings to the shared credentials file
+
+Usage: atfg login [OPTIONS] &lt;URL&gt;
+
+Arguments:
+  &lt;URL&gt;  Graph server URL, e.g. https://atfgraph.example.com
+
+Options:
+      --api-key-stdin  Read the API key from standard input instead of prompting
+      --no-verify      Save without first checking that the server accepts the credentials
+  -h, --help           Print help
+  -V, --version        Print version</code></pre>
+<h2 id="atfg-logout"><code>atfg logout</code></h2>
+<pre><code class="language-text">Remove one saved graph server (default: the current one). Other entries are untouched
+
+Usage: atfg logout [OPTIONS] [URL]
+
+Arguments:
+  [URL]  Graph server URL to forget
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-whoami"><code>atfg whoami</code></h2>
+<pre><code class="language-text">Show the resolved server, key prefix and edge settings, where each came from, and whether the server accepts them
+
+Usage: atfg whoami [OPTIONS]
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-doctor"><code>atfg doctor</code></h2>
+<pre><code class="language-text">Inspect this machine: binaries, Python SDK, container/cluster tools and the graph server
+
+Usage: atfg doctor [OPTIONS]
+
+Options:
+      --python &lt;PYTHON&gt;  Interpreter to probe for the `atfgraph` package [default: python3]
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-migrate"><code>atfg migrate</code></h2>
+<p>Migrate history, back up, verify or restore a store. Run <code>atfg migrate --help</code> for tool options.</p>
+<p><code>atfg migrate</code> forwards its arguments to the bundled migration tool (<code>scripts/migrate.py</code>), so <code>atfg migrate --help</code> prints that tool&#x27;s help, from whichever Python interpreter and tool root are in use. Run it directly for the option list.</p>
+<h2 id="atfg-skill"><code>atfg skill</code></h2>
+<pre><code class="language-text">Install a bundled coding skill into a coding harness (Claude Code or Codex)
+
+Usage: atfg skill [OPTIONS] &lt;COMMAND&gt;
+
+Commands:
+  install  Install one bundled skill; scripts/install-skills.py does the copying and ownership checks
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-skill-install"><code>atfg skill install</code></h2>
+<pre><code class="language-text">Install one bundled skill; scripts/install-skills.py does the copying and ownership checks
+
+Usage: atfg skill install [OPTIONS] --target &lt;TARGET&gt; &lt;NAME&gt;
+
+Arguments:
+  &lt;NAME&gt;
+          Which bundled skill to install
+
+          [possible values: atfgraph-vnext, atfgraph-vnext-use, atfgraph-vnext-personal, atfgraph-vnext-topology]
+
+Options:
+      --target &lt;TARGET&gt;
+          Coding harness to install into
+
+          Possible values:
+          - claude-code: Claude Code; mapped to the installer&#x27;s `claude` client
+          - codex:       OpenAI Codex
+
+      --destination &lt;DESTINATION&gt;
+          Directory the harness owns (default: the harness&#x27;s own directory under $HOME)
+
+      --python &lt;PYTHON&gt;
+          Python interpreter that runs the installer (3.10 or newer)
+
+          [env: ATFG_PYTHON=]
+          [default: python3]
+
+  -h, --help
+          Print help (see a summary with &#x27;-h&#x27;)
+
+  -V, --version
+          Print version
+
+Global:
+  -s, --server &lt;SERVER&gt;
+          Graph server URL
+
+          [env: ATFGRAPH_SERVER=]
+          [default: http://127.0.0.1:18880]
+
+  -k, --api-key &lt;API_KEY&gt;
+          API key sent as the X-API-Key header. Omit for loopback development without keys
+
+          [env: ATFGRAPH_API_KEY]
+
+      --edge-auth &lt;EDGE_AUTH&gt;
+          Edge credential for a platform proxy in front of the graph server. `databricks` sends a workspace OAuth token as `Authorization`; the API key stays in X-API-Key
+
+          [env: ATFGRAPH_EDGE_AUTH=]
+          [default: none]
+          [possible values: none, databricks]
+
+      --databricks-profile &lt;DATABRICKS_PROFILE&gt;
+          Databricks CLI profile for `--edge-auth databricks`. Always explicit; never auto-selected
+
+          [env: ATFGRAPH_DATABRICKS_PROFILE=]
+
+      --json
+          Print raw JSON instead of tables
+
+      --timeout &lt;TIMEOUT&gt;
+          HTTP request timeout in seconds
+
+          [default: 30]
+
+      --state-dir &lt;STATE_DIR&gt;
+          Directory for pid metadata and daemon logs written by `atfg server`
+
+          [env: ATFGRAPH_VNEXT_HOME=]</code></pre>
+<h2 id="atfg-docs"><code>atfg docs</code></h2>
+<pre><code class="language-text">Serve the documentation site on the loopback address and open it in the browser
+
+Usage: atfg docs [OPTIONS]
+
+Options:
+      --port &lt;PORT&gt;      Loopback port to serve on; 0 asks the kernel for a free one [default: 8000]
+      --no-browser       Do not open the site in the default browser
+      --python &lt;PYTHON&gt;  Python interpreter that runs the web server (3.10 or newer) [env: ATFG_PYTHON=] [default: python3]
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-deploy"><code>atfg deploy</code></h2>
+<pre><code class="language-text">Validate, scaffold or manage deployments
+
+Usage: atfg deploy [OPTIONS] &lt;COMMAND&gt;
+
+Commands:
+  validate  Run the local validation commands for the deployment files (no cluster or registry is contacted)
+  scaffold  Write Dockerfile, Compose or Kubernetes files for a Python agent node worker
+  compose   Manage a local Docker Compose deployment: desired state on disk, observed state from Docker and the graph server
+  list      List deployments recorded by this CLI
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-deploy-validate"><code>atfg deploy validate</code></h2>
+<pre><code class="language-text">Run the local validation commands for the deployment files (no cluster or registry is contacted)
+
+Usage: atfg deploy validate [OPTIONS]
+
+Options:
+      --path &lt;PATH&gt;      Deployment directory. Defaults to `./deploy` [default: deploy]
+      --target &lt;TARGET&gt;  Which target to validate [default: all] [possible values: all, compose, kubernetes, helm]
+      --require-tools    Fail when a validation tool is missing instead of skipping it
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-deploy-scaffold"><code>atfg deploy scaffold</code></h2>
+<pre><code class="language-text">Write Dockerfile, Compose or Kubernetes files for a Python agent node worker
+
+Usage: atfg deploy scaffold [OPTIONS] --label &lt;LABEL&gt; --module &lt;MODULE&gt; &lt;DIR&gt;
+
+Arguments:
+  &lt;DIR&gt;  Directory of the agent node project
+
+Options:
+      --target &lt;TARGET&gt;  Which files to write [default: docker] [possible values: docker, kubernetes]
+      --label &lt;LABEL&gt;    Agent node label
+      --module &lt;MODULE&gt;  Worker module in `module:agent` form
+      --force            Overwrite existing files
+  -h, --help             Print help
+  -V, --version          Print version</code></pre>
+<h2 id="atfg-deploy-compose"><code>atfg deploy compose</code></h2>
+<pre><code class="language-text">Manage a local Docker Compose deployment: desired state on disk, observed state from Docker and the graph server
+
+Usage: atfg deploy compose [OPTIONS] &lt;COMMAND&gt;
+
+Commands:
+  up        Create or re-apply a deployment: `docker compose up --wait`, then verify `/health` and node registration
+  status    Observe containers, health and registered labels; exit 3 when they differ from the desired state
+  logs      Print container logs of the deployment
+  down      Stop and remove the deployment&#x27;s containers and network; `--volumes` also removes its data volume
+  rollback  Re-apply the previous successfully deployed image tag
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+<h2 id="atfg-deploy-compose-up"><code>atfg deploy compose up</code></h2>
+<pre><code class="language-text">Create or re-apply a deployment: `docker compose up --wait`, then verify `/health` and node registration
+
+Usage: atfg deploy compose up [OPTIONS] --name &lt;NAME&gt;
+
+Options:
+      --name &lt;NAME&gt;                   Deployment name; the Compose project becomes `atfgv-&lt;name&gt;`
+      --file &lt;FILE&gt;                   Compose file to deploy [default: deploy/docker/compose.yaml]
+      --port &lt;PORT&gt;                   Loopback port to publish the graph server on (default: a free port, fixed for the deployment&#x27;s lifetime)
+      --api-key-env &lt;API_KEY_ENV&gt;     Environment variable that holds the API key handed to the containers. Only the name is recorded [default: ATFGRAPH_API_KEY]
+      --image-tag &lt;IMAGE_TAG&gt;         Image tag substituted into the Compose file as ATFGRAPH_IMAGE_TAG
+      --build                         Build the images before starting
+      --wait &lt;WAIT&gt;                   Seconds to wait for health checks and node registration [default: 180]
+      --expect-label &lt;EXPECT_LABELS&gt;  Additional labels that must be registered before the deployment counts as converged
+  -h, --help                          Print help
+  -V, --version                       Print version</code></pre>
+<h2 id="atfg-deploy-compose-status"><code>atfg deploy compose status</code></h2>
+<pre><code class="language-text">Observe containers, health and registered labels; exit 3 when they differ from the desired state
+
+Usage: atfg deploy compose status [OPTIONS] --name &lt;NAME&gt;
+
+Options:
+      --name &lt;NAME&gt;
+  -h, --help         Print help
+  -V, --version      Print version</code></pre>
+<h2 id="atfg-deploy-compose-logs"><code>atfg deploy compose logs</code></h2>
+<pre><code class="language-text">Print container logs of the deployment
+
+Usage: atfg deploy compose logs [OPTIONS] --name &lt;NAME&gt;
+
+Options:
+      --name &lt;NAME&gt;
+      --tail &lt;TAIL&gt;        [default: 100]
+      --service &lt;SERVICE&gt;  Only this service
+  -h, --help               Print help
+  -V, --version            Print version</code></pre>
+<h2 id="atfg-deploy-compose-down"><code>atfg deploy compose down</code></h2>
+<pre><code class="language-text">Stop and remove the deployment&#x27;s containers and network; `--volumes` also removes its data volume
+
+Usage: atfg deploy compose down [OPTIONS] --name &lt;NAME&gt;
+
+Options:
+      --name &lt;NAME&gt;
+      --volumes
+      --forget       Delete the deployment record after a clean teardown
+  -h, --help         Print help
+  -V, --version      Print version</code></pre>
+<h2 id="atfg-deploy-compose-rollback"><code>atfg deploy compose rollback</code></h2>
+<pre><code class="language-text">Re-apply the previous successfully deployed image tag
+
+Usage: atfg deploy compose rollback [OPTIONS] --name &lt;NAME&gt;
+
+Options:
+      --name &lt;NAME&gt;
+      --wait &lt;WAIT&gt;  [default: 180]
+      --build        Build the images for that tag before starting (when they are not present locally)
+  -h, --help         Print help
+  -V, --version      Print version</code></pre>
+<h2 id="atfg-deploy-list"><code>atfg deploy list</code></h2>
+<pre><code class="language-text">List deployments recorded by this CLI
+
+Usage: atfg deploy list [OPTIONS]
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version</code></pre>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

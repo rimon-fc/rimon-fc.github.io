@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaluations operations — ATFGraph vNext reference</title>
+<meta name="description" content="Evaluations operations: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-api" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="index.html" aria-current="page">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Evaluations operations</h1>
+<p>Operations grouped under this contract tag.</p>
+<h2>Operations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Operation</th><th scope="col">Method</th><th scope="col">Path</th></tr></thead><tbody><tr><td><a href="#op-listEvalCaseSets"><code>listEvalCaseSets</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/evals/case-sets</code></td></tr><tr><td><a href="#op-createEvalCaseSet"><code>createEvalCaseSet</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/evals/case-sets</code></td></tr><tr><td><a href="#op-getEvalCaseSet"><code>getEvalCaseSet</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/evals/case-sets/{id}</code></td></tr><tr><td><a href="#op-updateEvalCaseSet"><code>updateEvalCaseSet</code></a></td><td><span class="method">PATCH</span></td><td><code>/api/v2/evals/case-sets/{id}</code></td></tr><tr><td><a href="#op-deleteEvalCaseSet"><code>deleteEvalCaseSet</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/evals/case-sets/{id}</code></td></tr><tr><td><a href="#op-listEvalCases"><code>listEvalCases</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/evals/case-sets/{id}/cases</code></td></tr><tr><td><a href="#op-createEvalCase"><code>createEvalCase</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/evals/case-sets/{id}/cases</code></td></tr><tr><td><a href="#op-startEvalRun"><code>startEvalRun</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/evals/case-sets/{id}/run</code></td></tr><tr><td><a href="#op-evalScores"><code>evalScores</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/evals/case-sets/{id}/scores</code></td></tr><tr><td><a href="#op-updateEvalCase"><code>updateEvalCase</code></a></td><td><span class="method">PATCH</span></td><td><code>/api/v2/evals/cases/{id}</code></td></tr><tr><td><a href="#op-deleteEvalCase"><code>deleteEvalCase</code></a></td><td><span class="method">DELETE</span></td><td><code>/api/v2/evals/cases/{id}</code></td></tr><tr><td><a href="#op-listEvalRuns"><code>listEvalRuns</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/evals/runs</code></td></tr><tr><td><a href="#op-getEvalRun"><code>getEvalRun</code></a></td><td><span class="method">GET</span></td><td><code>/api/v2/evals/runs/{id}</code></td></tr><tr><td><a href="#op-cancelEvalRun"><code>cancelEvalRun</code></a></td><td><span class="method">POST</span></td><td><code>/api/v2/evals/runs/{id}/cancel</code></td></tr></tbody></table></div>
+<section class="operation" id="op-listEvalCaseSets">
+<h3><code>listEvalCaseSets</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/evals/case-sets</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Case sets visible to the caller, newest first, optionally filtered by exact target. Each item carries case_count and, when the set has been run, last_run. Pass next_cursor back as cursor; limit defaults to 50 and is at most 500.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.list_eval_case_sets()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>cursor</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>limit</code></td><td>query</td><td>no</td><td>integer</td></tr><tr><td><code>target</code></td><td>query</td><td>no</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalcasesetlist"><code>EvalCaseSetList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;case_count&quot;: 0,
+      &quot;created_at&quot;: 0,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;last_run&quot;: {
+        &quot;case_set_id&quot;: &quot;string&quot;,
+        &quot;cost_complete&quot;: false,
+        &quot;cost_usd&quot;: 0.0,
+        &quot;created_at&quot;: 0,
+        &quot;duration_ms_p50&quot;: 0,
+        &quot;errored&quot;: 0,
+        &quot;failed&quot;: 0,
+        &quot;finished_at&quot;: 0,
+        &quot;id&quot;: &quot;string&quot;,
+        &quot;label&quot;: &quot;string&quot;,
+        &quot;pass_rate&quot;: 0.0,
+        &quot;passed&quot;: 0,
+        &quot;pending&quot;: 0,
+        &quot;revision&quot;: 0,
+        &quot;skipped&quot;: 0,
+        &quot;started_at&quot;: 0,
+        &quot;status&quot;: &quot;string&quot;,
+        &quot;target&quot;: &quot;string&quot;,
+        &quot;total&quot;: 0,
+        &quot;total_tokens&quot;: 0,
+        &quot;version&quot;: &quot;string&quot;
+      },
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;principal&quot;: &quot;string&quot;,
+      &quot;revision&quot;: 0,
+      &quot;target&quot;: &quot;string&quot;,
+      &quot;updated_at&quot;: 0,
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;next_cursor&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-createEvalCaseSet">
+<h3><code>createEvalCaseSet</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/evals/case-sets</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Create a case set for one `label.capability` target, optionally with its first cases (at most 500). version pins an immutable agent version; absent or empty means the newest registered version at run time. The set belongs to the calling principal: admins see every set in the namespace, other callers only their own, and foreign ids answer 404 eval_set_not_found. Namespaces hold at most 1024 sets; names are at most 256 characters, descriptions 4096.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.create_eval_case_set()</code></p>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-evalcasesetcreate"><code>EvalCaseSetCreate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;target&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>201</code></td><td><a href="../schemas/index.html#schema-evalcaseset"><code>EvalCaseSet</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>201</code></h4>
+<pre><code class="language-json">{
+  &quot;case_count&quot;: 0,
+  &quot;created_at&quot;: 0,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;last_run&quot;: {
+    &quot;case_set_id&quot;: &quot;string&quot;,
+    &quot;cost_complete&quot;: false,
+    &quot;cost_usd&quot;: 0.0,
+    &quot;created_at&quot;: 0,
+    &quot;duration_ms_p50&quot;: 0,
+    &quot;errored&quot;: 0,
+    &quot;failed&quot;: 0,
+    &quot;finished_at&quot;: 0,
+    &quot;id&quot;: &quot;string&quot;,
+    &quot;label&quot;: &quot;string&quot;,
+    &quot;pass_rate&quot;: 0.0,
+    &quot;passed&quot;: 0,
+    &quot;pending&quot;: 0,
+    &quot;revision&quot;: 0,
+    &quot;skipped&quot;: 0,
+    &quot;started_at&quot;: 0,
+    &quot;status&quot;: &quot;string&quot;,
+    &quot;target&quot;: &quot;string&quot;,
+    &quot;total&quot;: 0,
+    &quot;total_tokens&quot;: 0,
+    &quot;version&quot;: &quot;string&quot;
+  },
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;updated_at&quot;: 0,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-getEvalCaseSet">
+<h3><code>getEvalCaseSet</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/evals/case-sets/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>One case set with its case count and most recent run. A set owned by another principal is 404 eval_set_not_found rather than 403.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.get_eval_case_set()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalcaseset"><code>EvalCaseSet</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;case_count&quot;: 0,
+  &quot;created_at&quot;: 0,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;last_run&quot;: {
+    &quot;case_set_id&quot;: &quot;string&quot;,
+    &quot;cost_complete&quot;: false,
+    &quot;cost_usd&quot;: 0.0,
+    &quot;created_at&quot;: 0,
+    &quot;duration_ms_p50&quot;: 0,
+    &quot;errored&quot;: 0,
+    &quot;failed&quot;: 0,
+    &quot;finished_at&quot;: 0,
+    &quot;id&quot;: &quot;string&quot;,
+    &quot;label&quot;: &quot;string&quot;,
+    &quot;pass_rate&quot;: 0.0,
+    &quot;passed&quot;: 0,
+    &quot;pending&quot;: 0,
+    &quot;revision&quot;: 0,
+    &quot;skipped&quot;: 0,
+    &quot;started_at&quot;: 0,
+    &quot;status&quot;: &quot;string&quot;,
+    &quot;target&quot;: &quot;string&quot;,
+    &quot;total&quot;: 0,
+    &quot;total_tokens&quot;: 0,
+    &quot;version&quot;: &quot;string&quot;
+  },
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;updated_at&quot;: 0,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-updateEvalCaseSet">
+<h3><code>updateEvalCaseSet</code></h3>
+<p class="meta"><span class="method">PATCH</span> <code>/api/v2/evals/case-sets/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Compare-and-set edit of name, description, target and version. expected_revision must equal the current revision or the request fails with 409 revision_mismatch; unknown fields are rejected. Existing runs keep the target and version they were started with.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.update_eval_case_set()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-evalcasesetupdate"><code>EvalCaseSetUpdate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;expected_revision&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalcaseset"><code>EvalCaseSet</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;case_count&quot;: 0,
+  &quot;created_at&quot;: 0,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;last_run&quot;: {
+    &quot;case_set_id&quot;: &quot;string&quot;,
+    &quot;cost_complete&quot;: false,
+    &quot;cost_usd&quot;: 0.0,
+    &quot;created_at&quot;: 0,
+    &quot;duration_ms_p50&quot;: 0,
+    &quot;errored&quot;: 0,
+    &quot;failed&quot;: 0,
+    &quot;finished_at&quot;: 0,
+    &quot;id&quot;: &quot;string&quot;,
+    &quot;label&quot;: &quot;string&quot;,
+    &quot;pass_rate&quot;: 0.0,
+    &quot;passed&quot;: 0,
+    &quot;pending&quot;: 0,
+    &quot;revision&quot;: 0,
+    &quot;skipped&quot;: 0,
+    &quot;started_at&quot;: 0,
+    &quot;status&quot;: &quot;string&quot;,
+    &quot;target&quot;: &quot;string&quot;,
+    &quot;total&quot;: 0,
+    &quot;total_tokens&quot;: 0,
+    &quot;version&quot;: &quot;string&quot;
+  },
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;principal&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;updated_at&quot;: 0,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-deleteEvalCaseSet">
+<h3><code>deleteEvalCaseSet</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/evals/case-sets/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Delete a set together with its cases, runs and results in one transaction. Traversers the runs admitted are untouched. expected_revision travels as a query parameter and, when given, must match (409 revision_mismatch).</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.delete_eval_case_set()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>expected_revision</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-deleted"><code>Deleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-listEvalCases">
+<h3><code>listEvalCases</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/evals/case-sets/{id}/cases</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Page the cases of one set in creation order. cursor is the opaque position of the previous page&#x27;s last case; a null next_cursor is the last page. limit defaults to 50, at most 500.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.list_eval_cases()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>cursor</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>limit</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalcaselist"><code>EvalCaseList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;assertions&quot;: [
+        {
+          &quot;path&quot;: &quot;string&quot;,
+          &quot;type&quot;: {},
+          &quot;value&quot;: {}
+        }
+      ],
+      &quot;case_set_id&quot;: &quot;string&quot;,
+      &quot;created_at&quot;: 0,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;input&quot;: {},
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;revision&quot;: 0,
+      &quot;tags&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;updated_at&quot;: 0
+    }
+  ],
+  &quot;next_cursor&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-createEvalCase">
+<h3><code>createEvalCase</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/evals/case-sets/{id}/cases</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Add a case to a set: a name, the capability input (canonical JSON at most 65536 bytes), at most 64 validated assertions and at most 16 tags. An empty assertion list is the implicit `status: succeeded`. Sets hold at most 500 cases (422 eval_set_full). Regex patterns and JSON Schemas are compiled on write so a malformed assertion is a 400 invalid_input here rather than a verdict later.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.create_eval_case()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-evalcaseinput"><code>EvalCaseInput</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;input&quot;: {},
+  &quot;name&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>201</code></td><td><a href="../schemas/index.html#schema-evalcase"><code>EvalCase</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>201</code></h4>
+<pre><code class="language-json">{
+  &quot;assertions&quot;: [
+    {
+      &quot;path&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;equals&quot;,
+      &quot;value&quot;: {}
+    }
+  ],
+  &quot;case_set_id&quot;: &quot;string&quot;,
+  &quot;created_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;input&quot;: {},
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;tags&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-startEvalRun">
+<h3><code>startEvalRun</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/evals/case-sets/{id}/run</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Start a run of the set (or of case_ids) against the requested version, the set&#x27;s version, or the newest registered version, in that order of preference; the resolved immutable version is recorded on the run. The agent and capability are resolved before anything is written (404 agent_not_found / capability_not_found). Then one root traverser per case is admitted through the ordinary submit path with idempotency key `eval:&lt;run_id&gt;:&lt;case_id&gt;`, so access policies, capacity and the worker protocol apply unchanged; an admission fault marks that case errored immediately. Returns 202 with the run in status running; poll getEvalRun, or read the traversers directly.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.start_eval_run()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-evalrunrequest"><code>EvalRunRequest</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;case_ids&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>202</code></td><td><a href="../schemas/index.html#schema-evalrun"><code>EvalRun</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>202</code></h4>
+<pre><code class="language-json">{
+  &quot;case_set_id&quot;: &quot;string&quot;,
+  &quot;cost_complete&quot;: false,
+  &quot;cost_usd&quot;: 0.0,
+  &quot;created_at&quot;: 0,
+  &quot;duration_ms_p50&quot;: 0,
+  &quot;errored&quot;: 0,
+  &quot;failed&quot;: 0,
+  &quot;finished_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;pass_rate&quot;: 0.0,
+  &quot;passed&quot;: 0,
+  &quot;pending&quot;: 0,
+  &quot;revision&quot;: 0,
+  &quot;skipped&quot;: 0,
+  &quot;started_at&quot;: 0,
+  &quot;status&quot;: &quot;string&quot;,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;total&quot;: 0,
+  &quot;total_tokens&quot;: 0,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-evalScores">
+<h3><code>evalScores</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/evals/case-sets/{id}/scores</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Finished runs of one set aggregated per version, newest version first: run and case counts, verdict counts, pass_rate, the median duration over every settled result, token and cost totals (cost_usd null unless some result was priced; cost_complete when every run was fully priced), and the last run&#x27;s id and finish time. Running runs are settled first and excluded.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.eval_scores()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalscores"><code>EvalScores</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;case_set_id&quot;: &quot;string&quot;,
+  &quot;items&quot;: [
+    {
+      &quot;cases&quot;: 0,
+      &quot;cost_complete&quot;: false,
+      &quot;cost_usd&quot;: 0.0,
+      &quot;duration_ms_p50&quot;: 0,
+      &quot;errored&quot;: 0,
+      &quot;failed&quot;: 0,
+      &quot;last_finished_at&quot;: 0,
+      &quot;last_run_id&quot;: &quot;string&quot;,
+      &quot;pass_rate&quot;: 0.0,
+      &quot;passed&quot;: 0,
+      &quot;runs&quot;: 0,
+      &quot;skipped&quot;: 0,
+      &quot;total_tokens&quot;: 0,
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ]
+}</code></pre>
+</section>
+<section class="operation" id="op-updateEvalCase">
+<h3><code>updateEvalCase</code></h3>
+<p class="meta"><span class="method">PATCH</span> <code>/api/v2/evals/cases/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Compare-and-set edit of name, input, assertions and tags. expected_revision must equal the current revision (409 revision_mismatch); unknown fields are rejected. Runs already started keep the assertions they were started with.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.update_eval_case()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Request body</h4><p class="meta"><a href="../schemas/index.html#schema-evalcaseupdate"><code>EvalCaseUpdate</code></a> (required)</p>
+<pre><code class="language-json">{
+  &quot;expected_revision&quot;: 0
+}</code></pre>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalcase"><code>EvalCase</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;assertions&quot;: [
+    {
+      &quot;path&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;equals&quot;,
+      &quot;value&quot;: {}
+    }
+  ],
+  &quot;case_set_id&quot;: &quot;string&quot;,
+  &quot;created_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;input&quot;: {},
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;revision&quot;: 0,
+  &quot;tags&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;updated_at&quot;: 0
+}</code></pre>
+</section>
+<section class="operation" id="op-deleteEvalCase">
+<h3><code>deleteEvalCase</code></h3>
+<p class="meta"><span class="method">DELETE</span> <code>/api/v2/evals/cases/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Delete one case. Results it produced in earlier runs are kept. expected_revision, when given, must match (409 revision_mismatch). A case of another principal&#x27;s set is 404 eval_case_not_found.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.delete_eval_case()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr><tr><td><code>expected_revision</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-deleted"><code>Deleted</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;deleted&quot;: false
+}</code></pre>
+</section>
+<section class="operation" id="op-listEvalRuns">
+<h3><code>listEvalRuns</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/evals/runs</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Runs visible to the caller, newest first, optionally restricted to case_set_id (404 for a foreign or unknown set). Running runs are settled before the page is read, so counters reflect every traverser that has ended. Pass next_cursor back as cursor.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.list_eval_runs()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>case_set_id</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>cursor</code></td><td>query</td><td>no</td><td>string</td></tr><tr><td><code>limit</code></td><td>query</td><td>no</td><td>integer</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalrunlist"><code>EvalRunList</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;case_set_id&quot;: &quot;string&quot;,
+      &quot;cost_complete&quot;: false,
+      &quot;cost_usd&quot;: 0.0,
+      &quot;created_at&quot;: 0,
+      &quot;duration_ms_p50&quot;: 0,
+      &quot;errored&quot;: 0,
+      &quot;failed&quot;: 0,
+      &quot;finished_at&quot;: 0,
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;label&quot;: &quot;string&quot;,
+      &quot;pass_rate&quot;: 0.0,
+      &quot;passed&quot;: 0,
+      &quot;pending&quot;: 0,
+      &quot;revision&quot;: 0,
+      &quot;skipped&quot;: 0,
+      &quot;started_at&quot;: 0,
+      &quot;status&quot;: &quot;string&quot;,
+      &quot;target&quot;: &quot;string&quot;,
+      &quot;total&quot;: 0,
+      &quot;total_tokens&quot;: 0,
+      &quot;version&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;next_cursor&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+<section class="operation" id="op-getEvalRun">
+<h3><code>getEvalRun</code></h3>
+<p class="meta"><span class="method">GET</span> <code>/api/v2/evals/runs/{id}</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>One run with its per-case results, settled first: every pending case whose traverser has ended is evaluated (assertions, duration, model usage from the traverser&#x27;s usage rows) and the run counters are recomputed. When no case is pending the run is failed if any case failed or errored, otherwise succeeded. Results are ordered by case name.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.get_eval_run()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalrundetail"><code>EvalRunDetail</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;results&quot;: [
+    {
+      &quot;assertions&quot;: [
+        {
+          &quot;actual&quot;: {},
+          &quot;message&quot;: &quot;string&quot;,
+          &quot;passed&quot;: false,
+          &quot;path&quot;: &quot;string&quot;,
+          &quot;type&quot;: {}
+        }
+      ],
+      &quot;case_id&quot;: &quot;string&quot;,
+      &quot;case_name&quot;: &quot;string&quot;,
+      &quot;cost_usd&quot;: 0.0,
+      &quot;duration_ms&quot;: 0,
+      &quot;error&quot;: {},
+      &quot;finished_at&quot;: 0,
+      &quot;output&quot;: {},
+      &quot;run_id&quot;: &quot;string&quot;,
+      &quot;status&quot;: &quot;string&quot;,
+      &quot;total_tokens&quot;: 0,
+      &quot;traverser_id&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;run&quot;: {
+    &quot;case_set_id&quot;: &quot;string&quot;,
+    &quot;cost_complete&quot;: false,
+    &quot;cost_usd&quot;: 0.0,
+    &quot;created_at&quot;: 0,
+    &quot;duration_ms_p50&quot;: 0,
+    &quot;errored&quot;: 0,
+    &quot;failed&quot;: 0,
+    &quot;finished_at&quot;: 0,
+    &quot;id&quot;: &quot;string&quot;,
+    &quot;label&quot;: &quot;string&quot;,
+    &quot;pass_rate&quot;: 0.0,
+    &quot;passed&quot;: 0,
+    &quot;pending&quot;: 0,
+    &quot;revision&quot;: 0,
+    &quot;skipped&quot;: 0,
+    &quot;started_at&quot;: 0,
+    &quot;status&quot;: &quot;string&quot;,
+    &quot;target&quot;: &quot;string&quot;,
+    &quot;total&quot;: 0,
+    &quot;total_tokens&quot;: 0,
+    &quot;version&quot;: &quot;string&quot;
+  }
+}</code></pre>
+</section>
+<section class="operation" id="op-cancelEvalRun">
+<h3><code>cancelEvalRun</code></h3>
+<p class="meta"><span class="method">POST</span> <code>/api/v2/evals/runs/{id}/cancel</code></p>
+<p class="meta">Requires: invoke role</p>
+<p>Cancel a running run: its pending results become skipped, the run becomes cancelled with finished_at set, and every pending traverser is cancelled through the ordinary cancel path (unfinished descendants included). Cancelling a run that already ended is a no-op that returns the run.</p>
+<p class="meta">Generated Python client internals: <code>atfgraph._generated.api.evaluations_api.EvaluationsApi.cancel_eval_run()</code></p>
+<h4>Parameters</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Parameter</th><th scope="col">In</th><th scope="col">Required</th><th scope="col">Type</th></tr></thead><tbody><tr><td><code>id</code></td><td>path</td><td>yes</td><td>string</td></tr></tbody></table></div>
+<h4>Responses</h4>
+<div class="table-wrap"><table><thead><tr><th scope="col">Status</th><th scope="col">Body</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>200</code></td><td><a href="../schemas/index.html#schema-evalrun"><code>EvalRun</code></a></td><td>Successful operation</td></tr><tr><td><code>400</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>401</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Missing or invalid credentials</td></tr><tr><td><code>403</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Role or ownership denied</td></tr><tr><td><code>404</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Resource unavailable to this identity</td></tr><tr><td><code>409</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Revision, idempotency, immutable version or lease conflict</td></tr><tr><td><code>413</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>422</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capability input/output schema violation</td></tr><tr><td><code>429</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Capacity exceeded</td></tr><tr><td><code>500</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr><tr><td><code>503</code></td><td><a href="../schemas/index.html#schema-errorresponse"><code>ErrorResponse</code></a></td><td>Structured API error</td></tr></tbody></table></div>
+<h4>Example response <code>200</code></h4>
+<pre><code class="language-json">{
+  &quot;case_set_id&quot;: &quot;string&quot;,
+  &quot;cost_complete&quot;: false,
+  &quot;cost_usd&quot;: 0.0,
+  &quot;created_at&quot;: 0,
+  &quot;duration_ms_p50&quot;: 0,
+  &quot;errored&quot;: 0,
+  &quot;failed&quot;: 0,
+  &quot;finished_at&quot;: 0,
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;label&quot;: &quot;string&quot;,
+  &quot;pass_rate&quot;: 0.0,
+  &quot;passed&quot;: 0,
+  &quot;pending&quot;: 0,
+  &quot;revision&quot;: 0,
+  &quot;skipped&quot;: 0,
+  &quot;started_at&quot;: 0,
+  &quot;status&quot;: &quot;string&quot;,
+  &quot;target&quot;: &quot;string&quot;,
+  &quot;total&quot;: 0,
+  &quot;total_tokens&quot;: 0,
+  &quot;version&quot;: &quot;string&quot;
+}</code></pre>
+</section>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

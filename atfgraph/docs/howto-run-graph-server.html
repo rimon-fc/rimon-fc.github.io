@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run the graph server — ATFGraph vNext reference</title>
+<meta name="description" content="Run the graph server: generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-docs" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="../examples/index.html">Examples</a></li><li><a href="index.html" aria-current="page">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Run the graph server</h1>
+<p><strong>Problem:</strong> you need a graph server running, configured and stoppable on this machine.</p>
+<h2 id="start-it">Start it</h2>
+<p>The server is Rust, at the root of this repository (<code>src/</code>). From the checkout:</p>
+<pre><code class="language-bash">cargo build --bin atfgraphd --bin atfg
+(cd ui &amp;&amp; npm ci &amp;&amp; npm run build)      # once, for the console at /ui/
+export PATH=&quot;$PWD/target/debug:$PATH&quot;
+atfg server start
+atfg server status</code></pre>
+<p>An installed self-host bundle has the same binaries under <code>&lt;prefix&gt;/bin</code>; a client install has <code>atfg</code> only and talks to a server elsewhere.</p>
+<p><code>atfg server start</code>:</p>
+<ol><li>Probes <code>http://127.0.0.1:18880/health</code>. If ATFGraph vNext already answers, nothing is started. If another product answers, it refuses.</li><li>Locates <code>atfgraphd</code> next to the <code>atfg</code> binary, or at <code>--daemon</code> / <code>ATFGRAPHD_BIN</code>.</li><li>Spawns it detached with <code>--listen</code>, optional <code>--config</code> and <code>--database-url</code>, logs to a file, and writes pid metadata to
+<code>~/.atfgraph-vnext/server-&lt;listen&gt;.json</code> (override the directory with
+<code>--state-dir</code> or <code>ATFGRAPH_VNEXT_HOME</code>).</li><li>Waits up to <code>--wait</code> seconds for <code>/health</code>. If the daemon exits early, the tail of its log is printed.</li></ol>
+<p><code>--foreground</code> runs the daemon attached to your terminal instead. To run a second server, or one on a throwaway database:</p>
+<pre><code class="language-bash">atfg server start --listen 127.0.0.1:18890 \
+  --database-url &quot;sqlite:///tmp/scratch/graph.db?mode=rwc&quot; \
+  --state-dir /tmp/scratch/state</code></pre>
+<h2 id="stop-it">Stop it</h2>
+<pre><code class="language-bash">atfg server stop</code></pre>
+<p><code>stop</code> reads the pid record and signals <strong>only</strong> that pid, and only if the pid still runs a process named <code>atfgraphd</code>. A reused pid is reported and left alone. A dead pid just clears the record. It never scans for processes and never stops a server it did not start.</p>
+<h2 id="configure-it">Configure it</h2>
+<p>The daemon reads YAML in the contract shape:</p>
+<pre><code class="language-yaml">atfgraph:
+  server:
+    listen: 127.0.0.1:18880
+  storage:
+    url: sqlite://./data/graph.db?mode=rwc      # or postgres://user:pass@host/db
+  execution:
+    lease_seconds: 30
+  auth:
+    tokens:
+      - token: a-long-random-value
+        namespace: local
+        principal: operator
+        roles: [admin]                          # admin | invoke | worker</code></pre>
+<p>Environment overrides: <code>ATFGRAPH_CONFIG_FILE</code>, <code>ATFGRAPH_LISTEN</code>, <code>ATFGRAPH_DATABASE_URL</code>, <code>ATFGRAPH_LEASE_SECONDS</code>, <code>ATFGRAPH_API_KEY</code> (a single key that grants the <code>local</code> namespace admin).</p>
+<p><strong>Loopback without keys is development mode.</strong> The daemon refuses to start on a non-loopback address with no tokens and no <code>ATFGRAPH_API_KEY</code>.</p>
+<p>Validate a file before starting:</p>
+<pre><code class="language-bash">atfg config validate deploy/config/atfgraph.yaml          # exit 0 valid, 1 invalid
+atfg config validate my.yaml --strict                     # warnings also fail
+atfg --json config validate my.yaml</code></pre>
+<p>The validator checks the shape, <code>listen</code> as <code>ip:port</code>, the storage URL scheme, <code>lease_seconds &gt; 0</code>, every token&#x27;s <code>token</code>/<code>namespace</code>/<code>principal</code>/<code>roles</code>, duplicate tokens, unknown keys (warnings), and the non-loopback-without-tokens rule. It also notes which override variables are set in your shell. A failing file looks like this:</p>
+<pre><code class="language-text">error: atfgraph.storage.url: `mysql://x` must start with sqlite: or postgres://
+error: atfgraph.server.listen: 0.0.0.0:18880 is not loopback and no auth tokens are configured; the daemon refuses to start this way (set auth.tokens or ATFGRAPH_API_KEY)
+invalid: 2 error(s), 0 warning(s)</code></pre>
+<h2 id="check-it">Check it</h2>
+<p><code>GET /health</code> is unauthenticated liveness. <code>GET /api/v2/server</code> reports the build:</p>
+<pre><code class="language-json">{&quot;api_version&quot;:&quot;v2&quot;,&quot;features&quot;:{&quot;a2a&quot;:false,&quot;durable_execution&quot;:true,&quot;managed_deployment&quot;:false,&quot;mcp&quot;:true,&quot;outbound_workers&quot;:true},&quot;namespace&quot;:&quot;local&quot;,&quot;product&quot;:&quot;ATFGraph vNext&quot;,&quot;version&quot;:&quot;0.1.0&quot;,&quot;worker_protocol&quot;:&quot;v1&quot;}</code></pre>
+<p><code>atfg doctor</code> checks the binaries, the state directory, the Python interpreter and whether it can import <code>atfgraph</code>, and the presence of container and cluster tools.</p>
+<h2 id="prune-it">Prune it</h2>
+<p>The database grows with every run. Two administrator operations trim it, both read-only until you say otherwise:</p>
+<pre><code class="language-bash"># What would go: the journal of runs that finished before the cutoff.
+curl -s -X POST &quot;$ATFGRAPH_URL/api/v2/retention/plan&quot; -H &quot;X-API-Key: $KEY&quot; \
+  -H &#x27;content-type: application/json&#x27; -d &#x27;{&quot;cutoff&quot;: &quot;2026-06-01T00:00:00Z&quot;}&#x27;
+# Do it, one run at a time under a lock; repeat until &quot;scanned&quot; is 0.
+curl -s -X POST &quot;$ATFGRAPH_URL/api/v2/retention/apply&quot; -H &quot;X-API-Key: $KEY&quot; \
+  -H &#x27;content-type: application/json&#x27; -d &#x27;{&quot;cutoff&quot;: &quot;2026-06-01T00:00:00Z&quot;, &quot;dry_run&quot;: false}&#x27;</code></pre>
+<p><code>mode: &quot;journal&quot;</code> (the default) deletes events, attempts, execution artifacts, signed paths, node logs, decided approvals and checkpoints of finished run trees. The runs themselves, their usage, run metadata, sessions and memory stay, so idempotency keys remain spent and <code>traversers.get</code> keeps answering.</p>
+<p><code>mode: &quot;sessions&quot;</code> deletes the brief artifacts (files attached to a session before a run, as the Console&#x27;s Studio does) of sessions whose last activity is older than the cutoff and that have no active turn and no unfinished run. The session, its runs, memory and knowledge stay. It pages with <code>cursor</code> / <code>next_cursor</code> instead of <code>after_seq</code>:</p>
+<pre><code class="language-bash">curl -s -X POST &quot;$ATFGRAPH_URL/api/v2/retention/apply&quot; -H &quot;X-API-Key: $KEY&quot; \
+  -H &#x27;content-type: application/json&#x27; \
+  -d &#x27;{&quot;mode&quot;: &quot;sessions&quot;, &quot;cutoff&quot;: &quot;2026-06-01T00:00:00Z&quot;, &quot;dry_run&quot;: false}&#x27;</code></pre>
+<p>The per-file and per-session size caps for brief artifacts are configuration, not retention: <code>brief_artifacts.max_file_bytes</code> (default 25 MiB) and <code>brief_artifacts.max_session_bytes</code> (default 100 MiB), or the environment variables <code>ATFGRAPH_BRIEF_ARTIFACT_MAX_BYTES</code> and <code>ATFGRAPH_BRIEF_SESSION_MAX_BYTES</code>. Deleting a session (<code>DELETE /api/v2/sessions/{id}</code>) removes its brief artifacts at once.</p>
+<h2 id="related">Related</h2>
+<ul><li>Server-wide counts and the worker fleet: <a href="howto-monitor-over-http.html">Monitor over HTTP</a>.</li><li>Run the server in a container: <a href="howto-deploy-compose.html">Deploy with Docker Compose</a>.</li><li>Messages <code>atfg server</code> can print: <a href="troubleshooting.html">Troubleshooting</a>.</li></ul>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retrieval example (semantic + hybrid knowledge) — ATFGraph vNext reference</title>
+<meta name="description" content="Retrieval example (semantic + hybrid knowledge): generated reference for ATFGraph vNext.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="page-examples" data-site-root="../">
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-glyph" aria-hidden="true">/\</span><span class="brand-name">ATFGraph</span><span class="brand-sep" aria-hidden="true">:</span><span class="brand-docs">Docs</span><span class="brand-edition">vNext</span></a>
+    <nav aria-label="Primary">
+      <ul><li><a href="../index.html">Overview</a></li><li><a href="../api/index.html">API reference</a></li><li><a href="../schemas/index.html">Schemas</a></li><li><a href="../features.html">Feature areas</a></li><li><a href="index.html" aria-current="page">Examples</a></li><li><a href="../docs/index.html">Guides</a></li></ul>
+    </nav>
+    <div class="search" role="search">
+      <label for="site-search" class="visually-hidden">Search this reference</label>
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="site-search" type="search" autocomplete="off" spellcheck="false"
+             aria-describedby="search-status" placeholder="Search">
+      <kbd class="search-key" aria-hidden="true">/</kbd>
+      <div class="search-panel">
+        <p id="search-status" class="search-status" role="status" aria-live="polite">Type to search.</p>
+        <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+      </div>
+    </div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="theme-sun" aria-hidden="true"></span><span class="theme-moon" aria-hidden="true"></span></button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" data-sidebar hidden></aside>
+<main id="main" tabindex="-1">
+<div class="crumbs" data-crumbs hidden></div>
+<article class="prose">
+<h1>Retrieval example (semantic + hybrid knowledge)</h1>
+<p class="meta">Directory <code>examples/python/features/retrieval</code></p>
+<p>One node, five traversals, no server change. Documents live in the node&#x27;s <code>global</code> knowledge scope (BM25 with <code>doc_id#ordinal</code> citations); <code>SemanticKnowledge</code> embeds every server chunk with the configured provider and stores one vector per chunk in the same scope&#x27;s memory vectors (<code>kb:desk:&lt;doc_id&gt;#&lt;ordinal&gt;</code>). Queries run lexically, semantically or fused by reciprocal rank, and every semantic hit is verified against the live document revision before it is returned.</p>
+<p class="meta">Agent node label <code>retrieval_desk</code>, version <code>1.0.0</code>.</p>
+<h2 id="example-capabilities">Capabilities</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Kind</th><th scope="col">Signature</th><th scope="col">Module</th><th scope="col">Summary</th></tr></thead><tbody><tr><td><code>ask</code></td><td>traversal</td><td><code>(question: str, mode: str = &#x27;hybrid&#x27;, top_k: int = 5, kind: Optional[str] = None) -&gt; Answer</code></td><td><code>examples/python/features/retrieval/agent.py</code></td><td>Ranked passages with citations. ``mode`` is ``hybrid``, ``semantic`` or</td></tr><tr><td><code>forget</code></td><td>traversal</td><td><code>(doc_id: str) -&gt; dict</code></td><td><code>examples/python/features/retrieval/agent.py</code></td><td>Delete one document and its vectors.</td></tr><tr><td><code>ingest</code></td><td>traversal</td><td><code>(documents: List[Dict[str, Any]]) -&gt; dict</code></td><td><code>examples/python/features/retrieval/agent.py</code></td><td>Atomic lexical batch, then indexing. A failed embedding step is reported per</td></tr><tr><td><code>reindex</code></td><td>traversal</td><td><code>(doc_id: Optional[str] = None) -&gt; dict</code></td><td><code>examples/python/features/retrieval/agent.py</code></td><td>Rebuild vectors for one document or for the whole scope.</td></tr><tr><td><code>status</code></td><td>traversal</td><td><code>() -&gt; dict</code></td><td><code>examples/python/features/retrieval/agent.py</code></td><td></td></tr></tbody></table></div>
+<h2 id="example-commands">Commands</h2>
+<p class="meta">Taken from this example's own README and module docstrings.</p>
+<pre><code class="language-bash">python -m atfgraph.worker --module examples.python.features.retrieval.agent:app
+python -m examples.python.features.retrieval.call</code></pre>
+<h2 id="example-files">Files</h2>
+<ul><li><code>examples/python/features/retrieval/README.md</code></li><li><code>examples/python/features/retrieval/__init__.py</code></li><li><code>examples/python/features/retrieval/agent.py</code></li><li><code>examples/python/features/retrieval/agentnode.yaml</code></li><li><code>examples/python/features/retrieval/call.py</code></li><li><code>examples/python/features/retrieval/embeddings.py</code></li><li><code>examples/python/features/retrieval/fixtures.py</code></li></ul>
+<h2 id="example-readme">README</h2>
+<p class="meta">Rendered from <code>examples/python/features/retrieval/README.md</code>; the source file is not modified.</p>
+<p>One node, five traversals, no server change. Documents live in the node&#x27;s <code>global</code> knowledge scope (BM25 with <code>doc_id#ordinal</code> citations); <code>SemanticKnowledge</code> embeds every server chunk with the configured provider and stores one vector per chunk in the same scope&#x27;s memory vectors (<code>kb:desk:&lt;doc_id&gt;#&lt;ordinal&gt;</code>). Queries run lexically, semantically or fused by reciprocal rank, and every semantic hit is verified against the live document revision before it is returned.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Traversal</th><th scope="col">Surface</th><th scope="col">Notes</th></tr></thead><tbody><tr><td><code>ingest(documents)</code></td><td><code>SemanticKnowledge.put_many(strict=False)</code></td><td>atomic lexical batch, then bounded-concurrency embedding and <code>memory.vector.set</code>; per-document failures are returned, not raised</td></tr><tr><td><code>ask(question, mode, top_k, kind)</code></td><td><code>SemanticKnowledge.search</code></td><td><code>hybrid</code> (default) / <code>semantic</code> / <code>lexical</code>; <code>kind</code> filters document metadata on both rankings; passages carry both scores and ranks, <code>stale</code> lists dropped vectors</td></tr><tr><td><code>forget(doc_id)</code></td><td><code>SemanticKnowledge.delete</code></td><td>tombstone plus vector removal</td></tr><tr><td><code>reindex(doc_id?)</code></td><td><code>SemanticKnowledge.reindex</code> / <code>reindex_all</code></td><td>repair after an interrupted <code>ingest</code> or a model change</td></tr><tr><td><code>status()</code></td><td><code>SemanticKnowledge.stats</code></td><td>knowledge counts plus vectors, indexed documents, model, dimension</td></tr></tbody></table></div>
+<h2 id="embedding-provider">Embedding provider</h2>
+<p>The provider is explicit. With <code>ATFGRAPH_EMBEDDING_URL</code> and <code>ATFGRAPH_EMBEDDING_MODEL</code> set, <code>http_embedding_provider</code> posts to an OpenAI-compatible <code>/embeddings</code> endpoint (only when a traversal embeds text). Without them the node uses <code>embeddings.py</code>: a deterministic concept-lexicon vectoriser that maps <code>luggage</code>/<code>baggage</code> and <code>charges</code>/<code>fees</code> to shared concepts and hashes other words. It is a demonstration embedder, not a model; its purpose is an offline, reproducible workflow in which &quot;luggage charges&quot; retrieves the excess baggage passage although neither word occurs in the corpus, while BM25 returns nothing.</p>
+<h2 id="run">Run</h2>
+<pre><code>python -m atfgraph.worker --module examples.python.features.retrieval.agent:app
+python -m examples.python.features.retrieval.call</code></pre>
+<p><code>call.py</code> ingests <code>fixtures.py</code>, asks each question in <code>SEMANTIC_QUERIES</code> in all three modes (printing BM25 and cosine scores and ranks side by side), applies a metadata filter, forgets <code>policy:baggage</code> and shows the semantic query no longer returns it, then prints the status.</p>
+<p>Lexical and semantic rankings are different things: BM25 scores are term statistics, cosine scores are provider geometry. The example never presents one as the other; hybrid passages show both. Use <code>reindex</code> after changing the embedding model or repairing an interrupted ingestion.</p>
+<p>Tests: <code>tests/test_semantic_knowledge.py</code> (wire bodies over a recording transport, bounded concurrency, retry and failure consistency, stale-vector handling, the node through the contract double, and the real daemon over HTTP).</p>
+</article>
+</main>
+<aside class="toc" data-toc hidden>
+  <p class="toc-title">Contents</p>
+  <ol class="toc-list"></ol>
+</aside>
+</div>
+<footer class="page-footer">
+<div class="footer-inner">
+<p>Repository <code>rimon-fc/atfgraph</code>, Documentation <code>https://rimon-fc.github.io/atfgraph</code></p>
+<p>ATFGraph developer documentation: build, run and operate agent nodes.</p>
+</div>
+</footer>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/search.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>
